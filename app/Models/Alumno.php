@@ -14,6 +14,12 @@ class Alumno extends Model
   protected $table ='tbl_alumnos';
   protected $primaryKey = 'alu_id';
 
+  protected $with = [
+    'tipoDocumento',
+    'tipo_civil',
+    'tipo_estado',
+  ];
+
   protected $casts = [
       'estado'=>'boolean',
       'fecha_nacimiento'=>'date',
@@ -49,6 +55,7 @@ class Alumno extends Model
     'alu_observaciones',
     'deleted_at',
     'usu_id',
+    'alu_password',
     'usu_id_baja',
   ];
 

@@ -55,6 +55,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::apiResources([
 				'tramites' => 'TramiteController',
 				'alumnos' => 'AlumnoController',
+    			'imagenes' => 'PlantillaImagenController',
 			]);
 			Route::apiResource('comisiones/alumnos','Comision\ComisionAlumnoController',[
 				'as' => 'comisionAlumno',
@@ -81,6 +82,13 @@ Route::group(['middleware' => 'auth:api'], function(){
 					'store' ,
 					'destroy' ,
 				]
+			]);
+
+			Route::apiResource('novedades/sistemas','Novedad\SistemaController',[
+				'as' => 'novedadSistema',
+				'parameters' => [
+					'sistema' => 'novedadSistema',
+				],
 			]);
 
 			Route::get('','SedeController@show');
@@ -152,6 +160,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 			});
 
 			Route::prefix('alumnos')->group(function(){
+				Route::get('concidencias','AlumnoController@concidencias');
 
 				Route::group([
 					'prefix'=> '{id_alumno}',
@@ -465,6 +474,19 @@ Route::group(['middleware' => 'auth:api'], function(){
 				});
 			});
 
+			/////////////////////////////// NOVEDADES
+
+			Route::group(['prefix' => 'novedades'], function() {
+			    Route::group(['prefix' => 'sistemas'], function() {
+			        Route::group([
+			        	'prefix' => '{id_novedad_sistema}',
+						'where'  => ['id_novedad_sistema' => '[0-9]+'],
+			        ], function() {
+			        	Route::post('mostrar','Novedad\SistemaController@mostrar');
+			        	Route::get('usuarios','Novedad\SistemaController@usuarios');
+			        });
+			    });
+			});
 		});
 	});
 
@@ -625,7 +647,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 			'where'  => ['id_alumno' => '[0-9]+'],
 		],function () {
 			Route::get('','AlumnoController@show');
-			Route::delete('','AlumnoController@destroy');
 
 			Route::post('archivos','AlumnoController@archivoAlta');
 			Route::get('archivos/{id_alumno_archivo}','AlumnoController@archivo')->where('id_alumno_archivo','[0-9]+');

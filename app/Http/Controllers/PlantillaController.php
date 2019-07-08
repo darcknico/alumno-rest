@@ -9,9 +9,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Validator;
+use Glide;
 
-use App\Mail\DemoEmail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use voku\CssToInlineStyles\CssToInlineStyles;
 
 class PlantillaController extends Controller
 {
@@ -171,6 +173,9 @@ class PlantillaController extends Controller
 
     public function enviar(Request $request){
       $user = Auth::user();
+      $cssToInlineStyles = new CssToInlineStyles();
+      $cssToInlineStyles->setUseInlineStylesBlock(true);
+
       $validator = Validator::make($request->all(),[
           'destino' => 'required | email',
       ]);
@@ -186,8 +191,9 @@ class PlantillaController extends Controller
           'pla_id' => $id,
           'estado' => 1,
         ])->get();
+        $cssToInlineStyles->setHTML($plantilla->pla_cuerpo);
         $todo = Mail::send('mails.empty',[
-            'cuerpo'=> $plantilla->pla_cuerpo,
+            'cuerpo'=> $cssToInlineStyles->convert(),
         ], function($message) use ($destino,$adjunto,$user){
             $message->from($user->email, $user->apellido.' '.$user->nombre);
             $message->replyTo($user->email, $user->apellido.' '.$user->nombre);
@@ -202,8 +208,9 @@ class PlantillaController extends Controller
             }
         });
       } else {
+        $cssToInlineStyles->setHTML($cuerpo);
         $todo = Mail::send('mails.empty',[
-            'cuerpo'=> $cuerpo,
+            'cuerpo'=> $cssToInlineStyles->convert(),
         ], function($message) use ($destino,$user){
             $message->from($user->email, $user->apellido.' '.$user->nombre);
             $message->replyTo($user->email, $user->apellido.' '.$user->nombre);
@@ -246,5 +253,10 @@ class PlantillaController extends Controller
         $id_archivo = $request->route('id_archivo');
         $todo = PlantillaArchivo::find($id_archivo);
         return response()->download(storage_path("app/{$todo->par_dir}"));
+    }
+
+    public function images(Filesystem $filesystem, $path)
+    {
+      return Glide::server('plantillas')->imageResponse($path, request()->all());
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ed5d94bdd01166dc67db7a2ee7a821ac",
+    "content-hash": "8ef3c4e37fb0c433331d213105dae545",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -60,20 +60,20 @@
         },
         {
             "name": "axn/laravel-glide",
-            "version": "1.6.0",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/AXN-Informatique/laravel-glide.git",
-                "reference": "1fd533898f3916f7acc15d672d2e3e4a831782d7"
+                "reference": "85fbf70dcc87c8aeda25411b86f26a1f5f55b2c2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/AXN-Informatique/laravel-glide/zipball/1fd533898f3916f7acc15d672d2e3e4a831782d7",
-                "reference": "1fd533898f3916f7acc15d672d2e3e4a831782d7",
+                "url": "https://api.github.com/repos/AXN-Informatique/laravel-glide/zipball/85fbf70dcc87c8aeda25411b86f26a1f5f55b2c2",
+                "reference": "85fbf70dcc87c8aeda25411b86f26a1f5f55b2c2",
                 "shasum": ""
             },
             "require": {
-                "laravel/framework": "5.2.*|5.3.*|5.4.*|5.5.*|5.6.*|5.7.*",
+                "laravel/framework": "5.2.*|5.3.*|5.4.*|5.5.*|5.6.*|5.7.*|5.8.*",
                 "league/glide-laravel": "^1.0"
             },
             "type": "library",
@@ -104,7 +104,7 @@
             ],
             "description": "league/glide wrapper for Laravel",
             "homepage": "https://github.com/AXN-Informatique/laravel-glide",
-            "time": "2018-09-11T15:47:49+00:00"
+            "time": "2019-03-07T20:27:08+00:00"
         },
         {
             "name": "barryvdh/laravel-cors",
@@ -4110,6 +4110,129 @@
                 "environment"
             ],
             "time": "2018-07-29T20:33:41+00:00"
+        },
+        {
+            "name": "voku/css-to-inline-styles",
+            "version": "2.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/voku/CssToInlineStyles.git",
+                "reference": "b0ce5bf0cc2508033b490e5d36c9c782ab6d28ae"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/voku/CssToInlineStyles/zipball/b0ce5bf0cc2508033b490e5d36c9c782ab6d28ae",
+                "reference": "b0ce5bf0cc2508033b490e5d36c9c782ab6d28ae",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "php": ">=7.0.0",
+                "symfony/css-selector": "~3.0 || ~4.0",
+                "voku/simple_html_dom": "~4.5"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~6.0 || ~7.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.6.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "voku\\CssToInlineStyles\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Tijs Verkoyen",
+                    "email": "css_to_inline_styles@verkoyen.eu",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Lars Moelleken",
+                    "email": "lars@moelleken.org",
+                    "homepage": "https://github.com/voku",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Only a Fork of -> CssToInlineStyles is a class that enables you to convert HTML-pages/files into HTML-pages/files with inline styles. This is very useful when you're sending emails.",
+            "homepage": "https://github.com/voku/CssToInlineStyles",
+            "keywords": [
+                "CSSToHtml",
+                "CSSinline",
+                "css",
+                "css-to-html",
+                "email",
+                "inline",
+                "style"
+            ],
+            "time": "2019-04-26T08:34:05+00:00"
+        },
+        {
+            "name": "voku/simple_html_dom",
+            "version": "4.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/voku/simple_html_dom.git",
+                "reference": "f24249b7bfb04043728b4130a1d8792017cafb61"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/voku/simple_html_dom/zipball/f24249b7bfb04043728b4130a1d8792017cafb61",
+                "reference": "f24249b7bfb04043728b4130a1d8792017cafb61",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-libxml": "*",
+                "ext-simplexml": "*",
+                "php": ">=7.0.0",
+                "symfony/css-selector": "~3.0|~4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~6.0 || ~7.0"
+            },
+            "suggest": {
+                "voku/portable-utf8": "~4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "voku\\helper\\": "src/voku/helper/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Lars Moelleken",
+                    "homepage": "http://www.moelleken.org/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "dimabdc",
+                    "email": "support@titor.ru",
+                    "homepage": "http://github.com/dimabdc",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Simple HTML DOM package.",
+            "homepage": "http://simplehtmldom.sourceforge.net/",
+            "keywords": [
+                "HTML Parser",
+                "dom",
+                "php dom"
+            ],
+            "time": "2019-07-01T07:59:39+00:00"
         },
         {
             "name": "zendframework/zend-diactoros",

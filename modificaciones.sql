@@ -158,3 +158,19 @@ ALTER TABLE `tbl_comision_alumno` ADD CONSTRAINT `fk_alumno` FOREIGN KEY (`alu_i
 ALTER TABLE `tbl_comision_alumno` ADD CONSTRAINT `fk_comision` FOREIGN KEY (`com_id`) REFERENCES `tbl_comisiones`(`com_id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE `tbl_comision_alumno` ADD `com_observaciones` VARCHAR(255) NULL AFTER `com_nota`;
 */
+/*
+ALTER TABLE `tbl_alumnos` ADD `alu_password` VARCHAR(255) NULL AFTER `usu_id`;
+
+CREATE TABLE `sch_alumno`.`tbl_plantilla_imagen` ( `pim_id` INT NOT NULL AUTO_INCREMENT , `emp_id` INT NOT NULL , `pim_nombre` VARCHAR(255) NOT NULL , `pim_dir` VARCHAR(255) NOT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `usu_id` INT NOT NULL , PRIMARY KEY (`pim_id`)) ENGINE = InnoDB;
+
+CREATE TABLE `sch_alumno`.`tbl_novedades_sistema` ( `nsi_id` INT NOT NULL AUTO_INCREMENT , `nsi_titulo` VARCHAR(255) NOT NULL , `nsi_descripcion` VARCHAR(255) NULL , `nsi_cuerpo` LONGTEXT NULL , `created_at` INT NULL , `updated_at` INT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `usu_id` INT NOT NULL , PRIMARY KEY (`nsi_id`)) ENGINE = InnoDB;
+
+CREATE TABLE `sch_alumno`.`tbl_novedad_usuario` ( `nus_id` INT NOT NULL AUTO_INCREMENT , `nsi_id` INT NOT NULL , `usu_id` INT NOT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `nus_visto` DATETIME NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , PRIMARY KEY (`nus_id`)) ENGINE = InnoDB;
+
+CREATE TABLE `sch_alumno`.`tbl_documentos` ( `doc_id` INT NOT NULL AUTO_INCREMENT , `doc_titulo` VARCHAR(255) NOT NULL , `doc_descripcion` VARCHAR(255) NULL , `doc_cuerpo` LONGTEXT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `usu_id` INT NOT NULL , `doc_id_documento` INT NULL , PRIMARY KEY (`doc_id`)) ENGINE = InnoDB;
+
+ALTER TABLE `tbl_novedades_sistema` ADD `nsi_mostrar` BOOLEAN NOT NULL DEFAULT FALSE AFTER `nsi_cuerpo`;
+
+ALTER TABLE `tbl_plantillas` CHANGE `pla_cuerpo` `pla_cuerpo` TEXT CHARACTER SET utf8 COLLATE utf8_spanish_ci NULL;
+
+*/

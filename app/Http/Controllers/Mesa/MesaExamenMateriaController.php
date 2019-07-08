@@ -269,6 +269,8 @@ class MesaExamenMateriaController extends Controller
                 $todo->id_mesa_examen_materia = $id_mesa_examen_materia;
                 $todo->id_alumno = $id_alumno;
                 $todo->id_inscripcion = $id_inscripcion;
+                $todo->nota = $request->input('nota');
+                $todo->nota_nombre = $request->input('nota_nombre');
                 $todo->id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',1);
                 $todo->usu_id = $user->id;
                 $todo->save();

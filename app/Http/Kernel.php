@@ -52,6 +52,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
+        'cors' => \Barryvdh\Cors\HandleCors::class,
         'sede' => \App\Http\Middleware\SedeMiddleware::class,
         'alumno' => \App\Http\Middleware\AlumnoMiddleware::class,
         'auth' => \App\Http\Middleware\Authenticate::class,

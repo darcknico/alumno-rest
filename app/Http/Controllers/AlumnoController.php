@@ -226,6 +226,28 @@ class AlumnoController extends Controller
       return response()->json($todo, 200);
     }
 
+    public function concidencias(Request $request){
+        $documento = $request->query('documento','');
+        $id_tipo_documento = $request->query('id_tipo_documento',96);
+        $id_sede = $request->route('id_sede');
+        if( empty($documento) and empty($id_tipo_documento)){
+            return response()->json(['coincidencia'=>true], 200);
+        }
+        $alumno = Alumno::where('id_tipo_documento',$id_tipo_documento)
+            ->where('id_sede',$id_sede)
+            ->where('documento',$documento)
+            ->where('estado',1)
+            ->first();
+        $coincidencia = false;
+        if($alumno){
+            $coincidencia = true;
+        }
+        return response()->json([
+            'coincidencia' => true,
+            'alumno' => $alumno,
+        ], 200);
+    }
+
     /**
      * Store
      *
@@ -442,7 +464,7 @@ class AlumnoController extends Controller
     public function destroy(Request $request)
     {
         $user = Auth::user();
-        $id_alumno = $request->route('id_alumno');
+        $id_alumno = $request->alumno;
         $alumno = Alumno::find($id_alumno);
         $alumno->usu_id_baja = $user->id;
         $alumno->deleted_at = Carbon::now();
@@ -1298,5 +1320,21 @@ class AlumnoController extends Controller
             $salida[]= $item;
         }
         return $salida;
+    }
+
+    public function password(Request $request)
+    {
+        $id_alumno = $request->route('id_alumno');
+        $validator = Validator::make($request->all(),[
+            'password' => 'required',
+        ]);
+        if($validator->fails()){
+            return response()->json(['error'=>$validator->errors()],403);
+        }
+        $alumno = Alumno::find($id_alumno);
+        $alumno->alu_password = bcrypt($request->input('password'));
+        $alumno->save();
+
+        return response()->json($alumno,200);
     }
 }

@@ -21,6 +21,7 @@ use Glide;
 use Carbon\Carbon;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
+use voku\CssToInlineStyles\CssToInlineStyles;
 
 class NotificacionController extends Controller
 {
@@ -379,6 +380,8 @@ class NotificacionController extends Controller
     }
 
     public function desplegar(Request $request){
+      $cssToInlineStyles = new CssToInlineStyles();
+      $cssToInlineStyles->setUseInlineStylesBlock(true);
       $id_notificacion = $request->route('id_notificacion');
       $notificacion = Notificacion::find($id_notificacion);
       $alumnos = AlumnoNotificacion::where([
@@ -387,6 +390,7 @@ class NotificacionController extends Controller
         'ano_enviado' => 0,
       ])->get();
       $plantilla = Plantilla::find($notificacion->id_plantilla);
+      $cssToInlineStyles->setHTML($plantilla->cuerpo);
       foreach ($alumnos as $alumno) {
         $token = bin2hex(random_bytes(64));
         $logo = CorreoFunction::logo();
@@ -399,7 +403,7 @@ class NotificacionController extends Controller
         ])->get();
         try {
           \Mail::send('mails.notificacion',[
-            'cuerpo' => $plantilla->cuerpo,
+            'cuerpo'=> $cssToInlineStyles->convert(),
             'visto' => $visto,
           ], function($message)use($alumno,$notificacion,$adjunto){
             $message->from($notificacion->responder_email, $notificacion->responder_nombre);

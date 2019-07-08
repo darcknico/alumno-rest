@@ -16,7 +16,9 @@ Route::get('/', function () {
 });
 
 Route::get('/img/{path}', 'NotificacionController@images')->where('path', '.*');
+Route::get('/plantillas/imagenes/{path}', 'PlantillaController@images')->where('path', '.*')->middleware(['cors']);
 
+/*
 Route::get('/artisan', function () {
 	//dd(public_path('something'));
 
@@ -26,6 +28,7 @@ Route::get('/artisan', function () {
 	}
 	//return Artisan::call('passport:install');
 });
+*/
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
