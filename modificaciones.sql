@@ -174,3 +174,46 @@ ALTER TABLE `tbl_novedades_sistema` ADD `nsi_mostrar` BOOLEAN NOT NULL DEFAULT F
 ALTER TABLE `tbl_plantillas` CHANGE `pla_cuerpo` `pla_cuerpo` TEXT CHARACTER SET utf8 COLLATE utf8_spanish_ci NULL;
 
 */
+/*
+CREATE TABLE `sch_alumno`.`tbl_alumno_sede` ( `ase_id` INT NOT NULL AUTO_INCREMENT , `alu_id` INT NOT NULL , `sed_id` INT NOT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `usu_id` INT NOT NULL , PRIMARY KEY (`ase_id`)) ENGINE = InnoDB;
+
+INSERT INTO tbl_alumno_sede (alu_id, sed_id, usu_id,created_at,updated_at) 
+SELECT DISTINCT alu_id, sed_id, usu_id,created_at,updated_at  FROM tbl_alumnos;
+*/
+/*
+CREATE TABLE `sch_alumno`.`tbl_tipo_mesa_docente` ( `tmd_id` INT NOT NULL AUTO_INCREMENT , `tmd_nombre` VARCHAR(255) NOT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`tmd_id`)) ENGINE = InnoDB;
+
+INSERT INTO `tbl_tipo_mesa_docente` (`tmd_id`, `tmd_nombre`, `estado`) VALUES (NULL, 'Presidente', '1'), (NULL, 'Vocal 1', '1'), (NULL, 'Vocal 2', '1');
+
+CREATE TABLE `sch_alumno`.`tbl_mesa_materia_docente` ( `mmd_id` INT NOT NULL AUTO_INCREMENT , `usu_id` INT NOT NULL , `mma_id` INT NOT NULL , `tmd_id` INT NOT NULL DEFAULT '1' , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`mmd_id`)) ENGINE = InnoDB;
+
+CREATE TABLE `sch_alumno`.`tbl_comision_docente` ( `cdo_id` INT NOT NULL AUTO_INCREMENT , `usu_id` INT NOT NULL , `com_id` INT NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `cdo_observaciones` VARCHAR(255) NULL , PRIMARY KEY (`cdo_id`)) ENGINE = InnoDB;
+
+ALTER TABLE `tbl_mesa_materia_docente` ADD `mmd_observaciones` VARCHAR(255) NULL AFTER `tmd_id`;
+
+DELIMITER //
+DROP FUNCTION IF EXISTS asistencia_promedio //
+CREATE FUNCTION asistencia_promedio(id_comision INTEGER,id_alumno INTEGER)
+	RETURNS DECIMAL(10,2)
+	BEGIN
+		DECLARE estado INTEGER;
+		DECLARE prom DECIMAL(10,2);
+		select asa.estado, AVG( IF (asa.taa_id = 4,1,0 ) ) as avg
+		INTO estado, prom
+		from tbl_asistencia_alumno asa
+		right join tbl_asistencias asi on asa.asi_id = asi.asi_id
+		where
+		asa.alu_id = id_alumno and
+		asi.com_id = id_comision AND
+		asa.estado = 1
+		group by asa.estado;
+		RETURN prom;
+	END //
+
+DELIMITER ;
+
+ALTER TABLE `tbl_mesa_alumno_materia` ADD `mam_adeuda` BOOLEAN NOT NULL DEFAULT FALSE AFTER `mam_observaciones`;
+*/
+
+CREATE TABLE `sch_alumno`.`password_resets` ( `email` VARCHAR(255) NOT NULL , `token` VARCHAR(255) NOT NULL , `created_at` TIMESTAMP NULL , UNIQUE (`email`)) ENGINE = InnoDB;
+

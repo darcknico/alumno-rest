@@ -22,4 +22,14 @@ class AuxiliarFunction{
 		}
 		return false;
 	}
+
+	public static function rename($json){
+        $json = json_decode($json);
+        $resultado = [];
+        foreach ($json as $key => $value) {
+            $new_key = substr($key, 4);
+            $resultado[$new_key] = $value;
+        }
+        return $resultado;
+    }
 }

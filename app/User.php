@@ -19,7 +19,7 @@ class User extends Authenticatable
     protected $rememberTokenName = 'usu_token';
 
   protected $with = [
-    'docente',
+    //'docente',
     'tipo',
     'tipoDocumento',
   ];
@@ -63,6 +63,7 @@ class User extends Authenticatable
       'tus_id',
       'usu_id',
       'usu_token',
+      'usu_localidad',
   ];
 
   protected $maps = [
@@ -80,6 +81,7 @@ class User extends Authenticatable
       'id_tipo_documento' => 'tdo_id',
       'id_tipo_usuario' => 'tus_id',
       'id' => 'usu_id',
+      'localidad' => 'usu_localidad',
   ];
 
   protected $appends = [
@@ -97,6 +99,7 @@ class User extends Authenticatable
     'id_tipo_documento',
     'id_tipo_usuario',
     'id',
+    'localidad',
   ];
 
   public function getAuthPassword()

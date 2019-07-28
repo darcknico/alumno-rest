@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tipos\TipoContrato;
+use App\Models\Tipos\TipoMesaDocente;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,4 +22,9 @@ class TipoController extends Controller
         return response()->json($todo,200);
     }
 
+    public function mesa_docente()
+    {
+        $todo = TipoMesaDocente::where('estado',1)->get();
+        return response()->json($todo,200);
+    }
 }

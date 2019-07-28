@@ -116,4 +116,7 @@ class MesaExamenMateria extends Model
     return $this->hasMany('App\Models\Mesa\MesaExamenMateriaAlumno','mma_id','mma_id');
   }
 
+  public function docentes(){
+    return $this->hasMany('App\Models\Mesa\MesaExamenMateriaDocente','mma_id','mma_id');
+  }
 }

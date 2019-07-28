@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
 use Sofa\Eloquence\Eloquence;
 use Sofa\Eloquence\Mappable;
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Redactors\LeftRedactor;
 
-class Alumno extends Model
+class Alumno extends Model implements Auditable
 {
-  use Eloquence, Mappable;
+
+  use Eloquence,Mappable,\OwenIt\Auditing\Auditable;
 
   protected $table ='tbl_alumnos';
   protected $primaryKey = 'alu_id';
@@ -53,7 +55,6 @@ class Alumno extends Model
     'tac_id',
     'tae_id',
     'alu_observaciones',
-    'deleted_at',
     'usu_id',
     'alu_password',
     'usu_id_baja',
@@ -61,6 +62,7 @@ class Alumno extends Model
 
   protected $maps = [
       'id' => 'alu_id',
+      'id_sede' => 'sed_id',
       'nombre' => 'alu_nombre',
       'apellido' => 'alu_apellido',
       'fecha_alta' => 'alu_fecha_alta',
@@ -92,6 +94,7 @@ class Alumno extends Model
 
   protected $appends = [
       'id',
+      'id_sede',
       'nombre',
       'apellido',
       'fecha_alta',
@@ -149,6 +152,10 @@ class Alumno extends Model
     return $this->hasOne('App\Models\Extra\Provincia','pro_id','pro_id');
   }
 
+  public function sedes(){
+    return $this->hasMany('App\Models\Academico\AlumnoSede','alu_id','alu_id');
+  }
+
   public function inscripciones(){
     return $this->hasMany('App\Models\Inscripcion','alu_id','alu_id');
   }
@@ -165,4 +172,7 @@ class Alumno extends Model
     return $this->hasMany('App\Models\AlumnoNotificacion','alu_id','alu_id');
   }
 
+   protected $attributeModifiers = [
+        'alu_password' => LeftRedactor::class,
+    ];
 }

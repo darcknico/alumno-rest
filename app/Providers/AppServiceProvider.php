@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 
 use \Carbon\Carbon;
 
@@ -18,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
         setlocale(LC_ALL, 'es_AR.UTF-8');
         //Carbon::setLocale(config('app.locale'));
         //
+        Schema::defaultStringLength(191);
     }
 
     /**

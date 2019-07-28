@@ -23,7 +23,7 @@ return [
     	'Content-Disposition',
     	'X-Requested-With'],
     'allowedMethods' => ['GET','PUT','POST','DELETE','OPTIONS'],
-    'exposedHeaders' => [],
+    'exposedHeaders' => ['Content-Disposition'],
     'maxAge' => 0,
 
 ];

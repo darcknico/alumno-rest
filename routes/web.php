@@ -29,6 +29,6 @@ Route::get('/artisan', function () {
 	//return Artisan::call('passport:install');
 });
 */
-Auth::routes();
+//Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+//Route::get('/home', 'HomeController@index')->name('home');

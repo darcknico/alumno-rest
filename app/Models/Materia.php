@@ -71,4 +71,8 @@ class Materia extends Model
     return $this->hasMany('App\Models\MateriaCorrelatividad','mat_id','mat_id');
   }
 
+  public function mesas_examenes(){
+    return $this->hasMany('App\Models\Mesa\MesaExamenMateria','mat_id','mat_id');
+  }
+
 }

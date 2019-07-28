@@ -27,6 +27,7 @@ use App\Models\ObligacionInteres;
 use App\Models\Modalidad;
 use App\Models\Movimiento;
 use App\Models\Extra\Provincia;
+use App\Models\Academico\AlumnoSede;
 
 use App\Exports\AlumnoExport;
 use App\Imports\AlumnoImport;
@@ -57,23 +58,27 @@ class AlumnoController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
-        $registros = Alumno::with([
-            'tipoDocumento',
-            'tipo_civil',
-            'tipo_estado',
+
+        $estado = $request->query('estado',1);
+
+        $with = [
             'provincia',
             'inscripciones'=>function($q){
                 $q->where('estado',1);
             },
-            'archivos'=>function($q){
-                $q->where('estado',1);
-            },
-        ])
+        ];
+        if($estado == 0){
+            $with[] = 'usuario_baja';
+        }
+
+        $registros = Alumno::with($with)
         ->when(!empty($id_sede),function($q)use($id_sede){
-            return $q->where('sed_id',$id_sede);
+            return $q->whereHas('sedes',function($qt)use($id_sede){
+                return $qt->where('sed_id',$id_sede)->where('estado',1);
+            });
         })
         ->where([
-            'estado' => 1,
+            'estado' => $estado,
         ]);
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('created_at','desc')
@@ -205,9 +210,6 @@ class AlumnoController extends Controller
     public function buscar(Request $request){
       $documento = $request->query('documento','');
       $todo = Alumno::with([
-            'tipoDocumento',
-            'tipo_civil',
-            'tipo_estado',
             'provincia',
             'inscripciones'=>function($q){
                 $q->where('estado',1);
@@ -226,15 +228,11 @@ class AlumnoController extends Controller
       return response()->json($todo, 200);
     }
 
-    public function concidencias(Request $request){
+    public function coincidencia(Request $request){
         $documento = $request->query('documento','');
         $id_tipo_documento = $request->query('id_tipo_documento',96);
-        $id_sede = $request->route('id_sede');
-        if( empty($documento) and empty($id_tipo_documento)){
-            return response()->json(['coincidencia'=>true], 200);
-        }
-        $alumno = Alumno::where('id_tipo_documento',$id_tipo_documento)
-            ->where('id_sede',$id_sede)
+        $alumno = Alumno::with('sede')
+            ->where('id_tipo_documento',$id_tipo_documento)
             ->where('documento',$documento)
             ->where('estado',1)
             ->first();
@@ -243,9 +241,17 @@ class AlumnoController extends Controller
             $coincidencia = true;
         }
         return response()->json([
-            'coincidencia' => true,
+            'coincidencia' => $coincidencia,
             'alumno' => $alumno,
         ], 200);
+    }
+
+    public function sedes(Request $request){
+        $id_alumno = $request->route('id_alumno');
+        $todo = AlumnoSede::with('sede','usuario')
+            ->where('id_alumno',$id_alumno)
+            ->get();
+        return response()->json($todo, 200);
     }
 
     /**
@@ -260,6 +266,7 @@ class AlumnoController extends Controller
 
         $validator = Validator::make($request->all(),[
             'nombre' => 'required',
+            'id_tipo_documento' => 'required',
             'documento' => 'required',
         ]);
         if($validator->fails()){
@@ -281,7 +288,7 @@ class AlumnoController extends Controller
         $telefono = $request->input('telefono');
         $celular = $request->input('celular');
         $email = $request->input('email');
-        $id_tipo_documento = $request->input('id_tipo_documento');
+        $id_tipo_documento = $request->input('id_tipo_documento',96);
         $documento = $request->input('documento');
         $fecha_nacimiento = $request->input('fecha_nacimiento');
         $ciudad_nacimiento = $request->input('ciudad_nacimiento');
@@ -320,6 +327,12 @@ class AlumnoController extends Controller
         $todo->alu_observaciones = $observaciones;
         $todo->usu_id = $user->id;
         $todo->save();
+
+        $sede = new AlumnoSede;
+        $sede->id_alumno = $todo->id;
+        $sede->id_sede = $id_sede;
+        $sede->save();
+
         return response()->json($todo,200);
     }
 
@@ -547,6 +560,17 @@ class AlumnoController extends Controller
             $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
             $comision->save();
         }
+        /*
+        $sedes = AlumnoSede::where([
+            'alu_id' => $id_alumno,
+            'estado' => 1,
+        ])->get();
+        foreach ($sedes as $sede) {
+            $sede = AlumnoSede::find($sede->id);
+            $sede->estado = 0;
+            $sede->save();
+        }
+        */
         return response()->json($alumno,200);
     }
 

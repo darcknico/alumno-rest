@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Validator;
 
 use Carbon\Carbon;
+use JasperPHP\JasperPHP;
 
 class MesaExamenController extends Controller
 {
@@ -54,7 +55,8 @@ class MesaExamenController extends Controller
             foreach ($values as $key => $value) {
                 if(strlen($value)>0){
                     $registros = $registros->where(function($query) use  ($value) {
-                        $query->where('numero', $value);
+                        $query->where('numero', $value)
+                            ->orWhere('nombre','like','%'.$value.'%');
                     });
                 }
             }
@@ -290,27 +292,68 @@ class MesaExamenController extends Controller
     public function materias_disponibles(Request $request){
         $id_sede = $request->route('id_sede');
         $id_mesa_examen = $request->route('id_mesa_examen');
+
+        $search = $request->query('search','');
+        $sort = $request->query('sort','');
+        $order = $request->query('order','');
+        $start = $request->query('start',0);
+        $length = $request->query('length',0);
         $id_carrera = $request->query('id_carrera',0);
 
-        $mesas = MesaExamenMateria::where([
-            'estado' => 1,
-            'mes_id' => $id_mesa_examen,
-        ])->pluck('mat_id')->toArray();
-        $carreras = Carrera::where('estado',1)->pluck('car_id')->toArray();
-        $planes_estudio = PlanEstudio::whereIn('car_id',$carreras)
-            ->where('estado',1)
-            ->when($id_carrera>0,function($q)use($id_carrera){
-              return $q->where('car_id',$id_carrera);
-            })->pluck('pes_id')->toArray();
-        $todo = Materia::with('planEstudio.carrera')
+        $registros = Materia::with('planEstudio.carrera')
+        ->whereDoesntHave('mesas_examenes',function($q)use($id_mesa_examen){
+            $q->where('id_mesa_examen',$id_mesa_examen)->where('estado',1);
+        })
         ->where([
             'estado' => 1,
         ])
-        ->whereIn('pes_id',$planes_estudio)
-        ->whereNotIn('mat_id',$mesas)
-        ->orderBy('codigo','desc')
-        ->get();
-        return response()->json($todo,200);
+        ->when($id_carrera>0,function($q)use($id_carrera){
+            $q->where('planEstudio',function($qt)use($id_carrera){
+                $qt->where('id_carrera',$id_carrera)->where('estado',1);
+            });
+        });
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $registros = $registros->orderBy('created_at','desc')
+            ->get();
+            return response()->json($registros,200);
+        }
+        $values = explode(" ", $search);
+        if(count($values)>0){
+            foreach ($values as $key => $value) {
+                if(strlen($value)>0){
+                    $registros = $registros->where(function($query) use  ($value) {
+                        $query->where('mat_nombre','like','%'.$value.'%')
+                            ->orWhere('mat_codigo','like','%'.$value.'%')
+                            ->orWhere('mat_horas',$value);
+                    });
+                }
+            }
+        }
+        $sql = $registros->toSql();
+        $q = clone($registros->getQuery());
+        $total_count = $q->groupBy('estado')->count();
+
+        if(strlen($sort)>0){
+            $registros = $registros->orderBy($sort,$order);
+        } else {
+            $registros = $registros->orderBy('created_at','desc');
+        }
+        if($length>0){
+            $registros = $registros->limit($length);
+            if($start>1){
+                $registros = $registros->offset($start)->get();
+            } else {
+                $registros = $registros->get();
+            }
+
+        } else {
+            $registros = $registros->get();
+        }
+
+        return response()->json([
+            'total_count'=>intval($total_count),
+            'items'=>$registros,
+        ],200);
     }
 
 
@@ -333,6 +376,31 @@ class MesaExamenController extends Controller
             $todo->save();
         }
         return response()->json($todo,200);
+    }
+
+    public function reporte_resumen(Request $request){
+        $id_mesa_examen = $request->route('id_mesa_examen');
+        $mesa = MesaExamen::find($id_mesa_examen);
+
+        $jasper = new JasperPHP;
+        $input = storage_path("app/reportes/alumno_mesa_examen.jasper");
+        $output = storage_path("app/reportes/".uniqid());
+        $ext = "pdf";
+
+        $jasper->process(
+            $input,
+            $output,
+            [$ext],
+            [
+                'id_mesa_examen' => $id_mesa_examen,
+                'logo'=> storage_path("app/images/logo_constancia.png")??null,
+                'REPORT_LOCALE' => 'es_AR',
+            ],
+            \Config::get('database.connections.mysql')
+        )->execute();
+        
+        $filename ='mesa_examen-'.$mesa->numero.$ext;
+        return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 
 }

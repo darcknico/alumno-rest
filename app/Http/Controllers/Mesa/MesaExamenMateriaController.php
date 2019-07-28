@@ -6,6 +6,7 @@ use App\User;
 use App\Models\Mesa\MesaExamen;
 use App\Models\Mesa\MesaExamenMateria;
 use App\Models\Mesa\MesaExamenMateriaAlumno;
+use App\Models\Mesa\MesaExamenMateriaDocente;
 use App\Models\Mesa\TipoCondicionAlumno;
 use App\Models\Carrera;
 use App\Models\CarreraModalidad;
@@ -37,6 +38,13 @@ class MesaExamenMateriaController extends Controller
      */
     public function index(Request $request)
     {
+        $validator = Validator::make($request->all(),[
+            'fecha_ini' => 'date | nullable',
+            'fecha_fin' => 'date | nullable',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
 
         $id_sede = $request->route('id_sede');
         $id_carrera = $request->route('id_carrera',null);
@@ -70,15 +78,13 @@ class MesaExamenMateriaController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('fecha','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
 
         $id_departamento = $request->query('id_departamento',0);
         $id_carrera = $request->query('id_carrera',0);
         $id_materia = $request->query('id_materia',0);
+        $id_mesa_examen = $request->query('id_mesa_examen',0);
+        $fecha_ini = $request->query('fecha_ini',null);
+        $fecha_fin = $request->query('fecha_fin',null);
 
         $registros = $registros
             ->when($id_departamento>0,function($q)use($id_departamento){
@@ -93,7 +99,23 @@ class MesaExamenMateriaController extends Controller
             })
             ->when($id_materia>0,function($q)use($id_materia){
                 return $q->where('mat_id',$id_materia);
+            })
+            ->when($id_mesa_examen>0,function($q)use($id_mesa_examen){
+                return $q->where('id_mesa_examen',$id_mesa_examen);
+            })
+            ->when($fecha_ini>0,function($q)use($fecha_ini){
+                return $q->whereDate('fecha','>=',$fecha_ini);
+            })
+            ->when($fecha_fin>0,function($q)use($fecha_fin){
+                return $q->whereDate('fecha','<=',$fecha_fin);
             });
+
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $todo = $registros->orderBy('fecha','desc')
+            ->get();
+            return response()->json($todo,200);
+        }
+        
         $values = explode(" ", $search);
         if(count($values)>0){
             foreach ($values as $key => $value) {
@@ -103,14 +125,14 @@ class MesaExamenMateriaController extends Controller
                                 return $q->select('car_id')->from('tbl_carreras')->where([
                                     'estado' => 1,
                                 ])->where(function($qt) use ($value) {
-                                    $qt->where('nombre',$value)->orWhere('nombre_corto',$value);
+                                    $qt->where('car_nombre','like','%'.$value.'%')->orWhere('car_nombre_corto','like','%'.$value.'%');
                                 });
                             })
                             ->orWhereIn('mat_id',function($q)use($value){
                                 return $q->select('mat_id')->from('tbl_materias')->where([
                                     'estado' => 1,
                                 ])->where(function($qt) use ($value) {
-                                    $qt->where('nombre',$value)->orWhere('codigo',$value);
+                                    $qt->where('mat_nombre','like','%'.$value.'%')->orWhere('mat_codigo','like','%'.$value.'%');
                                 });
                             })
                             ->orWhere('libro','like','%'.$value.'%')
@@ -179,13 +201,14 @@ class MesaExamenMateriaController extends Controller
         $validator = Validator::make($request->all(),[
             'fecha' => 'required',
             'id_mesa_examen' => 'required',
-            'id_materia' => 'id_materia',
+            'id_materia' => 'required',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
         }
 
         $fecha = $request->input('fecha');
+        $fecha_cierre = $request->input('fecha_cierre',null);
         $ubicacion = $request->input('ubicacion',null);
         $id_mesa_examen = $request->input('id_mesa_examen');
         $id_materia = $request->input('id_materia');
@@ -204,8 +227,8 @@ class MesaExamenMateriaController extends Controller
             'mes_id' => $id_mesa_examen,
         ])->first();
         if($todo){
-            response()->json([
-                'error'=>'La mesa de examen ya cuenta con la materia. Elija otra mesa de examen disponible.',
+            return response()->json([
+                'error'=>'La mesa de examen ya cuenta con la materia. Elija otra materia disponible.',
             ],403);
         } else {
             $todo = new MesaExamenMateria;
@@ -214,6 +237,9 @@ class MesaExamenMateriaController extends Controller
             $todo->id_materia = $id_materia;
             $todo->usu_id = $user->id;
             $todo->fecha = $fecha;
+            if($fecha_cierre){
+                $todo->fecha_cierre = Carbon::parse($fecha_cierre);
+            }
             $todo->save();
         }
         return response()->json($todo,200);
@@ -272,6 +298,7 @@ class MesaExamenMateriaController extends Controller
                 $todo->nota = $request->input('nota');
                 $todo->nota_nombre = $request->input('nota_nombre');
                 $todo->id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',1);
+                $todo->adeuda = $request->input('adeuda',false);
                 $todo->usu_id = $user->id;
                 $todo->save();
             }
@@ -333,13 +360,21 @@ class MesaExamenMateriaController extends Controller
     public function show(Request $request)
     {
         $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
+        $id_inscripcion = $request->query('id_inscripcion',null);
         $todo = MesaExamenMateria::with([
+            'mesa_examen',
             'usuario',
             'carrera',
             'materia.planEstudio',
             'usuario_check_in',
             'usuario_check_out',
         ])->find($id_mesa_examen_materia);
+        if(!is_null($id_inscripcion)){
+            $id_materia = $todo->id_materia;
+            $todo->comision = ComisionAlumno::with('comision')->whereHas('comision',function($q)use($id_materia){
+                $q->where('id_materia',$id_materia)->where('estado',1);
+            })->where('id_inscripcion',$id_inscripcion)->where('estado',1)->orderBy('created_at','desc')->first();
+        }
         return response()->json($todo,200);
     }
 
@@ -395,6 +430,16 @@ class MesaExamenMateriaController extends Controller
     public function alumnos(Request $request){
         $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
         $todo = MesaExamenMateriaAlumno::with('alumno','usuario','condicion')
+        ->where([
+            'estado' => 1,
+            'mma_id' => $id_mesa_examen_materia,
+        ])->get();
+        return response()->json($todo,200);
+    }
+
+    public function docentes(Request $request){
+        $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
+        $todo = MesaExamenMateriaDocente::with('usuario')
         ->where([
             'estado' => 1,
             'mma_id' => $id_mesa_examen_materia,
@@ -556,7 +601,14 @@ class MesaExamenMateriaController extends Controller
         ])
         ->whereNotIn('mat_id',$materias)
         ->orderBy('mat_id','desc')->get();
-        return response()->json($todo,200);
+        $salida = [];
+        foreach ($todo as $materia) {
+            $materia->comision = Comision::whereHas('alumnos',function($q)use($id_inscripcion){
+                $q->where('id_inscripcion',$id_inscripcion)->where('estado',1);
+            })->where('id_materia',$materia->id_materia)->where('estado',1)->orderBy('anio','desc')->first();
+            $salida[]=$materia;
+        }
+        return response()->json($salida,200);
     }
 
     public function inscripcion(Request $request){
@@ -596,8 +648,17 @@ class MesaExamenMateriaController extends Controller
     }
 
     public function reporte_acta(Request $request){
+        $user = Auth::user();
         $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
 
+        $validator = Validator::make($request->all(),[
+            'id_tipo_condicion_alumno' => 'integer | nullable',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+
+        $id_tipo_condicion_alumno = $request->query('id_tipo_condicion_alumno',3);
         $mesa_examen_materia = MesaExamenMateria::find($id_mesa_examen_materia);
 
         $jasper = new JasperPHP;
@@ -612,20 +673,15 @@ class MesaExamenMateriaController extends Controller
             [
                 'REPORT_LOCALE' => 'es_AR',
                 'id_mesa_examen_materia' => $id_mesa_examen_materia,
+                'id_tipo_condicion_alumno' => $id_tipo_condicion_alumno,
+                'id_usuario' => $user->id,
                 'logo' => storage_path("app/images/logo_2.png"),
             ],
             \Config::get('database.connections.mysql')
         )->execute();
         
-        $filename ='reporte_acta'.$mesa_examen_materia->id;
-
-        //header('Access-Control-Allow-Origin: *');
-        header('Content-Description: application/pdf');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition:attachment; filename=' . $filename . '.' . $ext);
-        readfile($output . '.' . $ext);
-        unlink($output. '.'  . $ext);
-        flush();
+        $filename ='acta-'.$id_mesa_examen_materia.'-'.$mesa_examen_materia->id.$ext;
+        return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 
     public function condiciones(Request $request){

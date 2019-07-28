@@ -29,12 +29,8 @@ class DocenteController extends Controller
         $registros = Docente::whereHas('usuario',function($q){
             $q->where('id_tipo_usuario',8);
         });
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('created_at','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
-        $estado = $request->query('estado',null);
+
+        $estado = $request->query('estado',true);
         $id_sede = $request->query('id_sede',0);
         $id_tipo_contrato = $request->query('id_tipo_contrato',0);
 
@@ -46,14 +42,21 @@ class DocenteController extends Controller
                 ])->pluck('usu_id')->toArray();
                 return $q->whereIn('id_usuario',$usuarios);
             })
-            ->when(!is_bool($estado),function($q)use($estado){
+            ->when( !is_null($estado) and is_bool($estado),function($q)use($estado){
                 return $q->whereHas('usuario',function($qt)use($estado){
-                    $qt->where('estado',$estado);
+                    $qt->where('estado',($estado?1:0));
                 });
             })
             ->when($id_tipo_contrato>0,function($q)use($id_tipo_contrato){
                 return $q->where('id_tipo_contrato',$id_tipo_contrato);
             });
+
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $todo = $registros->orderBy('cuit','desc')
+            ->get();
+            return response()->json($todo,200);
+        }
+        
         $values = explode(" ", $search);
         if(count($values)>0){
             foreach ($values as $key => $value) {

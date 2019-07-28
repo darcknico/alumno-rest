@@ -10,6 +10,7 @@ use App\Models\Inscripcion;
 use App\Models\Alumno;
 use App\Models\Comision;
 use App\Models\ComisionAlumno;
+use App\Models\Comision\Docente as ComisionDocente;
 use App\Models\Asistencia;
 use App\Models\Comision\Examen;
 
@@ -91,6 +92,7 @@ class ComisionController extends Controller
                 if(strlen($value)>0){
                     $registros = $registros->where(function($query) use  ($value) {
                         $query->where('anio', $value)
+                            ->orWhere('numero','like','%'.$value.'%')
                             ->orWhereIn('car_id',function($q)use($value){
                                 return $q->select('car_id')->from('tbl_carreras')->where([
                                     'estado' => 1,
@@ -182,6 +184,7 @@ class ComisionController extends Controller
         $responsable_nombre = $request->input('responsable_nombre');
         $responsable_apellido = $request->input('responsable_apellido');
         $id_modalidad = $request->input('id_modalidad',1);
+        $docentes = $request->input('docentes');
         $materia = Materia::find($id_materia);
         if(!$materia){
             return response()->json(['error'=>'La materia no fue encontrada.'],404);
@@ -199,6 +202,13 @@ class ComisionController extends Controller
         $todo->id_sede = $id_sede;
         $todo->usu_id_alta = $user->id;
         $todo->save();
+
+        foreach ($docentes as $docente) {
+            $usuario = new ComisionDocente;
+            $usuario->id_usuario = $docente['id_usuario'];
+            $usuario->id_comision = $todo->id;
+            $usuario->save();
+        }
 
         return response()->json($todo,200);
     }
@@ -355,6 +365,7 @@ class ComisionController extends Controller
         $responsable_apellido = $request->input('responsable_apellido');
         $id_modalidad = $request->input('id_modalidad',1);
         $cerrado = $request->input('cerrado',false);
+        $docentes = $request->input('docentes');
 
         $todo = Comision::find($id_comision);
         $todo->anio = $anio;
@@ -365,6 +376,25 @@ class ComisionController extends Controller
         $todo->id_modalidad = $id_modalidad;
         $todo->cerrado = $cerrado;
         $todo->save();
+
+        $docentes_old = ComisionDocente::where('id_comision',$id_comision)->where('estado',1)->get()->toArray();
+        foreach ($docentes_old as $docente) {
+            $encontro = array_search($docente['id_usuario'], array_column($docentes, 'id_usuario'));
+            if(!$encontro){
+                $docente = ComisionDocente::find($docente['id']);
+                $docente->estado=0;
+                $docente->save();
+            }
+        }
+        foreach ($docentes as $docente) {
+            $encontro = array_search($docente['id_usuario'], array_column($docentes_old, 'id_usuario'));
+            if(!$encontro){
+                $usuario = new ComisionDocente;
+                $usuario->id_usuario = $docente['id_usuario'];
+                $usuario->id_comision = $id_comision;
+                $usuario->save();
+            }
+        }
         return response()->json($todo,200);
     }
 
@@ -375,6 +405,17 @@ class ComisionController extends Controller
             'com_id' => $id_comision,
         ])->get()->sortBy(function ($batch) { 
             return $batch->alumno->apellido; 
+        });
+        return response()->json($todo->values()->all(),200);
+    }
+
+    public function docentes(Request $request){
+        $id_comision = $request->route('id_comision');
+        $todo = ComisionDocente::with('docente')->where([
+            'estado' => 1,
+            'com_id' => $id_comision,
+        ])->get()->sortBy(function ($batch) { 
+            return $batch->usuario->apellido; 
         });
         return response()->json($todo->values()->all(),200);
     }
@@ -396,7 +437,7 @@ class ComisionController extends Controller
         ])
         ->whereNotIn('alu_id',$alumnos)
         ->pluck('alu_id')->toArray();
-        $todo = Alumno::with('tipoDocumento')->whereIn('alu_id',$inscripciones)->orderBy('apellido','asc')->get();
+        $todo = Alumno::whereIn('alu_id',$inscripciones)->orderBy('alu_apellido','asc')->get();
         return response()->json($todo,200);
     }
 

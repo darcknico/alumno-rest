@@ -1,6 +1,8 @@
 <?php
-
 namespace App\Models\Mesa;
+
+use App\Models\Mesa\MesaExamenMateria;
+use App\Models\Mesa\MesaExamenMateriaAlumno;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -48,6 +50,9 @@ class MesaExamen extends Model
       'fecha_fin',
       'numero',
       'nombre',
+
+      'totales',
+      'inscriptos',
   ];
 
 
@@ -67,4 +72,35 @@ class MesaExamen extends Model
     return $this->hasMany('App\Models\Mesa\MesaExamenMateria','mes_id','mes_id');
   }
 
+  public function getTotalesAttribute(){
+    $todo = MesaExamenMateria::selectRaw('
+      mes_id,
+      count(mes_id) as total,
+      sum(if( mma_fecha_cierre is null,1,0)) as abiertos,
+      sum(if( mma_fecha_cierre is null,0,1)) as cerrados
+      ')
+      ->where('estado',1)->where('id_mesa_examen',$this['mes_id'])->groupBy('mes_id')->first();
+    $response = [
+      'total' => intval($todo->total??0),
+      'abiertos' => intval($todo->abiertos??0),
+      'cerrados' => intval($todo->cerrados??0),
+    ];
+    return $response;
+  }
+
+  public function getInscriptosAttribute(){
+    $id_mesa_examen = $this['mes_id'];
+
+    $todo = MesaExamenMateriaAlumno::selectRaw('
+      estado,
+      count(estado) as total
+      ')
+      ->where('estado',1)->whereHas('mesa_examen_materia',function($q)use($id_mesa_examen){
+        $q->where('id_mesa_examen',$id_mesa_examen)->where('estado',1);
+      })->groupBy('estado')->first();
+    $response = [
+      'total' => intval($todo->total??0),
+    ];
+    return $response;
+  }
 }

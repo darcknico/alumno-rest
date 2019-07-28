@@ -2,6 +2,8 @@
 
 namespace App\Models\Mesa;
 
+use App\Models\ComisionAlumno;
+
 use Illuminate\Database\Eloquent\Model;
 
 use Sofa\Eloquence\Eloquence;
@@ -16,7 +18,8 @@ class MesaExamenMateriaAlumno extends Model
 
   protected $casts = [
       'estado'=>'boolean',
-      'asistencia'=>'boolean',
+      'mam_asistencia'=>'boolean',
+      'mam_adeuda'=>'boolean',
   ];
 
   protected $hidden = [
@@ -32,6 +35,7 @@ class MesaExamenMateriaAlumno extends Model
     'deleted_at',
     'usu_id_baja',
     'mam_observaciones',
+    'mam_adeuda',
   ];
 
   protected $maps = [
@@ -44,6 +48,7 @@ class MesaExamenMateriaAlumno extends Model
       'nota' => 'mam_nota',
       'nota_nombre' => 'mam_nota_nombre',
       'observaciones' => 'mam_observaciones',
+      'adeuda' => 'mam_adeuda',
       'id_tipo_condicion_alumno' => 'tca_id',
   ];
 
@@ -57,7 +62,10 @@ class MesaExamenMateriaAlumno extends Model
       'nota',
       'nota_nombre',
       'observaciones',
+      'adeuda',
       'id_tipo_condicion_alumno',
+
+      'comision',
   ];
 
 
@@ -85,5 +93,14 @@ class MesaExamenMateriaAlumno extends Model
     return $this->hasOne('App\User','usu_id','usu_id_baja');
   }
 
-
+  public function getComisionAttribute(){
+    $mesa = $this->mesa_examen_materia;
+    return ComisionAlumno::whereHas('comision',function($q)use($mesa){
+        $q->where('id_materia',$mesa->id_materia);
+      })
+      ->where('id_inscripcion',$this['id_inscripcion'])
+      ->where('estado',1)
+      ->orderBy('created_at','desc')
+      ->first();
+  }
 }
