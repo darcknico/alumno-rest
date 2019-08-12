@@ -161,6 +161,8 @@ return [
         App\Providers\RouteServiceProvider::class,
         Laravel\Passport\PassportServiceProvider::class,
         OwenIt\Auditing\AuditingServiceProvider::class,
+        Chumper\Zipper\ZipperServiceProvider::class,
+
     ],
 
     /*
@@ -210,7 +212,7 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
         'Glide' => Axn\LaravelGlide\Facade::class,
-        
+        'Zipper' => Chumper\Zipper\Zipper::class,
     ],
 
 ];

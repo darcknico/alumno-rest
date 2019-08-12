@@ -51,12 +51,14 @@ Route::group(['middleware' => 'auth:api'], function(){
 			'where'  => ['id_sede' => '[0-9]+'],
 		],function () {
 			Route::post('seleccionar', 'Ajustes\UsuarioSedeController@seleccionar');
+			Route::get('reportes/terminados','Extra\ReporteJobController@terminados');
 
 			Route::apiResources([
 				'tramites' => 'TramiteController',
 				'alumnos' => 'AlumnoController',
     			'imagenes' => 'PlantillaImagenController',
 			]);
+			
 			Route::apiResource('comisiones/alumnos','Comision\ComisionAlumnoController',[
 				'as' => 'comisionAlumno',
 				'parameters' => [
@@ -95,6 +97,17 @@ Route::group(['middleware' => 'auth:api'], function(){
 				'parameters' => [
 					'sistema' => 'novedadSistema',
 				],
+			]);
+
+			Route::apiResource('reportes','Extra\ReporteJobController',[
+				'as' => 'reporteJob',
+				'parameters' => [
+					'reportes' => 'reporteJob',
+				],
+				'except' => [
+					'store' ,
+					'update' ,
+				]
 			]);
 
 			Route::get('','SedeController@show');
@@ -486,6 +499,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 						Route::post('cerrar','Mesa\MesaExamenMateriaController@cerrar');
 						Route::get('reportes/acta','Mesa\MesaExamenMateriaController@reporte_acta');
 					});
+					
+					Route::post('reportes/acta','Mesa\MesaExamenMateriaController@reporte_acta_masivo');
 
 					Route::group(['prefix' => 'alumnos'], function() {
 					    Route::get('','Mesa\MesaExamenMateriaAlumnoController@index');

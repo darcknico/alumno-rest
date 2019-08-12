@@ -40,7 +40,9 @@ class MesaExamenMateria extends Model
     'usu_id_check_in',
     'usu_id_check_out',
     'mma_libro',
-    'mma_folio',
+    'mma_folio_libre',
+    'mma_folio_promocion',
+    'mma_folio_regular',
   ];
 
   protected $maps = [
@@ -60,6 +62,9 @@ class MesaExamenMateria extends Model
       'check_in' => 'mma_check_in',
       'check_out' => 'mma_check_out',
       'libro' => 'mma_libro',
+      'folio_libre' => 'mma_folio_libre',
+      'folio_promocion' => 'mma_folio_promocion',
+      'folio_regular' => 'mma_folio_regular',
       'folio' => 'mma_folio',
   ];
 
@@ -78,7 +83,9 @@ class MesaExamenMateria extends Model
       'check_out',
       'observaciones',
       'libro',
-      'folio',
+      'folio_libre',
+      'folio_promocion',
+      'folio_regular',
       'alumnos_cantidad_aprobado',
       'alumnos_cantidad_no_aprobado',
   ];

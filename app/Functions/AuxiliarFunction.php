@@ -32,4 +32,18 @@ class AuxiliarFunction{
         }
         return $resultado;
     }
+
+    public static function randString($length) {
+	    $char = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	    $char = str_shuffle($char);
+	    for($i = 0, $rand = '', $l = strlen($char) - 1; $i < $length; $i ++) {
+	        $rand .= $char{mt_rand(0, $l)};
+	    }
+	    return $rand;
+	}
+
+	public static function is_true($val, $return_null=false){
+	    $boolval = ( is_string($val) ? filter_var($val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : (bool) $val );
+	    return ( $boolval===null && !$return_null ? false : $boolval );
+	}
 }

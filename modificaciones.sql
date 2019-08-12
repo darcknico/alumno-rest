@@ -214,6 +214,16 @@ DELIMITER ;
 
 ALTER TABLE `tbl_mesa_alumno_materia` ADD `mam_adeuda` BOOLEAN NOT NULL DEFAULT FALSE AFTER `mam_observaciones`;
 */
-
+/*
 CREATE TABLE `sch_alumno`.`password_resets` ( `email` VARCHAR(255) NOT NULL , `token` VARCHAR(255) NOT NULL , `created_at` TIMESTAMP NULL , UNIQUE (`email`)) ENGINE = InnoDB;
+*/
+/*
+CREATE TABLE `sch_alumno`.`tbl_reporte_job` ( `rjo_id` INT NOT NULL AUTO_INCREMENT , `rjo_cantidad` INT NOT NULL , `rjo_contador` INT NOT NULL DEFAULT '0' , `rjo_ruta` VARCHAR(255) NULL , `rjo_dir` VARCHAR(255) NULL , `usu_id` INT NULL , `rjo_terminado` TIMESTAMP NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `rjo_nombre` VARCHAR(255) NOT NULL , PRIMARY KEY (`rjo_id`)) ENGINE = InnoDB;
+ALTER TABLE `tbl_reporte_job` ADD `sed_id` INT NOT NULL AFTER `rjo_terminado`;
+ALTER TABLE `tbl_mesa_alumno_materia` ADD `mam_nota_final` INT NULL AFTER `mam_nota_nombre`, ADD `mam_nota_final_nombre` VARCHAR(255) NULL AFTER `mam_nota_final`;
+*/
+
+ALTER TABLE `tbl_mesa_materia` CHANGE `mma_folio` `mma_folio_libre` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_spanish_ci NULL DEFAULT NULL;
+
+ALTER TABLE `tbl_mesa_materia` ADD `mma_folio_promocion` VARCHAR(255) NULL AFTER `mma_folio_libre`, ADD `mma_folio_regular` VARCHAR(255) NULL AFTER `mma_folio_promocion`;
 

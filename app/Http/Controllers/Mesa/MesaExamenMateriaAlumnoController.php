@@ -143,10 +143,12 @@ class MesaExamenMateriaAlumnoController extends Controller
         $user = Auth::user();
 
         $validator = Validator::make($request->all(),[
-            'id_mesa_examen_materia' => 'id_mesa_examen_materia',
-            'id_alumno' => 'required',
-            'inscripcion' => 'required',
+            'id_mesa_examen_materia' => 'required | integer',
+            'id_alumno' => 'required | integer',
+            'id_inscripcion' => 'required | integer',
             'adeuda' => 'boolean | nullable',
+            'nota' => 'nullable | integer',
+            'id_tipo_condicion_alumno' => 'nullable | integer',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -186,24 +188,29 @@ class MesaExamenMateriaAlumnoController extends Controller
         if($todo){
             return response()->json(['error'=>'El alumno ya fue inscripto a la mesa de examen.'],403);
         } else {
+            $f = new \NumberFormatter("es", \NumberFormatter::SPELLOUT);
+
+            $id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',1);
+            $nota = $request->input('nota');
+
             $todo = new MesaExamenMateriaAlumno;
             $todo->id_mesa_examen_materia = $id_mesa_examen_materia;
             $todo->id_alumno = $id_alumno;
             $todo->id_inscripcion = $id_inscripcion;
-            $todo->nota = $request->input('nota');
-            $todo->nota_nombre = $request->input('nota_nombre');
-            $todo->id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',1);
+            $todo->nota = $nota;
+            if(!is_null($nota)){
+                $todo->nota_nombre = $f->format($nota);
+            }
+            $todo->id_tipo_condicion_alumno = $id_tipo_condicion_alumno;
+            if($id_tipo_condicion_alumno == 2){
+                $todo->nota_final = $nota;
+                $todo->nota_final_nombre = $f->format($nota);
+            }
             $todo->usu_id = $user->id;
             $todo->adeuda = $adeuda;
             $todo->save();
         }
-        $alumnos_cantidad = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
-            ->where([
-                'estado' => 1,
-                'mma_id' => $id_mesa_examen_materia,
-            ])->groupBy('mma_id')->first();
-        $mesa_examen_materia->alumnos_cantidad = $alumnos_cantidad->total??0;
-        $mesa_examen_materia->save();
+        MesaExamenMateriaController::actualizar($materia);
         return response()->json($todo,200);
     }
 
@@ -220,42 +227,43 @@ class MesaExamenMateriaAlumnoController extends Controller
 
         $validator = Validator::make($request->all(),[
             'asistencia' => 'boolean | nullable',
-            'nota' => 'required',
-            'nota_nombre' => 'required',
+            'nota' => 'required | integer',
+            'nota_nombre' => 'nullable',
+            'nota_final' => 'nullable | integer',
             'id_tipo_condicion_alumno' => 'required',
             'adeuda' => 'boolean | nullable',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
         }
+        $f = new \NumberFormatter("es", \NumberFormatter::SPELLOUT);
 
         $asistencia = $request->input('asistencia');
         $nota = $request->input('nota');
-        $nota_nombre = $request->input('nota_nombre');
+        $nota_nombre = $request->input('nota_nombre',null);
+        $nota_final = $request->input('nota_final');
+        $nota_final_nombre = $request->input('nota_final_nombre',null);
         $id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno');
         $observaciones = $request->input('observaciones');
         $adeuda = $request->input('adeuda');
 
-        $alumno = MesaExamenMateriaAlumno::with('alumno','condicion')->find($id_mesa_examen_materia_alumno);
+        $alumno = MesaExamenMateriaAlumno::find($id_mesa_examen_materia_alumno);
         $alumno->asistencia = $asistencia;
         $alumno->nota = $nota;
-        $alumno->nota_nombre = $nota_nombre;
+        $alumno->nota_nombre = $f->format($nota);
+        
+        $alumno->nota_final = $nota_final;
+        if(!is_null($nota_final)){
+            $alumno->nota_final_nombre = $f->format($nota_final);
+        } else {
+            $alumno->nota_final_nombre = $nota_final_nombre;
+        }
         $alumno->id_tipo_condicion_alumno = $id_tipo_condicion_alumno;
         $alumno->adeuda = $adeuda;
         $alumno->save();
 
         $mesa_examen_materia = MesaExamenMateria::find($alumno->id_mesa_examen_materia);
-        $alumnos_cantidad = MesaExamenMateriaAlumno::selectRaw('count(*) as total, SUM(IF(mam_nota<4,1,0)) as no_aprobado, SUM(IF(mam_nota>3,1,0)) as aprobado')
-            ->where([
-                'estado' => 1,
-                'mma_id' => $alumno->id_mesa_examen_materia,
-            ])
-            ->whereNotNull('nota')
-            ->groupBy('mma_id')->first();
-        $mesa_examen_materia->alumnos_cantidad_aprobado = $alumnos_cantidad->aprobado??0;
-        $mesa_examen_materia->alumnos_cantidad_no_aprobado = $alumnos_cantidad->no_aprobado??0;
-        $mesa_examen_materia->save();
-
+        MesaExamenMateriaController::actualizar($mesa_examen_materia);
         return response()->json($alumno,200);
     }
 

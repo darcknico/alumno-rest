@@ -17,6 +17,7 @@ use App\Models\Comision;
 use App\Models\ComisionAlumno;
 use App\Models\Asistencia;
 use App\Models\Sede;
+use App\Models\Extra\ReporteJob;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -25,9 +26,11 @@ use Validator;
 
 use App\Exports\MesaExamenMateriaExport;
 use App\Imports\MesaExamenMateriaImport;
+use App\Filters\MesaExamenMateriaFilter;
+use App\Jobs\RerpoteMesaActa;
 
 use Carbon\Carbon;
-use JasperPHP\JasperPHP; 
+use JasperPHP\JasperPHP;
 
 class MesaExamenMateriaController extends Controller
 {
@@ -73,79 +76,24 @@ class MesaExamenMateriaController extends Controller
             return response()->json($todo,200);
         }
 
-        $search = $request->query('search','');
-        $sort = $request->query('sort','');
-        $order = $request->query('order','');
+        $sort = $request->query('sort','fecha');
+        $order = $request->query('order','desc');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
 
-        $id_departamento = $request->query('id_departamento',0);
-        $id_carrera = $request->query('id_carrera',0);
-        $id_materia = $request->query('id_materia',0);
-        $id_mesa_examen = $request->query('id_mesa_examen',0);
-        $fecha_ini = $request->query('fecha_ini',null);
-        $fecha_fin = $request->query('fecha_fin',null);
+        $registros = MesaExamenMateriaFilter::index($request,$registros);
 
-        $registros = $registros
-            ->when($id_departamento>0,function($q)use($id_departamento){
-                $carreras = Carrera::where([
-                    'dep_id' => $id_departamento,
-                    'estado' => 1,
-                ])->pluck('car_id')->toArray();
-                return $q->whereIn('car_id',$carreras);
-            })
-            ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->where('car_id',$id_carrera);
-            })
-            ->when($id_materia>0,function($q)use($id_materia){
-                return $q->where('mat_id',$id_materia);
-            })
-            ->when($id_mesa_examen>0,function($q)use($id_mesa_examen){
-                return $q->where('id_mesa_examen',$id_mesa_examen);
-            })
-            ->when($fecha_ini>0,function($q)use($fecha_ini){
-                return $q->whereDate('fecha','>=',$fecha_ini);
-            })
-            ->when($fecha_fin>0,function($q)use($fecha_fin){
-                return $q->whereDate('fecha','<=',$fecha_fin);
-            });
-
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('fecha','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
-        
-        $values = explode(" ", $search);
-        if(count($values)>0){
-            foreach ($values as $key => $value) {
-                if(strlen($value)>0){
-                    $registros = $registros->where(function($query) use  ($value) {
-                        $query->whereIn('car_id',function($q)use($value){
-                                return $q->select('car_id')->from('tbl_carreras')->where([
-                                    'estado' => 1,
-                                ])->where(function($qt) use ($value) {
-                                    $qt->where('car_nombre','like','%'.$value.'%')->orWhere('car_nombre_corto','like','%'.$value.'%');
-                                });
-                            })
-                            ->orWhereIn('mat_id',function($q)use($value){
-                                return $q->select('mat_id')->from('tbl_materias')->where([
-                                    'estado' => 1,
-                                ])->where(function($qt) use ($value) {
-                                    $qt->where('mat_nombre','like','%'.$value.'%')->orWhere('mat_codigo','like','%'.$value.'%');
-                                });
-                            })
-                            ->orWhere('libro','like','%'.$value.'%')
-                            ->orWhere('folio','like','%'.$value.'%');
-                    });
-                }
-            }
-        }
         if(strlen($sort)>0){
             $registros = $registros->orderBy($sort,$order);
         } else {
             $registros = $registros->orderBy('fecha','desc');
         }
+
+        if( $length==0 and $start==0 ){
+            $todo = $registros->get();
+            return response()->json($todo,200);
+        }
+
         $sql = $registros->toSql();
         $q = clone($registros->getQuery());
         $total_count = $q->groupBy('estado')->count();
@@ -199,7 +147,8 @@ class MesaExamenMateriaController extends Controller
         $id_materia = $request->route('id_materia');
 
         $validator = Validator::make($request->all(),[
-            'fecha' => 'required',
+            'fecha' => 'required | date',
+            'fecha_cierre' => 'nullable | date',
             'id_mesa_examen' => 'required',
             'id_materia' => 'required',
         ]);
@@ -212,6 +161,12 @@ class MesaExamenMateriaController extends Controller
         $ubicacion = $request->input('ubicacion',null);
         $id_mesa_examen = $request->input('id_mesa_examen');
         $id_materia = $request->input('id_materia');
+
+        $observaciones = $request->input('observaciones',null);
+        $folio_libre = $request->input('folio_libre',null);
+        $folio_promocion = $request->input('folio_promocion',null);
+        $folio_regular = $request->input('folio_regular',null);
+        $libro = $request->input('libro',null);
 
         $mesa_examen = MesaExamen::find($id_mesa_examen);
         $materia = Materia::find($id_materia);
@@ -237,6 +192,12 @@ class MesaExamenMateriaController extends Controller
             $todo->id_materia = $id_materia;
             $todo->usu_id = $user->id;
             $todo->fecha = $fecha;
+            $todo->observaciones = $observaciones;
+            $todo->folio_libre = $folio_libre;
+            $todo->folio_promocion = $folio_promocion;
+            $todo->folio_regular = $folio_regular;
+            $todo->libro = $libro;
+
             if($fecha_cierre){
                 $todo->fecha_cierre = Carbon::parse($fecha_cierre);
             }
@@ -250,6 +211,15 @@ class MesaExamenMateriaController extends Controller
         $id_sede = $request->route('id_sede');
         $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
         $id_alumno = $request->route('id_alumno');
+
+        $validator = Validator::make($request->all(),[
+            'adeuda' => 'boolean | nullable',
+            'nota' => 'nullable | integer',
+            'id_tipo_condicion_alumno' => 'nullable | integer',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
 
         $id_inscripcion = $request->input('id_inscripcion',null);
         $mesa_examen_materia = MesaExamenMateria::find($id_mesa_examen_materia);
@@ -291,24 +261,28 @@ class MesaExamenMateriaController extends Controller
                 $todo->usu_id = $user->id;
                 $todo->save();
             } else {
+                $f = new \NumberFormatter("es", \NumberFormatter::SPELLOUT);
+                $id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',1);
+                $nota = $request->input('nota');
+
                 $todo = new MesaExamenMateriaAlumno;
                 $todo->id_mesa_examen_materia = $id_mesa_examen_materia;
                 $todo->id_alumno = $id_alumno;
                 $todo->id_inscripcion = $id_inscripcion;
                 $todo->nota = $request->input('nota');
-                $todo->nota_nombre = $request->input('nota_nombre');
-                $todo->id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',1);
+                if(!is_null($nota)){
+                    $todo->nota_nombre = $f->format($nota);
+                }
+                $todo->id_tipo_condicion_alumno = $id_tipo_condicion_alumno;
+                if($id_tipo_condicion_alumno == 2){
+                    $todo->nota_final = $nota;
+                    $todo->nota_final_nombre = $f->format($nota);
+                }
                 $todo->adeuda = $request->input('adeuda',false);
                 $todo->usu_id = $user->id;
                 $todo->save();
             }
-            $alumnos_cantidad = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
-                ->where([
-                    'estado' => 1,
-                    'mma_id' => $id_mesa_examen_materia,
-                ])->groupBy('mma_id')->first();
-            $mesa_examen_materia->alumnos_cantidad = $alumnos_cantidad->total??0;
-            $mesa_examen_materia->save();
+            $this->actualizar($mesa_examen_materia);
             return response()->json($todo,200);
         }
         return response()->json([
@@ -337,13 +311,7 @@ class MesaExamenMateriaController extends Controller
                 $todo->deleted_at = Carbon::now();
                 $todo->save();
             }
-            $alumnos_cantidad = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
-                ->where([
-                    'estado' => 1,
-                    'mma_id' => $id_mesa_examen_materia,
-                ])->groupBy('mma_id')->first();
-            $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
-            $comision->save();
+            $this->actualizar($mesa_examen_materia);
             return response()->json($todo,200);
         }
         return response()->json([
@@ -402,7 +370,7 @@ class MesaExamenMateriaController extends Controller
         $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
         $validator = Validator::make($request->all(),[
             'fecha' => 'required | date',
-            'fecha_cierre' => 'date',
+            'fecha_cierre' => 'nullable | date',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -411,17 +379,21 @@ class MesaExamenMateriaController extends Controller
         $fecha_cierre = $request->input('fecha_cierre',null);
         $ubicacion = $request->input('ubicacion',null);
         $observaciones = $request->input('observaciones',null);
-        $folio = $request->input('folio',null);
+        $folio_libre = $request->input('folio_libre',null);
+        $folio_promocion = $request->input('folio_promocion',null);
+        $folio_regular = $request->input('folio_regular',null);
         $libro = $request->input('libro',null);
 
         $todo = MesaExamenMateria::find($id_mesa_examen_materia);
         $todo->fecha = Carbon::parse($fecha);
-        if($fecha_cierre){
+        if(!is_null($fecha_cierre)){
             $todo->fecha_cierre = Carbon::parse($fecha_cierre);
         }
         $todo->ubicacion = $ubicacion;
         $todo->observaciones = $observaciones;
-        $todo->folio = $folio;
+        $todo->folio_libre = $folio_libre;
+        $todo->folio_promocion = $folio_promocion;
+        $todo->folio_regular = $folio_regular;
         $todo->libro = $libro;
         $todo->save();
         return response()->json($todo,200);
@@ -495,6 +467,22 @@ class MesaExamenMateriaController extends Controller
     public function check_out(Request $request){
         $user = Auth::user();
         $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
+        $f = new \NumberFormatter("es", \NumberFormatter::SPELLOUT);
+        
+        $validator = Validator::make($request->all(),[
+            'fecha_cierre' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+
+        $fecha_cierre = $request->input('fecha_cierre',null);
+        $observaciones = $request->input('observaciones',null);
+        $folio_libre = $request->input('folio_libre',null);
+        $folio_promocion = $request->input('folio_promocion',null);
+        $folio_regular = $request->input('folio_regular',null);
+        $libro = $request->input('libro',null);
+
         $mesa_examen = MesaExamenMateria::find($id_mesa_examen_materia);
         $salida = [];
         if($request->hasFile('archivo') and $mesa_examen){
@@ -510,17 +498,29 @@ class MesaExamenMateriaController extends Controller
                     $salida[]=$alumno;
                 }
             }
-            $alumnos_cantidad_presente = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
-                ->where([
-                    'estado' => 1,
-                    'mma_id' => $id_mesa_examen_materia,
-                    'mam_asistencia' => 1,
-                ])->groupBy('mma_id')->first();
-            $mesa_examen->alumnos_cantidad_presente = $alumnos_cantidad_presente->total??0;
-            $mesa_examen->check_out = Carbon::now();
-            $mesa_examen->usu_id_check_out = $user->id;
-            $mesa_examen->save();
+        } else {
+            $asistencias = $request->input('alumnos',[]);
+            foreach ($asistencias as $asistencia_alumno) {
+                $alumno = MesaExamenMateriaAlumno::find($asistencia_alumno['id']);
+                if($alumno){
+                    $alumno->asistencia = $asistencia_alumno['asistencia'];
+                    $alumno->nota_final = $asistencia_alumno['nota_final'];
+                    $alumno->nota_final_nombre = $f->format($asistencia_alumno['nota_final']);
+                    $alumno->save();
+                    $salida[]=$alumno;
+                }
+            }
         }
+        $this->actualizar($mesa_examen);
+        $mesa_examen->fecha_cierre = $fecha_cierre;
+        $mesa_examen->observaciones = $observaciones;
+        $mesa_examen->folio_libre = $folio_libre;
+        $mesa_examen->folio_promocion = $folio_promocion;
+        $mesa_examen->folio_regular = $folio_regular;
+        $mesa_examen->libro = $libro;
+        $mesa_examen->check_out = Carbon::now();
+        $mesa_examen->usu_id_check_out = $user->id;
+        $mesa_examen->save();
         return response()->json($salida,200);
     }
 
@@ -687,6 +687,79 @@ class MesaExamenMateriaController extends Controller
     public function condiciones(Request $request){
         $todo = TipoCondicionAlumno::where('estado',1)->get();
         return response()->json($todo,200);
+    }
+
+    public function reporte_acta_masivo(Request $request){
+        $validator = Validator::make($request->all(),[
+            'fecha_ini' => 'date | nullable',
+            'fecha_fin' => 'date | nullable',
+            'nombre' => 'nullable',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+
+        $user = Auth::user();
+        $id_sede = $request->route('id_sede');
+        $registros = MesaExamenMateria::whereHas('mesa_examen',function($q)use($id_sede){
+                $q->where([
+                    'estado' => 1,
+                    'sed_id' => $id_sede,
+                ]);
+            })
+            ->where([
+                'estado' => 1,
+            ]);
+
+        $registros = MesaExamenMateriaFilter::index($request,$registros);
+        $todo = $registros->get()->pluck('id')->toArray();
+
+        if($todo==0){
+            return response()->json([
+                'error' => 'No puede realizar la peticion si la cantidad de reportes a generar es cero.'
+            ],403);
+        }
+        $fecha = Carbon::now();
+        $cantidad = count($todo);
+
+        $nombre = $request->input('nombre',null);
+
+        $reporte = new ReporteJob;
+        if(is_null($nombre)){
+            $reporte->nombre = $fecha->format('d-m-Y').'_mesa_examen_materia_'.$cantidad;
+        } else {
+            $reporte->nombre = $nombre;
+        }
+        $reporte->cantidad = $cantidad;
+        $reporte->ruta = $request->getRequestUri();
+        $reporte->id_usuario = $user->id;
+        $reporte->id_sede = $id_sede;
+        $reporte->save();
+
+        RerpoteMesaActa::dispatch($todo,$reporte);
+
+        return response()->json($reporte,200);
+    }
+
+    public static function actualizar(MesaExamenMateria $materia){
+        $alumnos_cantidad_presente = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
+            ->where([
+                'estado' => 1,
+                'mma_id' => $materia->id,
+                'mam_asistencia' => 1,
+            ])->groupBy('mma_id')->first();
+        $materia->alumnos_cantidad_presente = $alumnos_cantidad_presente->total??0;
+
+        $alumnos_cantidad = MesaExamenMateriaAlumno::selectRaw('count(*) as total, SUM(IF(mam_nota_final<6,1,0)) as no_aprobado, SUM(IF(mam_nota_final>5,1,0)) as aprobado')
+            ->where([
+                'estado' => 1,
+                'mma_id' => $materia->id,
+            ])
+            ->whereNotNull('nota')
+            ->groupBy('mma_id')->first();
+        $materia->alumnos_cantidad_aprobado = $alumnos_cantidad->aprobado??0;
+        $materia->alumnos_cantidad_no_aprobado = $alumnos_cantidad->no_aprobado??0;
+        $materia->save();
     }
 
 }
