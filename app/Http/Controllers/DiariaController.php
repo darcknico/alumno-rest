@@ -131,6 +131,107 @@ class DiariaController extends Controller{
         return response()->json($diaria,200);
     }
 
+    public function store(Request $request){
+        $user = Auth::user();
+        $id_sede = $request->route('id_sede');
+        $validator = Validator::make($request->all(),[
+            'fecha_inicio' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $fecha_inicio = Carbon::parse($request->input('fecha_inicio'));
+
+        $diaria = Diaria::where([
+            'estado' => 1,
+            'sed_id' => $id_sede,
+        ])
+        ->whereDate('fecha_inicio','>=',$fecha_inicio)
+        ->whereNotNull('fecha_fin')
+        ->orderBy('fecha_inicio','asc')
+        ->first();
+        if($diaria){
+            $fecha_inicio_actual = Carbon::parse($diaria->fecha_inicio);
+            if($fecha_inicio >= $fecha_inicio_actual){
+                return response()->json(['error'=>'La fecha esta ocupando otra diaria.'],403);
+            }
+        }
+
+        $diaria = Diaria::where([
+            'estado' => 1,
+            'sed_id' => $id_sede,
+        ])
+        ->whereDate('fecha_fin','<=',$fecha_inicio)
+        ->orderBy('fecha_inicio','desc')
+        ->first();
+        if($diaria){
+            $fecha_fin_actual = Carbon::parse($diaria->fecha_fin);
+            if($fecha_inicio <= $fecha_fin_actual){
+                return response()->json(['error'=>'La fecha esta ocupando otra diaria.'],403);
+            }
+        }
+
+        $diaria = new Diaria;
+        $diaria->id_sede = $id_sede;
+        $diaria->fecha_inicio = $fecha_inicio;
+        $diaria->id_usuario = $user->id;
+        $diaria->save();
+        $diaria = DiariaFunction::actualizar_diaria($diaria);
+        DiariaFunction::actualizar($id_sede,$fecha_inicio);
+        return response()->json($diaria,200);
+    }
+
+    public function update(Request $request){
+        $user = Auth::user();
+        $id_sede = $request->route('id_sede');
+        $id_diaria = $request->route('id_diaria');
+        $validator = Validator::make($request->all(),[
+            'fecha_fin' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $diaria = Diaria::find($id_diaria);
+        $fecha_fin = Carbon::parse($request->input('fecha_fin'));
+        $fecha_inicio = Carbon::parse($request->fecha_inicio);
+
+        $ultimo = Diaria::where([
+            'estado' => 1,
+            'sed_id' => $id_sede,
+        ])
+        ->whereDate('fecha_inicio','>',$fecha_inicio)
+        ->orderBy('fecha_inicio','asc')
+        ->first();
+        if($ultimo){
+            $fecha_inicio_actual = Carbon::parse($ultimo->fecha_inicio);
+            if($fecha_fin >= $fecha_inicio_actual){
+                return response()->json(['error'=>'La fecha esta ocupando otra diaria.'],403);
+            }
+        }
+
+        if($fecha_inicio > $fecha_fin){
+            return response()->json(['error'=>'La fecha inicial debe ser menor o igual a la fecha final.'],403);
+        }
+
+        $diaria->fecha_fin = $fecha_fin;
+        $diaria->cierre_id_usuario = $user->id;
+        $diaria->save();
+        $diaria = DiariaFunction::actualizar_diaria($diaria);
+        DiariaFunction::actualizar($id_sede,$fecha_fin);
+        return response()->json($diaria,200);
+    }
+
+    public function destroy(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_diaria = $request->route('id_diaria');
+
+        $diaria = Diaria::find($id_diaria);
+        $diaria->estado = 0;
+        $diaria->save();
+        DiariaFunction::actualizar($id_sede,$diaria->fecha_inicio);
+        return response()->json($diaria,200);
+    }
+
     public function ingresos(Request $request){
     	$id_diaria = $request->route('id_diaria');
     	$diaria = Diaria::find($id_diaria);

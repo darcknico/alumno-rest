@@ -20,6 +20,7 @@ use Validator;
 use Carbon\Carbon;
 use App\Functions\CuentaCorrienteFunction;
 use App\Functions\DiariaFunction;
+use App\Functions\PlanPagoFunction;
 
 use App\Exports\PlanPagoExport;
 use App\Http\Controllers\AlumnoController;
@@ -137,21 +138,22 @@ class PlanPagoController extends Controller
 
   public function store(Request $request){
     $id_sede = $request->route('id_sede');
-    $id_inscripcion = $request->input('id_inscripcion');
     $user = Auth::user();
     $validator = Validator::make($request->all(),[
+        'id_inscripcion' => 'required | integer',
         'anio' => 'required',
         'matricula_monto' => 'required',
         'cuota_monto' => 'required',
         'interes_monto' => 'required',
-        'id_beca' => 'required',
-        'beca_nombre' => 'required',
         'beca_porcentaje' => 'required',
+        'cuota_cantidad' => 'nullable | integer',
+        'fecha' => 'nullable | date',
+        'dias_vencimiento' => 'nullable | integer',
     ]);
     if($validator->fails()){
       return response()->json(['error'=>$validator->errors()],403);
     }
-
+    $id_inscripcion = $request->input('id_inscripcion');
     $anio = $request->input('anio');
     $matricula_monto = $request->input('matricula_monto');
     $cuota_monto = $request->input('cuota_monto');
@@ -160,13 +162,21 @@ class PlanPagoController extends Controller
     $beca_nombre = $request->input('beca_nombre');
     $beca_porcentaje = $request->input('beca_porcentaje');
 
+    $cuota_cantidad = $request->input('cuota_cantidad',10);
+    $fecha = $request->input('fecha',null);
+    $dias_vencimiento = $request->input('dias_vencimiento',9);
+
+
     $plan_pago = PlanPago::where([
       'estado' => 1,
       'sed_id' => $id_sede,
       'ins_id' => $id_inscripcion
     ])->where('anio',$anio)->first();
     if($plan_pago){
-      return response()->json(['error'=>'No puede haber un plan de pago para el mismo año.'],403);
+      return response()->json([
+        'error'=>'No puede haber un plan de pago para el mismo año.',
+        'anio' => true,
+      ],403);
     }
     $plan_pago = new PlanPago;
     $plan_pago->id_sede = $id_sede;
@@ -176,37 +186,178 @@ class PlanPagoController extends Controller
     $plan_pago->cuota_monto = $cuota_monto;
     $plan_pago->interes_monto = $interes_monto;
     $plan_pago->anio = $anio;
+    $plan_pago->cuota_cantidad = $cuota_cantidad;
+    $plan_pago->fecha = $fecha;
+    $plan_pago->dias_vencimiento = $dias_vencimiento;
     $plan_pago->id_usuario = $user->id;
     $plan_pago->save();
-    $detalle = AlumnoController::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje);
-    $primero = true;
+    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento);
+    $obligaciones = [];
     foreach ($detalle['obligaciones'] as $obligacion) {
-        if($primero){
-            $primero = false;
-            $matricula = new Obligacion;
-            $matricula->id_plan_pago = $plan_pago->id;
-            $matricula->id_tipo_obligacion = 10;
-            $matricula->descripcion = $obligacion['descripcion'];
-            $matricula->monto = $obligacion['monto'];
-            $matricula->saldo = $obligacion['saldo'];
-            $matricula->fecha = $obligacion['fecha'];
-            $matricula->id_usuario = $user->id;
-            $matricula->fecha_vencimiento = $obligacion['fecha_vencimiento'];
-            $matricula->save();
+      $cuota = new Obligacion;
+      $cuota->id_plan_pago = $plan_pago->id;
+      $cuota->id_tipo_obligacion = $obligacion['id_tipo_obligacion'];
+      $cuota->descripcion = $obligacion['descripcion'];
+      $cuota->monto = $obligacion['monto'];
+      $cuota->saldo = $obligacion['saldo'];
+      $cuota->fecha = $obligacion['fecha'];
+      $cuota->id_usuario = $user->id;
+      $cuota->fecha_vencimiento = $obligacion['fecha_vencimiento'];
+      $cuota->save();
+      $obligaciones[] = $cuota;
+    }
+    CuentaCorrienteFunction::armar($id_sede,$plan_pago->id);
+    $plan_pago->obligaciones = $obligaciones;
+    return response()->json($plan_pago,200);
+  }
+
+  public function previa(Request $request){
+    $validator = Validator::make($request->all(),[
+        'anio' => 'required',
+        'matricula_monto' => 'required',
+        'cuota_monto' => 'required',
+        'beca_porcentaje' => 'required',
+        'cuota_cantidad' => 'nullable | integer',
+        'fecha' => 'nullable | date',
+        'dias_vencimiento' => 'nullable | integer',
+    ]);
+    if($validator->fails()){
+      return response()->json(['error'=>$validator->errors()],403);
+    }
+
+    $anio = $request->input('anio');
+    $matricula_monto = $request->input('matricula_monto');
+    $cuota_monto = $request->input('cuota_monto');
+    $beca_porcentaje = $request->input('beca_porcentaje');
+
+    $cuota_cantidad = $request->input('cuota_cantidad',10);
+    $fecha = $request->input('fecha',null);
+    $dias_vencimiento = $request->input('dias_vencimiento',9);
+
+    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento);
+    return response()->json($detalle,200);
+  }
+
+  public function update(Request $request){
+    $id_sede = $request->route('id_sede');
+    $id_plan_pago = $request->route('id_plan_pago');
+    $user = Auth::user();
+    $validator = Validator::make($request->all(),[
+        'anio' => 'required',
+        'matricula_monto' => 'required',
+        'cuota_monto' => 'required',
+        'interes_monto' => 'required',
+        'beca_porcentaje' => 'required',
+        'cuota_cantidad' => 'nullable | integer',
+        'fecha' => 'nullable | date',
+        'dias_vencimiento' => 'nullable | integer',
+    ]);
+    if($validator->fails()){
+      return response()->json(['error'=>$validator->errors()],403);
+    }
+
+    $anio = $request->input('anio');
+    $matricula_monto = $request->input('matricula_monto');
+    $cuota_monto = $request->input('cuota_monto');
+    $interes_monto = $request->input('interes_monto');
+    $beca_porcentaje = $request->input('beca_porcentaje');
+
+    $cuota_cantidad = $request->input('cuota_cantidad',10);
+    $fecha = $request->input('fecha',null);
+    $dias_vencimiento = $request->input('dias_vencimiento',9);
+
+    $plan_pago = PlanPago::find($id_plan_pago);
+
+    $check = PlanPago::where([
+      'estado' => 1,
+      'ins_id' => $plan_pago->id_inscripcion,
+    ])
+    ->whereNotIn('id', [$id_plan_pago])
+    ->where('anio',$anio)->first();
+    if($check){
+      return response()->json([
+        'error'=>'No puede haber un plan de pago para el mismo año.',
+        'anio' => true,
+      ],403);
+    }
+
+    $plan_pago->matricula_monto = $matricula_monto;
+    $plan_pago->cuota_monto = $cuota_monto;
+    $plan_pago->interes_monto = $interes_monto;
+    $plan_pago->anio = $anio;
+    $plan_pago->cuota_cantidad = $cuota_cantidad;
+    $plan_pago->fecha = $fecha;
+    $plan_pago->dias_vencimiento = $dias_vencimiento;
+    $plan_pago->save();
+
+    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento)['obligaciones'];
+    $matricula = Obligacion::where('ppa_id',$id_plan_pago)
+      ->where('estado',1)
+      ->where('id_tipo_obligacion',10)
+      ->first();
+    if($matricula){
+      $matricula->descripcion = $detalle[0]['descripcion'];
+      $matricula->monto = $detalle[0]['monto'];
+      $matricula->saldo = $detalle[0]['saldo'];
+      $matricula->fecha = $detalle[0]['fecha'];
+      $matricula->fecha_vencimiento = $detalle[0]['fecha_vencimiento'];
+      $matricula->save();
+    } else {
+      $matricula = new Obligacion;
+      $matricula->id_plan_pago = $id_plan_pago;
+      $matricula->id_tipo_obligacion = 10;
+      $matricula->descripcion = $detalle[0]['descripcion'];
+      $matricula->monto = $detalle[0]['monto'];
+      $matricula->saldo = $detalle[0]['saldo'];
+      $matricula->fecha = $detalle[0]['fecha'];
+      $matricula->id_usuario = $user->id;
+      $matricula->fecha_vencimiento = $detalle[0]['fecha_vencimiento'];
+      $matricula->save();
+    }
+
+    $obligaciones = Obligacion::where('ppa_id',$id_plan_pago)
+      ->where('tob_id',1)
+      ->orderBy('fecha','asc')
+      ->get()->toArray();
+    if($cuota_cantidad>0){
+      for ($i = 0; $i < $cuota_cantidad; $i++) {
+        if(isset($obligaciones[$i]) ){
+          $obligacion = Obligacion::find($obligaciones[$i]['id']);
+          $obligacion->fecha_vencimiento = $detalle[($i+1)]['fecha_vencimiento'];
+          $obligacion->fecha = $detalle[($i+1)]['fecha'];
+          $obligacion->descripcion = $detalle[($i+1)]['descripcion'];
+          $obligacion->monto = $detalle[($i+1)]['monto'];
+          $obligacion->saldo = $detalle[($i+1)]['saldo'];
+          $obligacion->estado = 1;
+          $obligacion->save();
         } else {
-            $cuota = new Obligacion;
+          $cuota = new Obligacion;
             $cuota->id_plan_pago = $plan_pago->id;
             $cuota->id_tipo_obligacion = 1;
-            $cuota->descripcion = $obligacion['descripcion'];
-            $cuota->monto = $obligacion['monto'];
-            $cuota->saldo = $obligacion['saldo'];
-            $cuota->fecha = $obligacion['fecha'];
-            $cuota->fecha_vencimiento = $obligacion['fecha_vencimiento'];
+            $cuota->descripcion = $detalle[($i+1)]['descripcion'];
+            $cuota->monto = $detalle[($i+1)]['monto'];
+            $cuota->saldo = $detalle[($i+1)]['saldo'];
+            $cuota->fecha = $detalle[($i+1)]['fecha'];
+            $cuota->fecha_vencimiento = $detalle[($i+1)]['fecha_vencimiento'];
             $cuota->id_usuario = $user->id;
             $cuota->save();
         }
+      }
+      for ($i = $cuota_cantidad; $i < count($obligaciones); $i++) {
+        $obligacion = Obligacion::find($obligaciones[$i]['id']);
+        $obligacion->estado = 0;
+        $obligacion->save();
+      }
+    } else {
+      foreach ($obligaciones as $obligacion) {
+        $obligacion = Obligacion::find($obligacion['id']);
+        $obligacion->estado = 0;
+        $obligacion->save();
+      }
     }
+
     CuentaCorrienteFunction::armar($id_sede,$plan_pago->id);
+    PlanPagoFunction::actualizar($plan_pago);
 
     return response()->json($plan_pago,200);
   }
@@ -472,6 +623,7 @@ class PlanPagoController extends Controller
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
     }
+    PlanPagoFunction::actualizar($plan_pago);
     return response()->json($pago,200);
   }
 
@@ -567,6 +719,7 @@ class PlanPagoController extends Controller
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
     }
+    PlanPagoFunction::actualizar($plan_pago);
     return response()->json($pago,200);
   }
 
@@ -750,10 +903,6 @@ class PlanPagoController extends Controller
       return response()->json(['error'=>'El saldo es menor al monto ingresado.'],403);
     }
 
-    $plan_pago->matricula_pagado = $plan_pago->matricula_pagado +$monto;
-    $plan_pago->matricula_saldo = $plan_pago->matricula_saldo - $monto;
-    $plan_pago->save();
-
     $fecha = Carbon::now();
 
     $obligacion = new Obligacion;
@@ -785,13 +934,6 @@ class PlanPagoController extends Controller
     $sede->pago_numero = $numero;
     $sede->save();
 
-    $obligacion_matricula = Obligacion::where([
-      'ppa_id'=>$id_plan_pago,
-      'tob_id'=>10,
-    ])
-    ->where('obl_saldo','>',0)
-    ->first();
-
     $parcial = new ObligacionPago;
     $parcial->monto = $monto;
     $parcial->id_obligacion = $obligacion_matricula->id;
@@ -799,8 +941,7 @@ class PlanPagoController extends Controller
     $parcial->id_usuario = $user->id;
     $parcial->save();
 
-    $obligacion_matricula->saldo = $obligacion_matricula->saldo - $monto;
-    $obligacion_matricula->save();
+    PlanPagoFunction::actualizar($plan_pago);
 
     return response()->json($pago,200);
   }

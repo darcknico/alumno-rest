@@ -222,8 +222,16 @@ CREATE TABLE `sch_alumno`.`tbl_reporte_job` ( `rjo_id` INT NOT NULL AUTO_INCREME
 ALTER TABLE `tbl_reporte_job` ADD `sed_id` INT NOT NULL AFTER `rjo_terminado`;
 ALTER TABLE `tbl_mesa_alumno_materia` ADD `mam_nota_final` INT NULL AFTER `mam_nota_nombre`, ADD `mam_nota_final_nombre` VARCHAR(255) NULL AFTER `mam_nota_final`;
 */
-
+/*
 ALTER TABLE `tbl_mesa_materia` CHANGE `mma_folio` `mma_folio_libre` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_spanish_ci NULL DEFAULT NULL;
-
 ALTER TABLE `tbl_mesa_materia` ADD `mma_folio_promocion` VARCHAR(255) NULL AFTER `mma_folio_libre`, ADD `mma_folio_regular` VARCHAR(255) NULL AFTER `mma_folio_promocion`;
+*/
+/*
+ALTER TABLE `tbl_diarias` ADD `usu_id` INT NULL AFTER `dia_saldo_otros`;
+ALTER TABLE `tbl_diarias` CHANGE `dia_saldo_otros` `dia_saldo_otros` DECIMAL(10,2) NOT NULL DEFAULT '0';
+ALTER TABLE `tbl_diarias` ADD `usu_id_cierre` INT NULL AFTER `usu_id`;
 
+ALTER TABLE `tbl_planes_pago` ADD `ppa_cuota_total` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `ppa_anio`, ADD `ppa_cuota_cantidad` INT NOT NULL DEFAULT '10' AFTER `ppa_cuota_total`, ADD `ppa_cuota_pagado` INT NOT NULL DEFAULT '0' AFTER `ppa_cuota_cantidad`;
+ALTER TABLE `tbl_planes_pago` ADD `ppa_dias_vencimiento` INT NOT NULL DEFAULT '9' AFTER `ppa_cuota_pagado`;
+ALTER TABLE `tbl_planes_pago` ADD `ppa_fecha` DATE NULL AFTER `ppa_dias_vencimiento`;
+*/

@@ -77,7 +77,9 @@ class MesaExamenMateriaFilter{
                                 });
                             })
                             ->orWhere('libro','like','%'.$value.'%')
-                            ->orWhere('folio','like','%'.$value.'%');
+                            ->orWhere('folio_libre','like','%'.$value.'%')
+                            ->orWhere('folio_promocion','like','%'.$value.'%')
+                            ->orWhere('folio_regular','like','%'.$value.'%');
                     });
                 }
             }

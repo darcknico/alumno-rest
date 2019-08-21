@@ -139,7 +139,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 					Route::prefix('planes_pago')->group(function(){
 						Route::get('','InscripcionController@planes_pago');
-						Route::post('','PlanPagoController@store');
 					});
 
 					Route::prefix('notas')->group(function(){
@@ -188,7 +187,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 					Route::get('inscripciones','AlumnoController@inscripciones');
 					Route::post('inscripciones','AlumnoController@inscripcion_store');
-					Route::put('inscripciones/previa','AlumnoController@inscripcion_preparar');
 				});
 
 				Route::post('importar/previa','AlumnoController@importar_previa');
@@ -198,6 +196,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 			Route::prefix('planes_pago')->group(function(){
 				Route::get('','PlanPagoController@index');
+				Route::post('','PlanPagoController@store');
 				
 				Route::get('estadisticas','PlanPagoController@estadisticas');
 
@@ -206,6 +205,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 					'where'  => ['id_plan_pago' => '[0-9]+'],
 				],function () {
 					Route::get('','PlanPagoController@show');
+					Route::put('','PlanPagoController@update');
 					Route::delete('','PlanPagoController@destroy');
 					Route::get('pagos','PlanPagoController@pagos');
 					Route::get('cuotas','PlanPagoController@cuotas');
@@ -295,6 +295,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 			Route::prefix('diarias')->group(function(){
 				Route::get('','DiariaController@index');
+				Route::post('','DiariaController@store');
 
 				Route::get('ultimos','DiariaController@ultimos');
 
@@ -303,6 +304,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 					'where'  => ['id_diaria' => '[0-9]+'],
 					],function () {
 						Route::get('','DiariaController@show');
+						Route::delete('','DiariaController@destroy');
+						Route::put('','DiariaController@update');
+						
 						Route::get('siguiente','DiariaController@siguiente');
 						Route::get('anterior','DiariaController@anterior');
 						Route::get('exportar','DiariaController@exportar');
@@ -730,13 +734,16 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 			Route::get('inscripciones','AlumnoController@inscripciones');
 			Route::post('inscripciones','AlumnoController@inscripcion_store');
-			Route::put('inscripciones/previa','AlumnoController@inscripcion_preparar');
 
 			Route::prefix('estados')->group(function(){
 				Route::get('deuda','AlumnoController@estado_deuda');
 			});
 
 		});
+	});
+
+	Route::prefix('planes_pago')->group(function(){
+		Route::post('previa','PlanPagoController@previa');
 	});
 
 	Route::prefix('tipos')->group(function () {

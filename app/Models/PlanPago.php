@@ -19,6 +19,7 @@ class PlanPago extends Model
 
   protected $casts = [
       'estado'=>'boolean',
+      'ppa_cuota_cantidad'=>'integer',
   ];
 
   protected $hidden = [
@@ -31,6 +32,11 @@ class PlanPago extends Model
     'ppa_cuota_monto',
     'ppa_interes_monto',
     'ppa_anio',
+    'ppa_cuota_total',
+    'ppa_cuota_cantidad',
+    'ppa_cuota_pagado',
+    'ppa_dias_vencimiento',
+    'ppa_fecha',
     'usu_id',
     'usu_id_baja',
   ];
@@ -45,6 +51,11 @@ class PlanPago extends Model
     'cuota_monto' => 'ppa_cuota_monto',
     'interes_monto' => 'ppa_interes_monto',
     'anio'=>'ppa_anio',
+    'cuota_total'=>'ppa_cuota_total',
+    'cuota_cantidad'=>'ppa_cuota_cantidad',
+    'cuota_pagado'=>'ppa_cuota_pagado',
+    'dias_vencimiento' => 'ppa_dias_vencimiento',
+    'fecha' => 'ppa_fecha',
     'id_usuario' => 'usu_id',
     'id_usuario_baja' => 'usu_id_baja',
   ];
@@ -59,6 +70,11 @@ class PlanPago extends Model
     'cuota_monto',
     'interes_monto',
     'anio',
+    'cuota_total',
+    'cuota_cantidad',
+    'cuota_pagado',
+    'dias_vencimiento',
+    'fecha',
     'id_usuario',
 
     'pagado',
@@ -131,16 +147,6 @@ class PlanPago extends Model
       'estado' => 1,
     ])
     ->where('tob_id',2)
-    ->groupBy('ppa_id')->first();
-    return $obligacion['total']??0;
-  }
-
-  public function getCuotaTotalAttribute(){
-    $obligacion = Obligacion::selectRaw('ppa_id,sum(obl_monto) as total')->where([
-      'ppa_id' => $this['id'],
-      'estado' => 1,
-    ])
-    ->where('tob_id',1)
     ->groupBy('ppa_id')->first();
     return $obligacion['total']??0;
   }

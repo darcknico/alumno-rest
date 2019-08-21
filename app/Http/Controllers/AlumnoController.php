@@ -41,6 +41,7 @@ use Carbon\Carbon;
 use App\Functions\CorreoFunction;
 use App\Functions\CuentaCorrienteFunction;
 use App\Functions\DiariaFunction;
+use App\Functions\PlanPagoFunction;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlumnoController extends Controller
@@ -683,35 +684,21 @@ class AlumnoController extends Controller
         $plan_pago->anio = $anio;
         $plan_pago->id_usuario = $user->id;
         $plan_pago->save();
-        $detalle = AlumnoController::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje);
-        $primero = true;
+        $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje);
         foreach ($detalle['obligaciones'] as $obligacion) {
-            if($primero){
-                $primero = false;
-                $matricula = new Obligacion;
-                $matricula->id_plan_pago = $plan_pago->id;
-                $matricula->id_tipo_obligacion = 10;
-                $matricula->descripcion = $obligacion['descripcion'];
-                $matricula->monto = $obligacion['monto'];
-                $matricula->saldo = $obligacion['saldo'];
-                $matricula->fecha = $obligacion['fecha'];
-                $matricula->id_usuario = $user->id;
-                $matricula->fecha_vencimiento = $obligacion['fecha_vencimiento'];
-                $matricula->save();
-            } else {
-                $cuota = new Obligacion;
-                $cuota->id_plan_pago = $plan_pago->id;
-                $cuota->id_tipo_obligacion = 1;
-                $cuota->descripcion = $obligacion['descripcion'];
-                $cuota->monto = $obligacion['monto'];
-                $cuota->saldo = $obligacion['saldo'];
-                $cuota->fecha = $obligacion['fecha'];
-                $cuota->fecha_vencimiento = $obligacion['fecha_vencimiento'];
-                $cuota->id_usuario = $user->id;
-                $cuota->save();
-            }
+            $cuota = new Obligacion;
+            $cuota->id_plan_pago = $plan_pago->id;
+            $cuota->id_tipo_obligacion = $obligacion['id_tipo_obligacion'];
+            $cuota->descripcion = $obligacion['descripcion'];
+            $cuota->monto = $obligacion['monto'];
+            $cuota->saldo = $obligacion['saldo'];
+            $cuota->fecha = $obligacion['fecha'];
+            $cuota->fecha_vencimiento = $obligacion['fecha_vencimiento'];
+            $cuota->id_usuario = $user->id;
+            $cuota->save();
         }
         CuentaCorrienteFunction::armar($id_sede,$plan_pago->id);
+        PlanPagoFunction::actualizar($plan_pago);
 
         if(!empty($alumno->email)){
             $sede = Sede::find($id_sede);
@@ -755,70 +742,6 @@ class AlumnoController extends Controller
 
         return response()->json($todo,200);
         
-    }
-
-    public function inscripcion_preparar(Request $request){
-        $user = Auth::user();
-        $id_sede = $request->route('id_sede');
-        $id_alumno = $request->route('id_alumno');
-        $validator = Validator::make($request->all(),[
-            'anio' => 'required',
-            'matricula_monto' => 'required',
-            'cuota_monto' => 'required',
-            'interes_monto' => 'required',
-            'id_beca' => 'required',
-            'beca_nombre' => 'required',
-            'beca_porcentaje' => 'required',
-        ]);
-        if($validator->fails()){
-          return response()->json(['error'=>$validator->errors()],403);
-        }
-
-        $anio = $request->input('anio');
-        $matricula_monto = $request->input('matricula_monto');
-        $cuota_monto = $request->input('cuota_monto');
-        $interes_monto = $request->input('interes_monto');
-        $id_beca = $request->input('id_beca');
-        $beca_nombre = $request->input('beca_nombre');
-        $beca_porcentaje = $request->input('beca_porcentaje');
-
-        $detalle = AlumnoController::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje);
-
-        return response()->json($detalle['obligaciones'],200);
-    }
-    public static function preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje){
-        $fecha = Carbon::createFromDate($anio,2, 1);
-        $obligaciones = [];
-        $matricula = [
-            'descripcion' => 'Matricula Inscripcion',
-            'monto' => $matricula_monto,
-            'saldo' => $matricula_monto,
-            'fecha' => $fecha->toDateString(),
-            'fecha_vencimiento' => $fecha->addDays(9)->toDateString(),
-        ];
-
-        $obligaciones[] = $matricula;
-        $total = $matricula_monto;
-        if($beca_porcentaje>0){
-            $cuota_monto = $cuota_monto - $cuota_monto*($beca_porcentaje/100);
-        }
-        for ($i=3; $i <=12 ; $i++) {
-            $fecha = Carbon::createFromDate($anio,$i, 1);
-            $obligacion = [
-                'descripcion' => 'Cuota '.$fecha->formatLocalized('%B').' '.$anio,
-                'monto' => $cuota_monto,
-                'saldo' => $cuota_monto,
-                'fecha' => $fecha->toDateString(),
-                'fecha_vencimiento' => $fecha->addDays(9)->toDateString(),
-            ];
-            $total += $cuota_monto;
-            $obligaciones[] = $obligacion;
-        }
-
-        return [
-            'total' => $total,
-            'obligaciones' => $obligaciones,
-        ];
     }
 
     public function inscripciones(Request $request){
@@ -993,36 +916,20 @@ class AlumnoController extends Controller
                         $plan_pago->anio = 2018;
                         $plan_pago->id_usuario = $user->id;
                         $plan_pago->save();
-                        $detalle = AlumnoController::preparar_obligaciones(2018,$matricula_monto,$cuota_monto,$beca->porcentaje);
-                        $primero = true;
+                        $detalle = PlanPagoFunction::preparar_obligaciones(2018,$matricula_monto,$cuota_monto,$beca->porcentaje);
                         $obligaciones = [];
                         foreach ($detalle['obligaciones'] as $obligacion) {
-                            if($primero){
-                                $primero = false;
-                                $matricula = new Obligacion;
-                                $matricula->id_plan_pago = $plan_pago->id;
-                                $matricula->id_tipo_obligacion = 10;
-                                $matricula->descripcion = $obligacion['descripcion'];
-                                $matricula->monto = $obligacion['monto'];
-                                $matricula->saldo = $obligacion['saldo'];
-                                $matricula->fecha = $obligacion['fecha'];
-                                $matricula->id_usuario = $user->id;
-                                $matricula->fecha_vencimiento = $obligacion['fecha_vencimiento'];
-                                $matricula->save();
-                                $obligaciones[]=$matricula;
-                            } else {
-                                $cuota = new Obligacion;
-                                $cuota->id_plan_pago = $plan_pago->id;
-                                $cuota->id_tipo_obligacion = 1;
-                                $cuota->descripcion = $obligacion['descripcion'];
-                                $cuota->monto = $obligacion['monto'];
-                                $cuota->saldo = $obligacion['saldo'];
-                                $cuota->fecha = $obligacion['fecha'];
-                                $cuota->fecha_vencimiento = $obligacion['fecha_vencimiento'];
-                                $cuota->id_usuario = $user->id;
-                                $cuota->save();
-                                $obligaciones[]=$cuota;
-                            }
+                            $cuota = new Obligacion;
+                            $cuota->id_plan_pago = $plan_pago->id;
+                            $cuota->id_tipo_obligacion = $obligacion['id_tipo_obligacion'];
+                            $cuota->descripcion = $obligacion['descripcion'];
+                            $cuota->monto = $obligacion['monto'];
+                            $cuota->saldo = $obligacion['saldo'];
+                            $cuota->fecha = $obligacion['fecha'];
+                            $cuota->fecha_vencimiento = $obligacion['fecha_vencimiento'];
+                            $cuota->id_usuario = $user->id;
+                            $cuota->save();
+                            $obligaciones[]=$cuota;
                         }
 
                         //matricula

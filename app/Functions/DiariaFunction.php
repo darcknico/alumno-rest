@@ -66,6 +66,7 @@ class DiariaFunction{
 		return $diaria;
 	}
 
+	
 	public static function cerrar($id_sede,$fecha){
 		$diaria = Diaria::where([
 				'sed_id'=>$id_sede,
@@ -80,6 +81,7 @@ class DiariaFunction{
 			return null;
 		}
 	}
+	
 
 	public static function agregar($id_sede,$id_movimiento){
 		$movimiento = Movimiento::find($id_movimiento);
@@ -225,6 +227,16 @@ class DiariaFunction{
 	}
 
 	public static function actualizar_diaria(Diaria $diaria,$fecha = null){
+		$anterior = DiariaFunction::anterior($diaria);
+		$saldo_anterior = 0;
+		$saldo_otros_anterior = 0;
+		if($anterior){
+			$saldo_anterior = $anterior->saldo;
+			$saldo_otros_anterior = $anterior->saldo_otros;
+		}
+		$diaria->saldo_anterior = $saldo_anterior;
+		$diaria->saldo_otros_anterior = $saldo_otros_anterior;
+		
 		$movimientos = Movimiento::selectRaw('
 			sum(if(tei_id=1 and fpa_id = 1,mov_monto,0)) as total_ingreso,
 			sum(if(tei_id=0 and fpa_id = 1,mov_monto,0)) as total_egreso,
@@ -249,20 +261,44 @@ class DiariaFunction{
 			$diaria->total_egreso = $movimientos->total_egreso;
 			$diaria->total_otros_ingreso = $movimientos->total_otros_ingreso;
 			$diaria->total_otros_egreso = $movimientos->total_otros_egreso;
-			$diaria->saldo = $movimientos->saldo_anterior + $movimientos->total_ingreso - $movimientos->total_egreso;
-			$diaria->saldo_otros = $movimientos->saldo_otros_anterior + $movimientos->total_otros_ingreso - $movimientos->total_otros_egreso;
+			$diaria->saldo = $saldo_anterior + $movimientos->total_ingreso - $movimientos->total_egreso;
+			$diaria->saldo_otros = $saldo_otros_anterior + $movimientos->total_otros_ingreso - $movimientos->total_otros_egreso;
 		} else {
 			$diaria->total_ingreso = 0;
 			$diaria->total_egreso = 0;
 			$diaria->total_otros_ingreso = 0;
 			$diaria->total_otros_egreso = 0;
-			$diaria->saldo = 0;
-			$diaria->saldo_otros = 0;
+			$diaria->saldo = $saldo_anterior;
+			$diaria->saldo_otros = $saldo_otros_anterior;
 		}
 		if($fecha){
 			$diaria->fecha_fin = $fecha->endOfDay();
 		}
 		$diaria->save();
 		return $diaria;
+	}
+
+	public static function anterior(Diaria $diaria){
+		$id_sede = $diaria->id_sede;
+
+        return Diaria::where([
+            'estado' => 1,
+            'sed_id' => $id_sede,
+        ])
+        ->whereDate('fecha_inicio','<',$diaria->fecha_inicio)
+        ->orderBy('fecha_inicio','desc')
+        ->first();
+	}
+
+	public static function siguiente(Diaria $diaria){
+		$id_sede = $diaria->id_sede;
+
+        return Diaria::where([
+            'estado' => 1,
+            'sed_id' => $id_sede,
+        ])
+        ->whereDate('fecha_inicio','>',$diaria->fecha_inicio)
+        ->orderBy('fecha_inicio','asc')
+        ->first();
 	}
 }

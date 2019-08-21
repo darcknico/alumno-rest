@@ -46,10 +46,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('plan_pago:interes')->monthlyOn(1,'1:00');
 
         //ABRIR DIARIA
-        $schedule->command('diaria:abrir')->daily()->at('02:00');
+        //$schedule->command('diaria:abrir')->daily()->at('02:00');
 
         //CERRAR DIARIA
-        $schedule->command('diaria:cerrar')->daily()->at('23:00');
+        //$schedule->command('diaria:cerrar')->daily()->at('23:00');
         
     }
 

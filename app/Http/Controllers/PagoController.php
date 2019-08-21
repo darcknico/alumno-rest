@@ -165,6 +165,7 @@ class PagoController extends Controller
 		$id_sede = $request->route('id_sede');
 		$id_pago = $request->route('id_pago');
 		$pago_original = Pago::find($id_pago);
+		$plan_pago = PlanPago::find($pago_original->id_plan_pago);
 		try{
 			$pago_original->estado = 0;
 			$pago_original->save();
@@ -215,6 +216,7 @@ class PagoController extends Controller
 		} catch(Exception $e){
 			return response()->json($e->getMessagge(),401);
 		}
+    	PlanPagoFunction::actualizar($plan_pago);
 		return response()->json($pago_original,200);
 	}
 

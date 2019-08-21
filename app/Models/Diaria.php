@@ -22,6 +22,10 @@ class Diaria extends Model
       'estado'=>'boolean',
   ];
 
+  protected $with = [
+    'usuario',
+  ];
+
   protected $hidden = [
     'dia_id',
     'dia_fecha_inicio',
@@ -35,6 +39,8 @@ class Diaria extends Model
     'dia_saldo',
     'dia_saldo_otros',
     'sed_id',
+    'usu_id',
+    'usu_id_cierre',
   ];
 
   protected $maps = [
@@ -50,6 +56,8 @@ class Diaria extends Model
     'saldo' => 'dia_saldo',
     'saldo_otros' => 'dia_saldo_otros',
     'id_sede' => 'sed_id',
+    'id_usuario' => 'usu_id',
+    'cierre_id_usuario' => 'usu_id_cierre',
   ];
 
   protected $appends = [
@@ -65,6 +73,14 @@ class Diaria extends Model
     'saldo',
     'saldo_otros',
     'id_sede',
+    'id_usuario',
   ];
 
+  public function usuario(){
+    return $this->hasOne('App\User','usu_id','usu_id');
+  }
+
+  public function cierre_usuario(){
+    return $this->hasOne('App\User','usu_id','usu_id_cierre');
+  }
 }

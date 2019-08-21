@@ -31,6 +31,22 @@ class CuentaCorrienteFunction{
 				CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
 			}
 		}
+
+		$obligaciones = Obligacion::where([
+			'estado' => 1,
+			'ppa_id' => $id_plan_pago,
+		])
+		->where('tob_id',2)
+		->orderBy('obl_fecha_vencimiento','asc')
+		->get();
+		foreach ($obligaciones as $obligacion) {
+			$existe = Obligacion::find($obligacion->id_obligacion);
+			if(!$existe->estado){
+				$obligacion = Obligacion::find($obligacion->id);
+				$obligacion->estado = 0;
+				$obligacion->save();
+			}
+		}
 		
 		$obligaciones = Obligacion::with([
     	'tipo',
@@ -62,6 +78,8 @@ class CuentaCorrienteFunction{
 			    \DB::beginTransaction();
 			    $obligacion = Obligacion::where('obl_id_obligacion',$id_obligacion)->first();
 				if($obligacion){
+					$obligacion->obl_descripcion = "Interes ".$original->descripcion;
+		    		$obligacion->save();
 					ObligacionInteres::where('obl_id',$obligacion->obl_id)->update([
 						'estado' => 0,
 					]);
@@ -112,6 +130,11 @@ class CuentaCorrienteFunction{
 						}
 					}
 				}
+				if($obligacion_saldo<0){
+					$obligacion_saldo = 0;
+				}
+				$original->saldo = $obligacion_saldo;
+				$original->save();
 				CuentaCorrienteFunction::interes_descripcion($obligacion->obl_id);
 				$obligacion = Obligacion::find($obligacion->obl_id);
 			    if($aplicar){
