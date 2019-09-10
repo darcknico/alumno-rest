@@ -23,13 +23,14 @@ use App\Functions\DiariaFunction;
 use App\Functions\PlanPagoFunction;
 
 use App\Exports\PlanPagoExport;
+use App\Exports\AlumnoPlanPagoExport;
+use App\Filters\PlanPagoFilter;
 use App\Http\Controllers\AlumnoController;
 
 class PlanPagoController extends Controller
 {
   public function index(Request $request){
     $id_sede = $request->route('id_sede');
-    $search = $request->query('search','');
     $sort = $request->query('sort','');
     $order = $request->query('order','');
     $page = $request->query('page',0);
@@ -41,95 +42,32 @@ class PlanPagoController extends Controller
       'sed_id' => $id_sede,
       'estado' => 1,
     ]);
-    if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $page==0 ){
+
+    $registros = PlanPagoFilter::index($request,$registros);
+
+    if(strlen($sort)==0 and strlen($order)==0 and $page==0 ){
       $todo = $registros->orderBy('created_at','desc')
         ->get();
       return response()->json($todo,200);
     }
-    $id_departamento = $request->query('id_departamento',0);
-    $id_carrera = $request->query('id_carrera',0);
-    $deudores = $request->query('deudores',0); //0 TODOS - 1 SI - 2 NO
-
-    $registros = $registros
-      ->when($id_departamento>0,function($q)use($id_departamento){
-        $carreras = Carrera::where([
-            'dep_id' => $id_departamento,
-            'estado' => 1,
-          ])->pluck('car_id')->toArray();
-          $inscripciones = Inscripcion::where([
-            'estado' => 1,
-          ])
-          ->whereIn('car_id',$carreras)
-          ->pluck('ins_id')->toArray();
-        return $q->whereIn('ins_id',$inscripciones);
-      })
-      ->when($id_carrera>0,function($q)use($id_carrera){
-        $inscripciones = Inscripcion::where([
-            'car_id' => $id_carrera,
-            'estado' => 1,
-          ])
-        ->pluck('ins_id')->toArray();
-        return $q->whereIn('ins_id',$inscripciones);
-      })
-      ->when($deudores>0,function($q)use($deudores){
-        if($deudores>1){
-          return $q->whereNotIn('ppa_id',function($qt){
-            return $qt->select('ppa_id')->from('tbl_obligaciones')->where([
-              'estado' => 1,
-            ])->where('obl_saldo','>',0);
-          });
-        } else {
-          return $q->whereIn('ppa_id',function($qt){
-            return $qt->select('ppa_id')->from('tbl_obligaciones')->where([
-              'estado' => 1,
-            ])->where('obl_saldo','>',0);
-          });
-        }
-      });
-    $values = explode(" ", $search);
-    if(count($values)>0){
-      foreach ($values as $key => $value) {
-        if(strlen($value)>0){
-          $registros = $registros->where(function($query) use  ($value,$id_sede) {
-            $query->where('ppa_matricula_monto',$value)
-              ->orWhere('anio',$value)
-              ->orWhere('ppa_cuota_monto',$value)
-              ->orWhereHas('inscripcion',function($q)use($value,$id_sede){
-                $q->whereIn('alu_id',function($qt)use($value,$id_sede){
-                    $qt->select('alu_id')->from('tbl_alumnos')
-                    ->where('estado',1)
-                    ->where('sed_id',$id_sede)
-                    ->where(function($qtz) use  ($value){
-                        $qtz->where('alu_nombre','like','%'.$value.'%')
-                        ->orWhere('alu_apellido','like','%'.$value.'%')
-                        ->orWhere('alu_documento',$value);
-                    });
-                  });
-              });
-          });
-        }
-      }
-    }
     if(strlen($sort)>0){
-    $registros = $registros->orderBy($sort,$order);
+      $registros = $registros->orderBy($sort,$order);
     } else {
-    $registros = $registros->orderBy('created_at','desc');
+      $registros = $registros->orderBy('created_at','desc');
     }
     $sql = $registros->toSql();
     $q = clone($registros->getQuery());
     $total_count = $q->groupBy('sed_id')->count();
     if($length>0){
-    $registros = $registros->limit($length);
-    if($page>1){
-        $registros = $registros->offset(($page-1)*$length)->get();
+      $registros = $registros->limit($length);
+      if($page>1){
+          $registros = $registros->offset(($page-1)*$length)->get();
+      } else {
+          $registros = $registros->get();
+      }
     } else {
         $registros = $registros->get();
     }
-
-    } else {
-        $registros = $registros->get();
-    }
-
     return response()->json([
         'total_count'=>intval($total_count),
         'items'=>$registros,
@@ -191,7 +129,7 @@ class PlanPagoController extends Controller
     $plan_pago->dias_vencimiento = $dias_vencimiento;
     $plan_pago->id_usuario = $user->id;
     $plan_pago->save();
-    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento);
+    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha);
     $obligaciones = [];
     foreach ($detalle['obligaciones'] as $obligacion) {
       $cuota = new Obligacion;
@@ -234,7 +172,7 @@ class PlanPagoController extends Controller
     $fecha = $request->input('fecha',null);
     $dias_vencimiento = $request->input('dias_vencimiento',9);
 
-    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento);
+    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha);
     return response()->json($detalle,200);
   }
 
@@ -290,7 +228,7 @@ class PlanPagoController extends Controller
     $plan_pago->dias_vencimiento = $dias_vencimiento;
     $plan_pago->save();
 
-    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento)['obligaciones'];
+    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha)['obligaciones'];
     $matricula = Obligacion::where('ppa_id',$id_plan_pago)
       ->where('estado',1)
       ->where('id_tipo_obligacion',10)
@@ -356,7 +294,7 @@ class PlanPagoController extends Controller
       }
     }
 
-    CuentaCorrienteFunction::armar($id_sede,$plan_pago->id);
+    CuentaCorrienteFunction::armar($id_sede,$plan_pago->id,true);
     PlanPagoFunction::actualizar($plan_pago);
 
     return response()->json($plan_pago,200);
@@ -952,8 +890,29 @@ class PlanPagoController extends Controller
     $id_departamento = $request->query('id_departamento',0);
     $id_carrera = $request->query('id_carrera',0);
     $deudores = $request->query('deudores',0);
+    $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
+    $anio = $request->query('anio',0);
 
-    return (new PlanPagoExport($id_sede,$search,$id_departamento,$id_carrera,$deudores))->download('pagos.xlsx');
+    return (new PlanPagoExport(
+      $id_sede,
+      $search,
+      $id_departamento,
+      $id_carrera,
+      $deudores,
+      $id_tipo_materia_lectivo,
+      $anio
+    ))->download('pagos.xlsx');
+  }
+
+  public function exportar_alumnos(Request $request){
+    $id_sede = $request->route('id_sede');
+    $anio = $request->query('anio',2019);
+    $id_carrera = $request->query('id_carrera',0);
+    $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
+
+    $reporte = new AlumnoPlanPagoExport($id_sede,$anio,$id_carrera,$id_tipo_materia_lectivo);
+    $reporte->custom();
+    return $reporte->download('alumnos_planes_pagos.xlsx');
   }
 
 

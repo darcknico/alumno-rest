@@ -34,10 +34,18 @@ Route::group(['middleware' => 'auth:api'], function(){
 		Route::get('sedes/{id_sede}','UsuarioController@sede_seleccionar')->where('id_sede', '[0-9]+');
 	});
 
+	Route::apiResource('docentes/materias','Academico\DocenteMateriaController',[
+		'as' => 'docenteMateria',
+		'parameters' => [
+			'materias' => 'docenteMateria',
+		],
+	]);
+
 	Route::apiResources([
 		'docentes' => 'Academico\DocenteController',
 		'chat' => 'Ajustes\ChatController',
 	]);
+	
 
 	Route::prefix('sedes')->group(function () {
 		Route::post('','SedeController@store');
@@ -50,6 +58,12 @@ Route::group(['middleware' => 'auth:api'], function(){
 			'middleware'=> ['sede'],
 			'where'  => ['id_sede' => '[0-9]+'],
 		],function () {
+			Route::prefix('estadisticas')->group(function(){
+				Route::get('pagos', 'HomeController@estadisticas_pagos');
+				Route::get('carreras', 'HomeController@estadisticas_carreras');
+				Route::get('obligaciones', 'HomeController@estadisticas_obligaciones');
+			});
+			
 			Route::post('seleccionar', 'Ajustes\UsuarioSedeController@seleccionar');
 			Route::get('reportes/terminados','Extra\ReporteJobController@terminados');
 
@@ -226,6 +240,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 				});
 
 				Route::get('exportar','PlanPagoController@exportar');
+				Route::get('exportar/alumnos','PlanPagoController@exportar_alumnos');
 
 
 				Route::prefix('precios')->group(function(){

@@ -235,3 +235,15 @@ ALTER TABLE `tbl_planes_pago` ADD `ppa_cuota_total` DECIMAL(10,2) NOT NULL DEFAU
 ALTER TABLE `tbl_planes_pago` ADD `ppa_dias_vencimiento` INT NOT NULL DEFAULT '9' AFTER `ppa_cuota_pagado`;
 ALTER TABLE `tbl_planes_pago` ADD `ppa_fecha` DATE NULL AFTER `ppa_dias_vencimiento`;
 */
+/*
+CREATE TABLE `tbl_docente_materia` (
+  `dma_id` int(11) NOT NULL,
+  `sed_id` int(11) NOT NULL,
+  `usu_id` int(11) NOT NULL,
+  `mat_id` int(11) NOT NULL,
+  `car_id` int(11) NOT NULL,
+  `estado` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+*/

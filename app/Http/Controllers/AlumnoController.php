@@ -635,6 +635,9 @@ class AlumnoController extends Controller
             'id_modalidad' => 'required',
             'beca_nombre' => 'required',
             'beca_porcentaje' => 'required',
+            'cuota_cantidad' => 'nullable | integer',
+            'dias_vencimiento' => 'nullable | integer',
+            'fecha' => 'nullable | date',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -650,6 +653,9 @@ class AlumnoController extends Controller
         $id_modalidad = $request->input('id_modalidad');
         $beca_nombre = $request->input('beca_nombre');
         $beca_porcentaje = $request->input('beca_porcentaje');
+        $cuota_cantidad = $request->input('cuota_cantidad',10);
+        $dias_vencimiento = $request->input('dias_vencimiento',9);
+        $fecha = $request->input('fecha',null);
 
         $alumno = Alumno::find($id_alumno);
         if($alumno->id_tipo_alumno_estado == 1){
@@ -681,10 +687,13 @@ class AlumnoController extends Controller
         $plan_pago->matricula_saldo = $matricula_monto;
         $plan_pago->cuota_monto = $cuota_monto;
         $plan_pago->interes_monto = $interes_monto;
+        $plan_pago->cuota_cantidad = $cuota_cantidad;
+        $plan_pago->dias_vencimiento = $dias_vencimiento;
+        $plan_pago->fecha = $fecha;
         $plan_pago->anio = $anio;
         $plan_pago->id_usuario = $user->id;
         $plan_pago->save();
-        $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje);
+        $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha);
         foreach ($detalle['obligaciones'] as $obligacion) {
             $cuota = new Obligacion;
             $cuota->id_plan_pago = $plan_pago->id;

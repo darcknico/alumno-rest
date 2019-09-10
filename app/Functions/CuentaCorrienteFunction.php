@@ -25,7 +25,78 @@ class CuentaCorrienteFunction{
 		->get();
 
 		if($borrar_pagos){
-			
+			$obligaciones = Obligacion::where([
+				'estado' => 1,
+				'ppa_id' => $id_plan_pago,
+			])
+			->whereIn('tob_id',[1,2])
+			->orderBy('obl_fecha_vencimiento','asc')
+			->get();
+			foreach ($obligaciones as $obligacion) {
+				$obligacion = Obligacion::find($obligacion->id);
+				$obligacion->saldo = $obligacion->monto;
+				$obligacion->save();
+			}
+			$pagos_parciales = Obligacion::where([
+				'estado' => 1,
+				'ppa_id' => $id_plan_pago,
+			])
+			->where('tob_id',3)
+			->pluck('obl_id')->toArray();
+			$pagos = Pago::where([
+					'estado' => 1,
+					'tpa_id' => 1,
+					'sed_id' => $id_sede,
+				])
+				->whereIn('obl_id',$pagos_parciales)
+				->orderBy('pag_fecha','asc')
+				->get();
+			foreach ($pagos as $pago) {
+				$parciales = ObligacionPago::where([
+					'pag_id' => $pago->id,
+					'estado' => 1,
+				])->get();
+				foreach ($parciales as $parcial) {
+					$parcial = ObligacionPago::find($parcial->id);
+					$parcial->estado = 0;
+					$parcial->save();
+				}
+				$monto_restante = $pago->monto;
+				foreach ($obligaciones as $obligacion) {
+					$saldo = round($monto_restante - $obligacion->monto,2);
+					if($saldo>=0){
+						$parcial = new ObligacionPago;
+						$parcial->monto = $obligacion->monto;
+						$parcial->id_obligacion = $obligacion->id;
+						$parcial->id_pago = $pago->id;
+						$parcial->id_usuario = $pago->id_usuario;
+						$parcial->save();
+
+						$obligacion = Obligacion::find($obligacion->id);
+						$obligacion->saldo = 0;
+						$obligacion->save();
+						if($obligacion->id_tipo_obligacion == 1){
+							CuentaCorrienteFunction::interes_calcular($obligacion->id);
+						}
+					} else {
+						$parcial = new ObligacionPago;
+						$parcial->monto = $monto_restante;
+						$parcial->id_obligacion = $obligacion->id;
+						$parcial->id_pago = $pago->id;
+						$parcial->id_usuario = $pago->id_usuario;
+						$parcial->save();
+
+						$obligacion = Obligacion::find($obligacion->obl_id);
+						$obligacion->saldo = $obligacion->saldo - $monto_restante;
+						$obligacion->save();
+						if($obligacion->id_tipo_obligacion == 1){
+							CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
+						}
+						break;
+					}
+					$monto_restante = $saldo;
+				}
+			}
 		} else {
 			foreach ($obligaciones as $obligacion) {
 				CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);

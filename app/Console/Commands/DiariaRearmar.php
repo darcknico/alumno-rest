@@ -16,7 +16,7 @@ class DiariaRearmar extends Command
      *
      * @var string
      */
-    protected $signature = 'diaria:rearmar';
+    protected $signature = 'diaria:rearmar {id_sede}';
 
     /**
      * The console command description.
@@ -42,10 +42,19 @@ class DiariaRearmar extends Command
      */
     public function handle()
     {
-        $sedes = Sede::where('estado',1)->get();
-        foreach ($sedes as $sede) {
-            DiariaFunction::actualizar($sede->id);
+        $id_sede = $this->argument('id_sede');
+        if($id_diaria){
+            $sede = Sede::find($id_sede);
+            if($sede){
+                DiariaFunction::actualizar($id_sede);
+            }
+        } else {
+            $sedes = Sede::where('estado',1)->get();
+            foreach ($sedes as $sede) {
+                DiariaFunction::actualizar($sede->id);
+            }
+            return $sedes;
         }
-        return $sedes;
+        
     }
 }

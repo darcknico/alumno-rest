@@ -112,4 +112,8 @@ class Inscripcion extends Model
   public function planes_pago(){
     return $this->hasMany('App\Models\PlanPago','ins_id','ins_id');
   }
+
+  public function comisiones(){
+    return $this->hasMany('App\Models\ComisionAlumno','ins_id','ins_id');
+  }
 }

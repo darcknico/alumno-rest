@@ -21,6 +21,7 @@ use Validator;
 use Carbon\Carbon;
 use App\Functions\CuentaCorrienteFunction;
 use App\Functions\DiariaFunction;
+use App\Functions\PlanPagoFunction;
 use JasperPHP\JasperPHP; 
 
 use App\Exports\PagoExport;
@@ -167,51 +168,58 @@ class PagoController extends Controller
 		$pago_original = Pago::find($id_pago);
 		$plan_pago = PlanPago::find($pago_original->id_plan_pago);
 		try{
-			$pago_original->estado = 0;
-			$pago_original->save();
-			if (!is_null($pago_original->movimiento)) {
-				$movimiento = Movimiento::find($pago_original->id_movimiento);
-				$movimiento->estado = 0;
-		        $movimiento->deleted_at = Carbon::now();
-		        $movimiento->usu_id_baja = $user->id;
-				$movimiento->save();
+			if($pago_original->estado == 1){
+				$pago_original->estado = 0;
+				$pago_original->save();
+				if (!is_null($pago_original->movimiento)) {
+					$movimiento = Movimiento::find($pago_original->id_movimiento);
+					$movimiento->estado = 0;
+			        $movimiento->deleted_at = Carbon::now();
+			        $movimiento->usu_id_baja = $user->id;
+					$movimiento->save();
 
-				DiariaFunction::quitar($id_sede,$pago_original->id_movimiento);
-			}
-			$obligacion_original = Obligacion::where('obl_id',$pago_original->obl_id)->first();
-			$obligacion_original->estado = 0;
-			$obligacion_original->save();
-			//$unidad = UnidadFuncional::where('ufu_id',$obligacion->ufu_id)->first();
-			$pagos = ObligacionPago::where([
-				'pag_id' => $id_pago,
-			])->pluck('obl_id')->toArray();
-			ObligacionPago::where([
-				'pag_id' => $id_pago,
-			])->update([
-				'estado' => 0,
-			]);
-			
-			$obligaciones = Obligacion::whereIn('obl_id',$pagos)
-			->orderByRaw('obl_fecha_vencimiento,obl_id asc')
-			->get();
-			foreach ($obligaciones as $obligacion) {
-				$pago = ObligacionPago::where([
+					DiariaFunction::quitar($id_sede,$pago_original->id_movimiento);
+				}
+				$obligacion_original = Obligacion::where('obl_id',$pago_original->obl_id)->first();
+				$obligacion_original->estado = 0;
+				$obligacion_original->save();
+				$pagos = ObligacionPago::where([
 					'pag_id' => $id_pago,
-					'obl_id' => $obligacion->obl_id,
-				])->first();
-				$obligacion = Obligacion::find($obligacion->obl_id);
-				$obligacion->obl_saldo = round($obligacion->obl_saldo + $pago->opa_monto,2);
-				$obligacion->save();
-			}
-			if($pago_original->id_tipo_pago == 10){
-				$plan_pago = PlanPago::find($pago_original->id_plan_pago);
-				$plan_pago->matricula_pagado = $plan_pago->matricula_pagado - $pago_original->monto;
-			    $plan_pago->matricula_saldo = $plan_pago->matricula_saldo + $pago_original->monto;
-			    $plan_pago->save();
-			} else if($pago_original->id_tipo_pago == 20){
-
+				])->pluck('obl_id')->toArray();
+				ObligacionPago::where([
+					'pag_id' => $id_pago,
+				])->update([
+					'estado' => 0,
+				]);
+				
+				$obligaciones = Obligacion::whereIn('obl_id',$pagos)
+				->orderByRaw('obl_fecha_vencimiento,obl_id asc')
+				->get();
+				foreach ($obligaciones as $obligacion) {
+					$pago = ObligacionPago::where([
+						'pag_id' => $id_pago,
+						'obl_id' => $obligacion->obl_id,
+					])->first();
+					$obligacion = Obligacion::find($obligacion->obl_id);
+					$obligacion->obl_saldo = round($obligacion->obl_saldo + $pago->opa_monto,2);
+					$obligacion->save();
+				}
 			} else {
-				CuentaCorrienteFunction::armar($id_sede,$obligacion_original->id_plan_pago);
+				$pago_original->estado = 1;
+				$pago_original->save();
+				if (!is_null($pago_original->movimiento)) {
+					$movimiento = Movimiento::find($pago_original->id_movimiento);
+					$movimiento->estado = 1;
+					$movimiento->save();
+					DiariaFunction::agregar($id_sede,$pago_original->id_movimiento);
+				}
+				$obligacion_original = Obligacion::where('obl_id',$pago_original->obl_id)->first();
+				$obligacion_original->estado = 1;
+				$obligacion_original->save();
+			}
+			
+			if($pago_original->id_tipo_pago != 10 and $pago_original->id_tipo_pago != 20){
+				CuentaCorrienteFunction::armar($id_sede,$obligacion_original->id_plan_pago,$pago_original->estado == 1);
 			}
 		} catch(Exception $e){
 			return response()->json($e->getMessagge(),401);
@@ -371,14 +379,7 @@ class PagoController extends Controller
 	    )->execute();
 	    
 	    $filename ='recibo_pago-nro_'.$pago->numero;
-
-	    //header('Access-Control-Allow-Origin: *');
-	    header('Content-Description: application/pdf');
-	    header('Content-Type: application/pdf');
-	    header('Content-Disposition:attachment; filename=' . $filename . '.' . $ext);
-	    readfile($output . '.' . $ext);
-	    unlink($output. '.'  . $ext);
-	    flush();
+	    return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
     }
 
     public function tipos(Request $request){

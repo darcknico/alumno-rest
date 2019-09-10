@@ -163,29 +163,39 @@ class DiariaFunction{
 			->whereDate('fecha_fin','>=',$fecha)
 			->first();
 		if(!$diaria){
-			$diaria = Diaria::whereDate('fecha_inicio','<=',$fecha)->whereNull('fecha_fin')->orderBy('fecha_inicio','desc')->first();
+			$diaria = Diaria::whereDate('fecha_inicio','<=',$fecha)
+				->where([
+					'estado' => 1,
+					'sed_id' => $id_sede,
+				])
+				->whereNull('fecha_fin')
+				->orderBy('fecha_inicio','desc')->first();
 		}
-		if($movimiento->id_tipo_egreso_ingreso == 1){
-			if($movimiento->id_forma_pago == 1){
-				$diaria->total_ingreso -= $movimiento->monto;
+		if($diaria){
+			if($movimiento->id_tipo_egreso_ingreso == 1){
+				if($movimiento->id_forma_pago == 1){
+					$diaria->total_ingreso -= $movimiento->monto;
+				} else {
+					$diaria->total_otros_ingreso -= $movimiento->monto;
+				}
 			} else {
-				$diaria->total_otros_ingreso -= $movimiento->monto;
+				if($movimiento->id_forma_pago == 1){
+					$diaria->total_egreso -= $movimiento->monto;
+				} else {
+					$diaria->total_otros_egreso -= $movimiento->monto;
+				}
 			}
-		} else {
 			if($movimiento->id_forma_pago == 1){
-				$diaria->total_egreso -= $movimiento->monto;
+				$diaria->saldo = $diaria->saldo_anterior + $diaria->total_ingreso - $diaria->total_egreso;
 			} else {
-				$diaria->total_otros_egreso -= $movimiento->monto;
+				$diaria->saldo_otros = $diaria->saldo_otros_anterior + $diaria->total_otros_ingreso - $diaria->total_otros_egreso;
 			}
-		}
-		if($movimiento->id_forma_pago == 1){
-			$diaria->saldo = $diaria->saldo_anterior + $diaria->total_ingreso - $diaria->total_egreso;
+			$diaria->save();
+			DiariaFunction::actualizar($id_sede,Carbon::parse($diaria->fecha_inicio));
+			return $diaria;
 		} else {
-			$diaria->saldo_otros = $diaria->saldo_otros_anterior + $diaria->total_otros_ingreso - $diaria->total_otros_egreso;
+			return null;
 		}
-		$diaria->save();
-		DiariaFunction::actualizar($id_sede,Carbon::parse($diaria->fecha_inicio));
-		return $diaria;
 	}
 
 

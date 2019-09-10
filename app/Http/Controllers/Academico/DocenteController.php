@@ -62,7 +62,12 @@ class DocenteController extends Controller
             foreach ($values as $key => $value) {
               if(strlen($value)>0){
                 $registros = $registros->where(function($query) use  ($value) {
-                  $query->where('cuit','like','%'.$value.'%')
+                  $query->whereHas('usuario',function($q)use($value){
+                    $q->where('apellido','like','%'.$value.'%')
+                        ->orWhere('nombre','like','%'.$value.'%')
+                        ->orWhere('documento','like','%'.$value.'%');
+                    })
+                    ->orWhere('cuit','like','%'.$value.'%')
                     ->orWhere('titulo','like','%'.$value.'%');
                 });
               }
