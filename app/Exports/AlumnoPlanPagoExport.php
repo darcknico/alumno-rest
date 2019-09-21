@@ -127,7 +127,7 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
                     cobranza_mes(ppa_id,12) as diciembre
                 FROM tbl_planes_pago where ppa_id = ?;
                 ", [
-            $this->id_sede,
+            $registro->id,
             ]
             );
         $result = [];

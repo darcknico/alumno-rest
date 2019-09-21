@@ -17,6 +17,7 @@ use App\Functions\DiariaFunction;
 use Carbon\Carbon;
 
 use App\Exports\MovimientoExport;
+use \DB;
 
 class MovimientoController extends Controller{
 
@@ -288,6 +289,113 @@ class MovimientoController extends Controller{
             $id_tipo_movimiento,
             $id_tipo_comprobante,
             $id_tipo_egreso_ingreso,$fecha_inicio,$fecha_fin))->download('pagos.xlsx');
+    }
+
+    public function estadisticas_diaria(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_tipo_egreso_ingreso = $request->query('id_tipo_egreso_ingreso',1);
+        $fecha_inicio = $request->query('fecha_inicio',null);
+        $fecha_fin = $request->query('fecha_fin',null);
+        $validator = Validator::make($request->all(),[
+            'fecha_inicio' => 'required | date',
+            'fecha_fin' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $fecha_inicio = Carbon::parse($fecha_inicio);
+        $fecha_fin = Carbon::parse($fecha_fin);
+        $dias = $fecha_inicio->diffInDays($fecha_fin);
+        $sequence = 'seq_0_to_'.$dias;
+
+        $sql = "
+            SELECT d.date as fecha,
+            COALESCE(sum( IF(mov.tei_id=1,mov.mov_monto,0) ), 0) as total_ingresos,
+            COALESCE(sum( IF(mov.tei_id=0,mov.mov_monto,0) ), 0) as total_egresos,
+            COALESCE(sum( IF(mov.tei_id=1,1,0) ), 0) as cantidad_ingresos,
+            COALESCE(sum( IF(mov.tei_id=0,1,0) ), 0) as cantidad_egresos
+            FROM ( SELECT ? + INTERVAL seq DAY AS date 
+                FROM ".$sequence." AS offs
+                ) d LEFT OUTER JOIN
+                tbl_movimientos mov 
+                ON d.date = mov.mov_fecha and mov.sed_id = ? and mov.estado = 1
+            GROUP BY d.date
+            order by fecha
+                ";
+        $results = DB::select($sql, [
+            $fecha_inicio->toDateString(),
+            $id_sede,
+            ]
+            );
+        return response()->json($results,200);
+    }
+
+    public function estadisticas_tipo(Request $request){
+        $id_sede = $request->route('id_sede');
+        $length = $request->query('length',5);
+        $id_tipo_egreso_ingreso = $request->query('id_tipo_egreso_ingreso',1);
+        $fecha_inicio = $request->query('fecha_inicio',null);
+        $fecha_fin = $request->query('fecha_fin',null);
+        $validator = Validator::make($request->all(),[
+            'fecha_inicio' => 'required | date',
+            'fecha_fin' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $fecha_inicio = Carbon::parse($fecha_inicio);
+        $fecha_fin = Carbon::parse($fecha_fin);
+        if($length>0){
+            $results = DB::select("
+                    SELECT sum(mov.mov_monto) as total,count(mov.mov_monto) as cantidad , tmo.tmo_id as id ,tmo.tmo_nombre as nombre
+                    FROM tbl_tipo_movimiento tmo
+                    INNER JOIN tbl_movimientos mov ON tmo.tmo_id = mov.tmo_id
+                    WHERE 
+                    tmo.estado = true AND
+                    mov.estado = true AND
+                    tmo.tei_id = ? AND
+                    tmo.sed_id = ? AND
+                    mov.sed_id = ? AND
+                    mov.mov_fecha >= ? AND
+                    mov.mov_fecha <= ?
+                    GROUP BY tmo.tmo_id,tmo.tmo_nombre
+                    ORDER BY total
+                    LIMIT ?;
+                    ", [
+                $id_tipo_egreso_ingreso,
+                $id_sede,
+                $id_sede,
+                $fecha_inicio->toDateString(),
+                $fecha_fin->toDateString(),
+                $length,
+                ]
+            );
+        } else {
+            $results = DB::select("
+                    SELECT sum(mov.mov_monto) as total,count(mov.mov_monto) as cantidad , tmo.tmo_id as id ,tmo.tmo_nombre as nombre
+                    FROM tbl_tipo_movimiento tmo
+                    INNER JOIN tbl_movimientos mov ON tmo.tmo_id = mov.tmo_id
+                    WHERE 
+                    tmo.estado = true AND
+                    mov.estado = true AND
+                    tmo.tei_id = ? AND
+                    tmo.sed_id = ? AND
+                    mov.sed_id = ? AND
+                    mov.mov_fecha >= ? AND
+                    mov.mov_fecha <= ?
+                    GROUP BY tmo.tmo_id,tmo.tmo_nombre
+                    ORDER BY total;
+                    ", [
+                $id_tipo_egreso_ingreso,
+                $id_sede,
+                $id_sede,
+                $fecha_inicio->toDateString(),
+                $fecha_fin->toDateString(),
+                ]
+            );
+        }
+        
+        return response()->json($results,200);
     }
 
 }

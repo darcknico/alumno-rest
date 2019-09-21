@@ -33,7 +33,7 @@ class HomeController extends Controller
                 FROM ".$sequence." AS offs
                 ) d LEFT OUTER JOIN
                 tbl_pagos pag 
-                ON d.date = pag.pag_fecha and pag.sed_id = ?
+                ON d.date = pag.pag_fecha and pag.sed_id = ? and pag.estado = 1
             GROUP BY d.date
             order by fecha
                 ";

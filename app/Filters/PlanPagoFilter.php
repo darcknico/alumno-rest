@@ -93,14 +93,13 @@ class PlanPagoFilter{
         if(count($values)>0){
           foreach ($values as $key => $value) {
             if(strlen($value)>0){
-              $query = $query->where(function($query) use  ($value,$id_sede) {
+              $query = $query->where(function($query) use  ($value) {
                 $query->where('ppa_matricula_monto',$value)
                   ->orWhere('ppa_cuota_monto',$value)
-                  ->orWhereHas('inscripcion',function($q)use($value,$id_sede){
-                    $q->whereIn('alu_id',function($qt)use($value,$id_sede){
+                  ->orWhereHas('inscripcion',function($q)use($value){
+                    $q->whereIn('alu_id',function($qt)use($value){
                         $qt->select('alu_id')->from('tbl_alumnos')
                         ->where('estado',1)
-                        ->where('sed_id',$id_sede)
                         ->where(function($qtz) use  ($value){
                             $qtz->where('alu_nombre','like','%'.$value.'%')
                             ->orWhere('alu_apellido','like','%'.$value.'%')

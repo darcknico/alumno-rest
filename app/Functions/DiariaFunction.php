@@ -217,7 +217,8 @@ class DiariaFunction{
 			'sed_id' => $id_sede,
 			'estado' => 1,
 		])
-		->whereDate('fecha_inicio','>=',$fecha)
+		->whereMonth('fecha_inicio','=',$fecha->month)
+        ->whereYear('fecha_inicio','=',$fecha->year)
 		->orderBy('fecha_inicio','asc')
 		->get();
 		$saldo_anterior = 0;
@@ -234,6 +235,7 @@ class DiariaFunction{
 			$diaria = DiariaFunction::actualizar_diaria($diaria);
 			$saldo_anterior = $diaria->saldo;
 		}
+		return $diarias;
 	}
 
 	public static function actualizar_diaria(Diaria $diaria,$fecha = null){
@@ -290,24 +292,28 @@ class DiariaFunction{
 
 	public static function anterior(Diaria $diaria){
 		$id_sede = $diaria->id_sede;
-
+		$fecha = Carbon::parse($diaria->fecha_inicio);
         return Diaria::where([
             'estado' => 1,
             'sed_id' => $id_sede,
         ])
-        ->whereDate('fecha_inicio','<',$diaria->fecha_inicio)
+        ->whereDate('fecha_inicio','<',$fecha)
+        ->whereMonth('fecha_inicio','=',$fecha->month)
+        ->whereYear('fecha_inicio','=',$fecha->year)
         ->orderBy('fecha_inicio','desc')
         ->first();
 	}
 
 	public static function siguiente(Diaria $diaria){
 		$id_sede = $diaria->id_sede;
-
+		$fecha = Carbon::parse($diaria->fecha_inicio);
         return Diaria::where([
             'estado' => 1,
             'sed_id' => $id_sede,
         ])
-        ->whereDate('fecha_inicio','>',$diaria->fecha_inicio)
+        ->whereDate('fecha_inicio','>',$fecha)
+        ->whereMonth('fecha_inicio','=',$fecha->month)
+        ->whereYear('fecha_inicio','=',$fecha->year)
         ->orderBy('fecha_inicio','asc')
         ->first();
 	}

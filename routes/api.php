@@ -342,7 +342,10 @@ Route::group(['middleware' => 'auth:api'], function(){
 				});
 
 				Route::get('exportar','MovimientoController@exportar');
-				
+				Route::prefix('estadisticas')->group(function(){
+					Route::get('diarias','MovimientoController@estadisticas_diaria');
+					Route::get('tipos','MovimientoController@estadisticas_tipo');
+				});
 			});
 
 			Route::prefix('tipos_movimiento')->group(function(){

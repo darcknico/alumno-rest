@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Sede;
+use App\Models\Movimiento;
 
 use App\Functions\DiariaFunction;
 use Carbon\Carbon;
@@ -16,7 +17,7 @@ class DiariaRearmar extends Command
      *
      * @var string
      */
-    protected $signature = 'diaria:rearmar {id_sede}';
+    protected $signature = 'diaria:rearmar {id_sede=0}';
 
     /**
      * The console command description.
@@ -43,15 +44,43 @@ class DiariaRearmar extends Command
     public function handle()
     {
         $id_sede = $this->argument('id_sede');
-        if($id_diaria){
+        if( $id_sede>0 ){
             $sede = Sede::find($id_sede);
             if($sede){
-                DiariaFunction::actualizar($id_sede);
+                $most_old = Movimiento::where([
+                    'estado' => 1,
+                    'sed_id' => $sede->id,
+                ])->orderBy('fecha','asc')
+                ->first();
+                if($most_old){
+                    $pivot = Carbon::parse($most_old->fecha)->startOfMonth();
+                    $this->info('Sede: '.$sede->nombre." Fecha: ".$pivot->toDateString());
+                    $hoy = Carbon::now();
+                    while ( $pivot->isBefore($hoy) ) {
+                        $diarias = DiariaFunction::actualizar($sede->id,$pivot);
+                        $pivot = $pivot->addMonth();
+                        $this->info('Cantidad: '.count($diarias).' Siguiente: '.$pivot->toDateString());
+                    }
+                }
             }
         } else {
             $sedes = Sede::where('estado',1)->get();
             foreach ($sedes as $sede) {
-                DiariaFunction::actualizar($sede->id);
+                $most_old = Movimiento::where([
+                    'estado' => 1,
+                    'sed_id' => $sede->id,
+                ])->orderBy('fecha','asc')
+                ->first();
+                if($most_old){
+                    $pivot = Carbon::parse($most_old->fecha)->startOfMonth();
+                    $this->info('Sede: '.$sede->nombre." Fecha: ".$pivot->toDateString());
+                    $hoy = Carbon::now();
+                    while ( $pivot->isBefore($hoy) ) {
+                        $diarias = DiariaFunction::actualizar($sede->id,$pivot);
+                        $pivot = $pivot->addMonth();
+                        $this->info('Cantidad: '.count($diarias).' Siguiente: '.$pivot->toDateString());
+                    }
+                }
             }
             return $sedes;
         }
