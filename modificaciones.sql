@@ -247,3 +247,14 @@ CREATE TABLE `tbl_docente_materia` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
 */
+/*
+CREATE TABLE `sch_alumno`.`tbl_dias` ( `dia_id` INT NOT NULL AUTO_INCREMENT , `dia_nombre` VARCHAR(255) NOT NULL , PRIMARY KEY (`dia_id`)) ENGINE = InnoDB;
+INSERT INTO `tbl_dias` (`dia_id`, `dia_nombre`) VALUES (NULL, 'Domingo'), (NULL, 'Lunes'), (NULL, 'Martes'), (NULL, 'Miercoles'), (NULL, 'Jueves'), (NULL, 'Viernes'), (NULL, 'Sabado');
+CREATE TABLE `sch_alumno`.`tbl_comision_horario` ( `cho_id` INT NOT NULL AUTO_INCREMENT , `com_id` INT NOT NULL , `dia_id` INT NOT NULL , `cho_hora_inicial` TIME NOT NULL , `cho_hora_final` TIME NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`cho_id`)) ENGINE = InnoDB;
+
+CREATE TABLE `sch_alumno`.`tbl_aulas` ( `aul_id` INT NOT NULL AUTO_INCREMENT , `sed_id` INT NOT NULL , `aul_numero` INT NOT NULL , `aul_nombre` VARCHAR(255) NULL , `aul_capacidad` INT NOT NULL DEFAULT '0' , `created_at` TIMESTAMP NOT NULL , `updated_at` TIMESTAMP NOT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`aul_id`)) ENGINE = InnoDB;
+*/
+
+CREATE TABLE `sch_alumno`.`tbl_docente_contrato` ( `dco_id` INT NOT NULL AUTO_INCREMENT , `usu_id` INT NOT NULL , `tco_id` INT NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`dco_id`)) ENGINE = InnoDB;
+
+

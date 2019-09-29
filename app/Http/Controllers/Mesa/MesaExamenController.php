@@ -403,4 +403,98 @@ class MesaExamenController extends Controller
         return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 
+    public function materia_masivo_previa(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_mesa_examen = $request->route('id_mesa_examen',0);
+
+        $id_departamento = $request->query('id_departamento',0);
+        $id_carrera = $request->query('id_carrera',0);
+
+        $mesa_examen = MesaExamen::find($id_mesa_examen);
+
+        $carreras = Carrera::where([
+            'estado' => 1,
+        ])
+        ->when($id_departamento>0,function($q)use($id_departamento){
+            $q->where('id_departamento',$id_departamento);
+        })
+        ->when($id_carrera>0,function($q)use($id_carrera){
+            $q->where('id',$id_carrera);
+        })
+        ->whereNotNull('id_plan_estudio')
+        ->get()
+        ->pluck('id_plan_estudio')
+        ->toArray();
+        $existentes = MesaExamenMateria::where([
+            'estado' => 1,
+        ])
+        ->where('id_mesa_examen',$id_mesa_examen)
+        ->get()
+        ->pluck('id_materia')
+        ->toArray();
+
+        $materias = Materia::selectRaw('count(*) as total')
+        ->where('estado',1)
+        ->whereIn('id_plan_estudio',$carreras)
+        ->whereNotIn('id',$existentes)
+        ->groupBy('estado')
+        ->first();
+
+        return response()->json([
+            'total_carreras'=>count($carreras),
+            'total_materias'=>$materias->total??0,
+        ],200);
+    }
+
+    public function materia_masivo_asociar(Request $request){
+        $user = Auth::user();
+        $id_sede = $request->route('id_sede');
+        $id_mesa_examen = $request->route('id_mesa_examen');
+
+        $id_departamento = $request->query('id_departamento',0);
+        $id_carrera = $request->query('id_carrera',0);
+
+        $mesa_examen = MesaExamen::find($id_mesa_examen);
+
+        $carreras = Carrera::where([
+            'estado' => 1,
+        ])
+        ->when($id_departamento>0,function($q)use($id_departamento){
+            $q->where('id_departamento',$id_departamento);
+        })
+        ->when($id_carrera>0,function($q)use($id_carrera){
+            $q->where('id',$id_carrera);
+        })
+        ->whereNotNull('id_plan_estudio')
+        ->get()
+        ->pluck('id_plan_estudio')
+        ->toArray();
+        $existentes = MesaExamenMateria::where([
+            'estado' => 1,
+        ])
+        ->where('id_mesa_examen',$id_mesa_examen)
+        ->get()
+        ->pluck('id_materia')
+        ->toArray();
+
+        $materias = Materia::where('estado',1)
+        ->whereIn('id_plan_estudio',$carreras)
+        ->whereNotIn('id',$existentes)
+        ->get();
+
+        $fecha = Carbon::parse($mesa_examen->mes_fecha_inicio);
+        $salida = [];
+        foreach ($materias as $materia) {
+            $todo = new MesaExamenMateria;
+            $todo->id_mesa_examen = $id_mesa_examen;
+            $todo->id_carrera = $materia->planEstudio->id_carrera;
+            $todo->id_materia = $materia->id;
+            $todo->usu_id = $user->id;
+            $todo->fecha = $fecha;
+            $todo->save();
+            $salida[] = $salida;
+        }
+        return response()->json($salida,200);
+    }
+
 }

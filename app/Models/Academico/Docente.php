@@ -19,7 +19,7 @@ class Docente extends Model
 
     protected $with = [
     	'usuario.sedes',
-    	'tipo',
+    	'contratos',
     ];
 
 	protected $hidden = [
@@ -50,7 +50,11 @@ class Docente extends Model
 		return $this->hasOne('App\User','usu_id','usu_id');
 	}
 
-	public function tipo(){
-		return $this->hasOne('App\Models\Tipos\TipoContrato','tco_id','tco_id');
+	public function contratos(){
+		return $this->hasMany('App\Models\Academico\DocenteContrato','usu_id','usu_id')->where('estado',1);
+	}
+
+	public function carreras(){
+		return $this->hasOne('App\Models\Academico\DocenteMateria','usu_id','usu_id');
 	}
 }

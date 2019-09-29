@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use \DB;
 
 use Carbon\Carbon;
 use JasperPHP\JasperPHP; 
@@ -169,7 +170,7 @@ class InscripcionController extends Controller
 
     public function estadisticas(Request $request){
         $id_sede = $request->route('id_sede');
-        $totales = \DB::table('tbl_inscripciones')
+        $totales = DB::table('tbl_inscripciones')
         ->selectRaw('
             sum(if(tie_id=1,1,0)) as regular,
             sum(if(tie_id=2,1,0)) as egresado,
@@ -187,7 +188,7 @@ class InscripcionController extends Controller
             $totales['abandonado'] = 0;
         }
 
-        $totales_hoy = \DB::table('tbl_inscripciones')
+        $totales_hoy = DB::table('tbl_inscripciones')
         ->selectRaw('
             sum(if(tie_id=1,1,0)) as regular,
             sum(if(tie_id=2,1,0)) as egresado,
@@ -481,15 +482,6 @@ class InscripcionController extends Controller
         )->execute();
         
         $filename ='ficha_inscripcion-'.$inscripcion->alumno->documento;
-        /*
-        //header('Access-Control-Allow-Origin: *');
-        header('Content-Description: application/pdf');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition:attachment; filename=' . $filename . '.' . $ext);
-        readfile($output . '.' . $ext);
-        unlink($output. '.'  . $ext);
-        flush();
-        */
         return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
     }
 
@@ -516,15 +508,112 @@ class InscripcionController extends Controller
         )->execute();
         
         $filename ='constancia_alumno_regular-'.$inscripcion->alumno->documento;
-        /*
-        //header('Access-Control-Allow-Origin: *');
-        header('Content-Description: application/pdf');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition:attachment; filename=' . $filename . '.' . $ext);
-        readfile($output . '.' . $ext);
-        unlink($output. '.'  . $ext);
-        flush();
-        */
         return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
+    }
+
+    public function estadisticas_rendimientos(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_inscripcion = $request->route('id_inscripcion');
+        $anio = $request->query('anio',null);
+
+        $inscripcion = Inscripcion::find($id_inscripcion);
+
+        if(is_null($anio)){
+            $anio = Carbon::now()->year;
+        }
+        $current_date = $anio.'-1-1';
+        $sql = "
+            SELECT YEAR(d.date) as anio,
+                MONTH(d.date) as mes,
+                COALESCE(count(cae.cae_nota),0) as cantidad,
+                COALESCE(AVG(cae.cae_nota),0) as total
+                FROM (SELECT ? + INTERVAL seq month AS date 
+                    FROM seq_0_to_11 AS offs
+                ) d LEFT OUTER JOIN
+                tbl_comision_examen cex
+                ON MONTH(d.date )= MONTH(cex.cex_fecha) 
+                    AND YEAR(d.date) = YEAR(cex.cex_fecha)
+                    AND cex.estado = 1
+                left join 
+                    tbl_comision_examen_alumno cae on cae.cex_id = cex.cex_id
+                left join 
+                    tbl_comisiones com on cex.com_id = com.com_id
+                    AND com.estado = 1
+                    AND com.sed_id = ?
+                left join 
+                    tbl_comision_alumno cal on cal.com_id = com.com_id 
+                    AND cal.ins_id = ?
+            group by 1,2
+            order by 1,2
+                ";
+        $notas = DB::select($sql, [
+            $current_date,
+            $id_sede,
+            $id_inscripcion,
+        ]);
+
+        $sql = "
+            SELECT YEAR(d.date) as anio,
+                MONTH(d.date) as mes,
+                COALESCE(count(amn.amn_nota),0) as cantidad,
+                COALESCE(AVG(amn.amn_nota),0) as total
+                FROM (SELECT ? + INTERVAL seq month AS date 
+                    FROM seq_0_to_11 AS offs
+                ) d LEFT OUTER JOIN
+                tbl_alumno_materia_nota amn
+                ON MONTH(d.date )= MONTH(amn.amn_fecha) 
+                AND YEAR(d.date) = YEAR(amn.amn_fecha) 
+                AND amn.ins_id = ? 
+                AND amn.estado = 1
+            group by 1,2
+            order by 1,2
+                ";
+        $viejos = DB::select($sql, [
+            $current_date,
+            $id_inscripcion,
+        ]);
+
+        $sql = "
+            SELECT YEAR(d.date) as anio,
+                MONTH(d.date) as mes,
+                COALESCE(count(mam.mam_nota_final),0) as cantidad,
+                COALESCE(AVG(mam.mam_nota_final),0) as total
+                FROM (SELECT ? + INTERVAL seq month AS date 
+                    FROM seq_0_to_11 AS offs
+                ) d LEFT OUTER JOIN
+                tbl_mesa_materia mma
+                ON MONTH(d.date )= MONTH(mma.mma_fecha) 
+                AND YEAR(d.date) = YEAR(mma.mma_fecha)
+                AND mma.estado = 1
+                left join 
+                    tbl_mesa_alumno_materia mam on mam.mma_id = mma.mma_id 
+                    AND mam.ins_id = ?
+                    AND mam.estado = 1
+            group by 1,2
+            order by 1,2
+                ";
+        $nuevos = DB::select($sql, [
+            $current_date,
+            $id_inscripcion,
+        ]);
+
+        $mesas = [];
+        foreach ($viejos as $index => $viejo) {
+            $divisor = 2;
+            if($viejo->cantidad == 0 or $nuevos[$index]->cantidad == 0){
+                $divisor = 1;
+            }
+            $mesas[] = [
+                'total' => ($viejo->total + $nuevos[$index]->total)/$divisor,
+                'cantidad' => ($viejo->cantidad + $nuevos[$index]->cantidad),
+                'anio' => $viejo->anio,
+                'mes' => $viejo->mes,
+            ];
+        }
+
+        return response()->json([
+            'notas' => $notas,
+            'mesas' => $mesas,
+        ],200);
     }
 }

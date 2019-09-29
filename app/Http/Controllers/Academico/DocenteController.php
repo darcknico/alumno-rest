@@ -6,6 +6,8 @@ use App\User;
 use App\Models\Sede;
 use App\Models\UsuarioSede;
 use App\Models\Academico\Docente;
+use App\Models\Academico\DocenteContrato;
+use App\Models\Tipos\TipoContrato;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -26,6 +28,7 @@ class DocenteController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
+
         $registros = Docente::whereHas('usuario',function($q){
             $q->where('id_tipo_usuario',8);
         });
@@ -33,6 +36,7 @@ class DocenteController extends Controller
         $estado = $request->query('estado',true);
         $id_sede = $request->query('id_sede',0);
         $id_tipo_contrato = $request->query('id_tipo_contrato',0);
+        $id_carrera = $request->query('id_carrera',0);
 
         $registros = $registros
             ->when($id_sede>0,function($q)use($id_sede){
@@ -48,7 +52,14 @@ class DocenteController extends Controller
                 });
             })
             ->when($id_tipo_contrato>0,function($q)use($id_tipo_contrato){
-                return $q->where('id_tipo_contrato',$id_tipo_contrato);
+                $q->whereHas('contratos',function($qt)use($id_tipo_contrato){
+                    return $q->where('id_tipo_contrato',$id_tipo_contrato);
+                });
+            })
+            ->when($id_carrera>0,function($q)use($id_carrera){
+                return $q->whereHas('carreras',function($qt)use($id_carrera){
+                    $qt->where('estado',1)->where('id_carrera',$id_carrera);
+                });
             });
 
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
@@ -128,7 +139,6 @@ class DocenteController extends Controller
         $id_tipo_documento = $request->input('id_tipo_documento');
 
         $titulo = $request->input('titulo');
-        $id_tipo_contrato = $request->input('id_tipo_contrato');
         $cuit = $request->input('cuit');
         $observaciones = $request->input('observaciones');
 
@@ -160,10 +170,17 @@ class DocenteController extends Controller
                 $asociacion->save();
             }
 
+            $contratos = $request->input('contratos',[]);
+            foreach ($contratos as $contrato) {
+                $cont = new DocenteContrato;
+                $cont->id_usuario = $todo->id;
+                $cont->id_tipo_contrato = $contrato['id_tipo_contrato'];
+                $cont->save();
+            }
+
             $docente = new Docente;
             $docente->id_usuario = $todo->id;
             $docente->titulo = $titulo;
-            $docente->id_tipo_contrato = $id_tipo_contrato;
             $docente->cuit = $cuit;
             $docente->observaciones = $observaciones;
             $docente->save();
@@ -219,7 +236,6 @@ class DocenteController extends Controller
         $id_tipo_documento = $request->input('id_tipo_documento');
 
         $titulo = $request->input('titulo');
-        $id_tipo_contrato = $request->input('id_tipo_contrato');
         $cuit = $request->input('cuit');
         $observaciones = $request->input('observaciones');
 
@@ -238,7 +254,6 @@ class DocenteController extends Controller
             $user->save();
 
             $docente->titulo = $titulo;
-            $docente->id_tipo_contrato = $id_tipo_contrato;
             $docente->cuit = $cuit;
             $docente->observaciones = $observaciones;
             $docente->save();
@@ -263,5 +278,57 @@ class DocenteController extends Controller
         $usuario->estado = 0;
         $usuario->save();
         return response()->json($docente,200);
+    }
+
+    public function contrato_seleccionar(Request $request){
+      $user = Auth::user();
+      $id_tipo_contrato = $request->route('id_tipo_contrato');
+      $id_usuario = $request->route('id_usuario');
+
+      $docente = Docente::find($id_usuario);
+      $contrato = TipoContrato::find($id_tipo_contrato);
+      if($docente and $contrato){
+        $todo = DocenteContrato::where([
+          'estado' => 1,
+          'tco_id' => $id_tipo_contrato,
+          'usu_id' => $id_usuario,
+        ])->first();
+        if($todo){
+          $todo->save();
+        } else {
+            $todo = new DocenteContrato;
+            $todo->id_usuario = $id_usuario;
+            $todo->id_tipo_contrato = $id_tipo_contrato;
+            $todo->save();
+        }
+        return response()->json($todo,200);
+      }
+      return response()->json([
+          'error'=>'No se han encontrado al Docente o tipo de contrato',
+      ],403);
+    }
+
+    public function contrato_desasociar(Request $request){
+      $user = Auth::user();
+      $id_tipo_contrato = $request->route('id_tipo_contrato');
+      $id_usuario = $request->route('id_usuario');
+
+      $docente = Docente::find($id_usuario);
+      $contrato = TipoContrato::find($id_tipo_contrato);
+      if($docente and $contrato){
+          $todo = DocenteContrato::where([
+              'estado' => 1,
+              'tco_id' => $id_tipo_contrato,
+              'usu_id' => $id_usuario,
+          ])->first();
+          if($todo){
+              $todo->estado = 0;
+              $todo->save();
+          }
+          return response()->json($todo,200);
+      }
+      return response()->json([
+          'error'=>'No se han encontrado al Docente o tipo de contrato',
+      ],403);
     }
 }
