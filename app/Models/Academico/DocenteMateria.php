@@ -18,6 +18,7 @@ class DocenteMateria extends Model
     protected $with = [
     	'materia.planEstudio',
     	'carrera',
+    	'cargo',
     ];
 
 	protected $hidden = [
@@ -26,6 +27,9 @@ class DocenteMateria extends Model
 		'usu_id',
 		'mat_id',
 		'car_id',
+		'tdc_id',
+		'dma_fecha_asignacion',
+		'dma_horas_catedra',
 	];
 
 	protected $maps = [
@@ -34,6 +38,9 @@ class DocenteMateria extends Model
 		'id_usuario' => 'usu_id',
 		'id_materia' => 'mat_id',
 		'id_carrera' => 'car_id',
+		'id_tipo_docente_cargo' => 'tdc_id',
+		'fecha_asignacion' => 'dma_fecha_asignacion',
+		'horas_catedra' => 'dma_horas_catedra',
 	];
 
 	protected $appends = [
@@ -42,6 +49,9 @@ class DocenteMateria extends Model
 		'id_usuario',
 		'id_materia',
 		'id_carrera',
+		'id_tipo_docente_cargo',
+		'fecha_asignacion',
+		'horas_catedra',
 	];
 
 	public function sede(){
@@ -62,5 +72,9 @@ class DocenteMateria extends Model
 
 	public function carrera(){
 		return $this->hasOne('App\Models\Carrera','car_id','car_id');
+	}
+
+	public function cargo(){
+		return $this->hasOne('App\Models\Tipos\TipoDocenteCargo','tdc_id','tdc_id');
 	}
 }

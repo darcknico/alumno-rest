@@ -137,13 +137,12 @@ class AlumnoController extends Controller
         $q = clone($registros->getQuery());
         $total_count = count($q->get());
         if($length>0){
-        $registros = $registros->limit($length);
-        if($start>1){
-            $registros = $registros->offset($start)->get();
-        } else {
-            $registros = $registros->get();
-        }
-
+            $registros = $registros->limit($length);
+            if($start>1){
+                $registros = $registros->offset($start)->get();
+            } else {
+                $registros = $registros->get();
+            }
         } else {
             $registros = $registros->get();
         }
@@ -479,17 +478,15 @@ class AlumnoController extends Controller
     {
         $user = Auth::user();
         $id_alumno = $request->alumno;
-        $alumno = Alumno::find($id_alumno);
-        $alumno->usu_id_baja = $user->id;
-        $alumno->deleted_at = Carbon::now();
-        $alumno->estado = 0;
-        $alumno->save();
-
         $inscripciones = Inscripcion::where([
             'alu_id' => $id_alumno,
             'estado' => 1,
         ])
         ->get();
+        if(count($inscripciones)>0){
+            return response()->json(['error'=>'El alumno posee inscripciones activas, no puede ser eliminado.'],403);
+        }
+        /*
         foreach ($inscripciones as $inscripcion) {
             $inscripcion = Inscripcion::find($inscripcion->id);
             $inscripcion->estado = 0;
@@ -539,7 +536,9 @@ class AlumnoController extends Controller
                 $plan_pago->save();
             }
         }
+        */
 
+        /*
         $comisiones = ComisionAlumno::where([
             'alu_id' => $id_alumno,
             'estado' => 1,
@@ -561,7 +560,6 @@ class AlumnoController extends Controller
             $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
             $comision->save();
         }
-        /*
         $sedes = AlumnoSede::where([
             'alu_id' => $id_alumno,
             'estado' => 1,
@@ -572,6 +570,11 @@ class AlumnoController extends Controller
             $sede->save();
         }
         */
+        $alumno = Alumno::find($id_alumno);
+        $alumno->usu_id_baja = $user->id;
+        $alumno->deleted_at = Carbon::now();
+        $alumno->estado = $alumno->estado == 1?0:1;
+        $alumno->save();
         return response()->json($alumno,200);
     }
 
@@ -758,7 +761,6 @@ class AlumnoController extends Controller
         $id_alumno  = $request->route('id_alumno');
         $todo = Inscripcion::with('sede','usuario','beca','carrera.departamento','plan_estudio','tipo_estado','modalidad')
         ->where([
-            'estado' => 1,
             'alu_id' => $id_alumno,
         ])
         ->when($id_sede>0,function($q)use($id_sede){

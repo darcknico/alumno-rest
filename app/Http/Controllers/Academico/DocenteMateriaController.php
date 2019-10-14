@@ -32,6 +32,7 @@ class DocenteMateriaController extends Controller
         $id_materia = $request->query('id_materia',0);
         $id_carrera = $request->query('id_carrera',0);
         $id_departamento = $request->query('id_departamento',0);
+        $id_tipo_docente_cargo = $request->query('id_tipo_docente_cargo',0);
 
         $registros = $registros
             ->when($id_sede>0,function($q)use($id_sede){
@@ -50,6 +51,9 @@ class DocenteMateriaController extends Controller
                 return $q->whereHas('carrera',function($qt)use($id_departamento){
                     $qt->where('id_departamento',$id_departamento);
                 });
+            })
+            ->when($id_tipo_docente_cargo>0,function($q)use($id_tipo_docente_cargo){
+                return $q->where('id_tipo_docente_cargo',$id_tipo_docente_cargo);
             });
 
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
@@ -114,6 +118,7 @@ class DocenteMateriaController extends Controller
           'id_sede' => 'required | integer',
           'id_usuario' => 'required | integer',
           'id_materia' => 'required | integer',
+          'fecha_asignacion' => 'nullable | date',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -121,6 +126,9 @@ class DocenteMateriaController extends Controller
         $id_sede = $request->input('id_sede');
         $id_usuario = $request->input('id_usuario');
         $id_materia = $request->input('id_materia');
+        $id_tipo_docente_cargo = $request->input('id_tipo_docente_cargo',null);
+        $fecha_asignacion = $request->input('fecha_asignacion',null);
+        $horas_catedra = $request->input('horas_catedra',null);
 
         $materia = Materia::find($id_materia);
         if(!$materia){
@@ -142,6 +150,9 @@ class DocenteMateriaController extends Controller
         $todo->id_usuario = $id_usuario;
         $todo->id_materia = $id_materia;
         $todo->id_carrera = $materia->planEstudio->id_carrera;
+        $todo->id_tipo_docente_cargo = $id_tipo_docente_cargo;
+        $todo->fecha_asignacion = $fecha_asignacion;
+        $todo->horas_catedra = $horas_catedra;
         $todo->save();
 
         return response()->json($todo,200);
@@ -168,7 +179,23 @@ class DocenteMateriaController extends Controller
      */
     public function update(Request $request)
     {
+        $validator = Validator::make($request->all(),[
+          'fecha_asignacion' => 'nullable | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+
         $todo = DocenteMateria::find($request->docenteMateria);
+
+        $id_tipo_docente_cargo = $request->input('id_tipo_docente_cargo',null);
+        $fecha_asignacion = $request->input('fecha_asignacion',null);
+        $horas_catedra = $request->input('horas_catedra',null);
+
+        $todo->id_tipo_docente_cargo = $id_tipo_docente_cargo;
+        $todo->fecha_asignacion = $fecha_asignacion;
+        $todo->horas_catedra = $horas_catedra;
+        $todo->save();
         return $todo ;
     }
 

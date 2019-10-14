@@ -45,6 +45,11 @@ Route::group(['middleware' => 'auth:api'], function(){
 		'docentes' => 'Academico\DocenteController',
 		'chat' => 'Ajustes\ChatController',
 	]);
+	Route::apiResource('obligaciones','ObligacionController',[
+		'parameters' => [
+			'obligaciones' => 'obligacion',
+		],
+	]);
 	Route::prefix('docentes')->group(function () {
 		Route::group([
 			'prefix'=> '{id_usuario}',
@@ -83,7 +88,6 @@ Route::group(['middleware' => 'auth:api'], function(){
     			'imagenes' => 'PlantillaImagenController',
 				'aulas' => 'Academico\AulaController',
 			]);
-			
 			Route::apiResource('comisiones/alumnos','Comision\ComisionAlumnoController',[
 				'as' => 'comisionAlumno',
 				'parameters' => [
@@ -571,6 +575,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 							Route::put('','Mesa\MesaExamenMateriaDocenteController@update');
 							Route::delete('','Mesa\MesaExamenMateriaDocenteController@destroy');
 						});
+
+					    Route::get('reportes','Mesa\MesaExamenMateriaDocenteController@reporte_docente_mesa');
 					});
 				});
 			});
@@ -680,6 +686,11 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 			Route::post('correlativas/{correlatividad_id_materia}','MateriaController@correlatividad_asociar')->where('correlatividad_id_materia','[0-9]+');
 			Route::delete('correlativas/{correlatividad_id_materia}','MateriaController@correlatividad_desasociar')->where('correlatividad_id_materia','[0-9]+');
+
+			Route::prefix('estadisticas')->group(function(){
+				Route::get('historico','MateriaController@estadisticas_historico');
+				Route::get('anual','MateriaController@estadisticas_anual');
+			});
 		});
 	});
 
@@ -788,6 +799,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 	Route::prefix('tipos')->group(function () {
 		Route::get('contratos','TipoController@contratos');
 		Route::get('docentes/mesas','TipoController@mesa_docente');
+		Route::get('docentes/cargos','TipoController@docente_cargo');
 	});
 
 

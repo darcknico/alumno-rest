@@ -24,6 +24,7 @@ class MesaExamenMateriaFilter{
         $fecha_ini = $request->query('fecha_ini',null);
         $fecha_fin = $request->query('fecha_fin',null);
         $cierre = $request->query('cierre',null);
+        $id_usuario = $request->query('id_usuario',0);
 
         $query = $query
             ->when($id_departamento>0,function($q)use($id_departamento){
@@ -55,6 +56,11 @@ class MesaExamenMateriaFilter{
                 } else {
                     return $q->whereNull('fecha_cierre');
                 }
+            })
+            ->when($id_usuario>0,function($q)use($id_usuario){
+                $q->whereHas('docentes',function($qt)use($id_usuario){
+                    $qt->where('id_usuario',$id_usuario)->where('estado',1);
+                });
             });
             
         $values = explode(" ", $search);

@@ -19,6 +19,7 @@ use App\Models\AsistenciaAlumno;
 use App\Models\TipoInscripcionEstado;
 
 use App\Functions\DiariaFunction;
+use App\Filters\InscripcionFilter;
 
 use App\Exports\InscripcionExport;
 use Illuminate\Support\Facades\Storage;
@@ -68,56 +69,8 @@ class InscripcionController extends Controller
         $anio_inicial = $request->query('anio_inicial',0);
         $anio_final = $request->query('anio_final',0);
 
-        $registros = $registros
-            ->when($id_departamento>0,function($q)use($id_departamento){
-                $carreras = Carrera::where([
-                    'dep_id' => $id_departamento,
-                    'estado' => 1,
-                ])->pluck('car_id')->toArray();
-                return $q->whereIn('car_id',$carreras);
-            })
-            ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->where('car_id',$id_carrera);
-            })
-            ->when($id_beca>0,function($q)use($id_beca){
-                return $q->where('bec_id',$id_beca);
-            })
-            ->when($id_tipo_inscripcion_estado>0,function($q)use($id_tipo_inscripcion_estado){
-                return $q->where('tie_id',$id_tipo_inscripcion_estado);
-            })
-            ->when($anio_inicial>0,function($q)use($anio_inicial){
-                return $q->where('anio','>=',$anio_inicial);
-            })
-            ->when($anio_final>0,function($q)use($anio_final){
-                return $q->where('anio','<=',$anio_final);
-            });
-        $values = explode(" ", $search);
-        if(count($values)>0){
-            foreach ($values as $key => $value) {
-              if(strlen($value)>0){
-                $registros = $registros->where(function($query) use  ($value,$id_sede) {
-                  $query
-                    ->whereIn('car_id',function($q)use($value,$id_sede){
-                        $q->select('car_id')->from('tbl_carreras')
-                        ->where('sed_id',$id_sede)
-                        ->where(function($qt) use  ($value){
-                            $qt->where('car_nombre','like','%'.$value.'%')
-                            ->orWhere('car_nombre_corto','like','%'.$value.'%');
-                        });
-                    })
-                    ->orWhereIn('alu_id',function($q)use($value,$id_sede){
-                        $q->select('alu_id')->from('tbl_alumnos')
-                        ->where('sed_id',$id_sede)
-                        ->where(function($qt) use  ($value){
-                            $qt->where('alu_nombre','like','%'.$value.'%')
-                            ->orWhere('alu_apellido','like','%'.$value.'%')
-                            ->orWhere('alu_documento',$value);
-                        });
-                    });
-                });
-              }
-            }
-        }
+        $registros = InscripcionFilter::index($request,$registros);
+
         if(strlen($sort)>0){
         $registros = $registros->orderBy($sort,$order);
         } else {
@@ -153,18 +106,24 @@ class InscripcionController extends Controller
         $id_tipo_inscripcion_estado = $request->query('id_tipo_inscripcion_estado',0);
         $anio_inicial = $request->query('anio_inicial',0);
         $anio_final = $request->query('anio_final',0);
+        $fecha_inicial = $request->query('fecha_inicial',"");
+        $fecha_final = $request->query('fecha_final',"");
 
         $fecha = Carbon::now()->format('d.m.Y');
 
         return (new InscripcionExport(
             $id_sede,
-            $search,
-            $id_departamento,
-            $id_carrera,
-            $id_beca,
-            $id_tipo_inscripcion_estado,
-            $anio_inicial,
-            $anio_final
+            [
+                'search' => $search,
+                'id_departamento' => $id_departamento,
+                'id_carrera' => $id_carrera,
+                'id_beca' => $id_beca,
+                'id_tipo_inscripcion_estado' => $id_tipo_inscripcion_estado,
+                'anio_inicial' => $anio_inicial,
+                'anio_final' => $anio_final,
+                'fecha_inicial' => $fecha_inicial,
+                'fecha_final' => $fecha_final,
+            ]
         ))->download('inscripciones'.$fecha.'.xlsx');
     }
 
@@ -325,15 +284,14 @@ class InscripcionController extends Controller
         $user = Auth::user();
         $id_inscripcion = $request->route('id_inscripcion');
 
-        $inscripcion = Inscripcion::find($id_inscripcion);
-        $inscripcion->estado = 0;
-        $inscripcion->save();
-
         $planes_pago = PlanPago::where([
             'ins_id' => $id_inscripcion,
             'estado' => 1,
         ])->get();
-
+        if(count($planes_pago)>0){
+            return response()->json(['error'=>'La inscripción posee planes de pago activas, no puede ser eliminado.'],403);
+        }
+        /*
         foreach ($planes_pago as $plan_pago) {
             $plan_pago = PlanPago::find($plan_pago->id);
             $pagos = Pago::where('id_plan_pago',$plan_pago)->where('estado',1)->get();
@@ -394,6 +352,10 @@ class InscripcionController extends Controller
             $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
             $comision->save();
         }
+        */
+        $inscripcion = Inscripcion::find($id_inscripcion);
+        $inscripcion->estado = 0;
+        $inscripcion->save();
         return response()->json($inscripcion,200);
     }
 
@@ -401,7 +363,6 @@ class InscripcionController extends Controller
         $id_inscripcion = $request->route('id_inscripcion');
 
         $planes_pago = PlanPago::where([
-            'estado' => 1,
             'ins_id' => $id_inscripcion,
         ])->orderBy('anio','desc')
         ->get();

@@ -62,6 +62,7 @@ class ComisionController extends Controller
         $id_materia = $request->query('id_materia',0);
         $anio = $request->query('anio',null);
         $cerrado = $request->query('cerrado',null);
+        $id_usuario = $request->query('id_usuario',0);
 
         $registros = $registros
             ->when($id_departamento>0,function($q)use($id_departamento){
@@ -84,7 +85,14 @@ class ComisionController extends Controller
                 return $q->where('cerrado',$cerrado);
             })
             ->when($user->id_tipo_usuario == 8,function($q)use($user){
-                return $q->where('id_usuario',$user->id);
+                $q->whereHas('docentes',function($qt)use($user){
+                    $qt->where('id_usuario',$user->id)->where('estado',1);
+                });
+            })
+            ->when($id_usuario>0,function($q)use($id_usuario){
+                $q->whereHas('docentes',function($qt)use($id_usuario){
+                    $qt->where('id_usuario',$id_usuario)->where('estado',1);
+                });
             });
         $values = explode(" ", $search);
         if(count($values)>0){
@@ -184,7 +192,10 @@ class ComisionController extends Controller
         $responsable_nombre = $request->input('responsable_nombre');
         $responsable_apellido = $request->input('responsable_apellido');
         $id_modalidad = $request->input('id_modalidad',1);
-        $docentes = $request->input('docentes');
+        $docentes = $request->input('docentes',[]);
+        if(is_null($docentes)){
+            $docentes = [];
+        }
         $materia = Materia::find($id_materia);
         if(!$materia){
             return response()->json(['error'=>'La materia no fue encontrada.'],404);

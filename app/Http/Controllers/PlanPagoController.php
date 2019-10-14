@@ -872,6 +872,11 @@ class PlanPagoController extends Controller
     $sede->pago_numero = $numero;
     $sede->save();
 
+    $obligacion_matricula = Obligacion::where([
+      'ppa_id'=>$id_plan_pago,
+      'tob_id' => 10,
+    ])->first();
+
     $parcial = new ObligacionPago;
     $parcial->monto = $monto;
     $parcial->id_obligacion = $obligacion_matricula->id;
@@ -922,7 +927,11 @@ class PlanPagoController extends Controller
 
     $plan_pago = PlanPago::find($id_plan_pago);
 
-    $pagos = Pago::where('id_plan_pago',$plan_pago)->where('estado',1)->get();
+    $pagos = Pago::where('id_plan_pago',$id_plan_pago)->where('estado',1)->get();
+    if(count($pagos)>0){
+        return response()->json(['error'=>'El plan de pago posee pagos sin eliminar, no puede ser eliminado.'],403);
+    }
+    /*
     foreach ($pagos as $pago) {
       $pago = Pago::find($pago->id);
       $pago->estado = 0;
@@ -952,7 +961,7 @@ class PlanPagoController extends Controller
         'estado' => 0
       ]);
     }
-
+    */
     $plan_pago->estado = 0;
     $plan_pago->usu_id_baja = $user->id;
     $plan_pago->deleted_at = Carbon::now();

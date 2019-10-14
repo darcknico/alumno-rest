@@ -52,7 +52,7 @@ class MesaExamenMateriaController extends Controller
         $id_sede = $request->route('id_sede');
         $id_carrera = $request->route('id_carrera',null);
         $id_materia = $request->route('id_materia',null);
-        $registros = MesaExamenMateria::with('carrera','materia.planEstudio')
+        $registros = MesaExamenMateria::with('carrera','materia.planEstudio','mesa_examen')
             ->whereHas('mesa_examen',function($q)use($id_sede){
                 $q->where([
                     'estado' => 1,

@@ -254,7 +254,27 @@ CREATE TABLE `sch_alumno`.`tbl_comision_horario` ( `cho_id` INT NOT NULL AUTO_IN
 
 CREATE TABLE `sch_alumno`.`tbl_aulas` ( `aul_id` INT NOT NULL AUTO_INCREMENT , `sed_id` INT NOT NULL , `aul_numero` INT NOT NULL , `aul_nombre` VARCHAR(255) NULL , `aul_capacidad` INT NOT NULL DEFAULT '0' , `created_at` TIMESTAMP NOT NULL , `updated_at` TIMESTAMP NOT NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`aul_id`)) ENGINE = InnoDB;
 */
-
+/*
 CREATE TABLE `sch_alumno`.`tbl_docente_contrato` ( `dco_id` INT NOT NULL AUTO_INCREMENT , `usu_id` INT NOT NULL , `tco_id` INT NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`dco_id`)) ENGINE = InnoDB;
+*/
+/*
+INSERT INTO `tbl_forma_pago` (`fpa_id`, `fpa_nombre`, `estado`) VALUES (NULL, 'mercadoPago', '1');
+*/
+/*
+CREATE TABLE `tbl_tipo_docente_cargo` (
+  `tdc_id` int(11) NOT NULL,
+  `tdc_nombre` varchar(255) COLLATE utf8_spanish_ci NOT NULL,
+  `estado` tinyint(1) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
 
+INSERT INTO `tbl_tipo_docente_cargo` (`tdc_id`, `tdc_nombre`, `estado`) VALUES
+(1, 'Titular', 1),
+(2, 'Adjunto', 1);
+ALTER TABLE `tbl_tipo_docente_cargo`
+  ADD PRIMARY KEY (`tdc_id`);
 
+ALTER TABLE `tbl_tipo_docente_cargo`
+  MODIFY `tdc_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+ALTER TABLE `tbl_docente_materia` ADD `tdc_id` INT NULL AFTER `car_id`, ADD `dma_fecha_asignacion` DATE NULL AFTER `tdc_id`, ADD `dma_horas_catedra` INT NULL DEFAULT '0' AFTER `dma_fecha_asignacion`;
+*/

@@ -32,18 +32,24 @@ class AlumnoSedeController extends Controller
         ->where([
             'estado' => 1,
         ]);
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('created_at','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
+        
         $id_sede = $request->query('id_sede',0);
+        $id_alumno = $request->query('id_alumno',0);
+        $documento = $request->query('documento',0);
 
         $registros = $registros
             ->when($id_sede>0,function($q)use($id_sede){
                 return $q->where('id_sede',$id_sede)->whereHas('alumno',function($qt)use($id_sede){
                   $qt->where('id_sede','!=',$id_sede);
                 });
+            })
+            ->when($id_alumno>0,function($q)use($id_alumno){
+              $q->where('id_alumno',$id_alumno);
+            })
+            ->when($documento>0,function($q)use($documento){
+              $q->whereHas('alumno',function($qt)use($documento){
+                $qt->where('documento',$documento);
+              });
             });
         $values = explode(" ", $search);
         if(count($values)>0){
@@ -56,6 +62,11 @@ class AlumnoSedeController extends Controller
                 });
               }
             }
+        }
+        if( strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $todo = $registros->orderBy('created_at','desc')
+            ->get();
+            return response()->json($todo,200);
         }
         if(strlen($sort)>0){
         $registros = $registros->orderBy($sort,$order);

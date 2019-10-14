@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Carbon\Carbon;
+use JasperPHP\JasperPHP;
+
+use App\Filters\MesaExamenMateriaDocenteFilter;
 
 class MesaExamenMateriaDocenteController extends Controller
 {
@@ -21,19 +25,13 @@ class MesaExamenMateriaDocenteController extends Controller
     public function index(Request $request)
     {
         $id_sede = $request->route('id_sede');
-        $search = $request->query('search','');
         $sort = $request->query('sort','');
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
+        $search = $request->query('search',"");
 
-        $id_departamento = $request->query('id_departamento',0);
-        $id_carrera = $request->query('id_carrera',0);
-        $id_materia = $request->query('id_materia',0);
-        $id_mesa_examen = $request->query('id_mesa_examen',0);
-        $id_usuario = $request->query('id_usuario',0);
-
-        $registros = MesaExamenMateriaDocente::with('mesa_examen_materia.materia','docente')
+        $registros = MesaExamenMateriaDocente::with('mesa_examen_materia.materia','mesa_examen_materia.mesa_examen','docente')
             ->whereHas('mesa_examen_materia',function($q)use($id_sede){
                 $q->whereHas('mesa_examen',function($qt)use($id_sede){
                     $qt->where([
@@ -47,54 +45,12 @@ class MesaExamenMateriaDocenteController extends Controller
             'estado' => 1,
         ]);
 
-        $registros = $registros
-            ->when($id_departamento>0,function($q)use($id_departamento){
-                $carreras = Carrera::where([
-                    'dep_id' => $id_departamento,
-                    'estado' => 1,
-                ])->pluck('car_id')->toArray();
-                return $q->whereHas('mesa_examen_materia',function($qt)use($carreras){
-                    $qt->whereIn('car_id',$carreras);
-                });
-            })
-            ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->whereHas('mesa_examen_materia',function($qt)use($id_carrera){
-                    $qt->where('car_id',$id_carrera);
-                });
-            })
-            ->when($id_materia>0,function($q)use($id_materia){
-                return $q->whereHas('mesa_examen_materia',function($qt)use($id_materia){
-                    $qt->where('mat_id',$id_carrera);
-                });
-            })
-            ->when($id_mesa_examen>0,function($q)use($id_mesa_examen){
-                return $q->where('id_mesa_examen',$id_mesa_examen);
-            })
-            ->when($id_usuario>0,function($q)use($id_usuario){
-                return $q->whereHas('docentes',function($qt)use($id_usuario){
-                    $qt->where('id_usuario',$id_usuario);
-                });
-            });
+        $registros = MesaExamenMateriaDocenteFilter::index($request,$registros);
         
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('created_at','desc')
             ->get();
             return response()->json($todo,200);
-        }
-
-        $values = explode(" ", $search);
-        if(count($values)>0){
-            foreach ($values as $key => $value) {
-                if(strlen($value)>0){
-                    $registros = $registros->where(function($query) use  ($value) {
-                        $query->whereHas('usuario',function($q)use($value){
-                            $q->where('nombre','like','%'.$value.'%')
-                            ->orWhere('apellido','like','%'.$value.'%')
-                            ->orWhere('documento','like','%'.$value.'%');
-                        });
-                    });
-                }
-            }
         }
 
         $sql = $registros->toSql();
@@ -230,5 +186,57 @@ class MesaExamenMateriaDocenteController extends Controller
         $todo->save();
 
         return response()->json($todo,200);
+    }
+
+
+    public function reporte_docente_mesa(Request $request){
+        $id_sede = $request->route('id_sede');
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(),[
+            'id_usuario' => 'required | integer',
+            'fecha_inicial' => 'required | date',
+            'fecha_final' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $id_usuario = $request->query('id_usuario');
+        $fecha_inicial = Carbon::parse($request->query('fecha_inicial'));
+        $fecha_final = Carbon::parse($request->query('fecha_final'));
+        $docente = Docente::find($id_usuario);
+
+        $diff = $fecha_inicial->diffInMonths($fecha_final);
+        $periodo = "";
+        if($diff>0){
+            $periodo = $fecha_inicial->formatLocalized('%B')." / ".$fecha_final->formatLocalized('%B')." ".$fecha_inicial->year;
+
+        } else {
+            $periodo = $fecha_inicial->formatLocalized('%B')." ".$fecha_inicial->year;
+        }
+
+        $jasper = new JasperPHP;
+        $input = storage_path("app/reportes/alumno_docente_mesa.jasper");
+        $output = storage_path("app/reportes/".uniqid());
+        $ext = "pdf";
+
+        $jasper->process(
+            $input,
+            $output,
+            [$ext],
+            [
+                'REPORT_LOCALE' => 'es_AR',
+                'id_usuario' => $id_usuario,
+                'fecha_inicial' => $fecha_inicial->toDateString(),
+                'fecha_final' => $fecha_final->toDateString(),
+                'periodo' => $periodo,
+                'id_sede' => $id_sede,
+                'logo' => storage_path("app/images/logo_2.png"),
+            ],
+            \Config::get('database.connections.mysql')
+        )->execute();
+        
+        $filename = $docente->usuario->apellido.' '.$docente->usuario->nombre.$ext;
+        return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 }

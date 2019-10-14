@@ -106,4 +106,7 @@ class Comision extends Model
     return $this->hasMany('App\Models\Comision\Examen','com_id','com_id');
   }
 
+  public function docentes(){
+    return $this->hasMany('App\Models\Comision\Docente','com_id','com_id');
+  }
 }
