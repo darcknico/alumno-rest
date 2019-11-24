@@ -354,7 +354,6 @@ class MovimientoController extends Controller{
                     tmo.estado = true AND
                     mov.estado = true AND
                     tmo.tei_id = ? AND
-                    tmo.sed_id = ? AND
                     mov.sed_id = ? AND
                     mov.mov_fecha >= ? AND
                     mov.mov_fecha <= ?
@@ -363,7 +362,6 @@ class MovimientoController extends Controller{
                     LIMIT ?;
                     ", [
                 $id_tipo_egreso_ingreso,
-                $id_sede,
                 $id_sede,
                 $fecha_inicio->toDateString(),
                 $fecha_fin->toDateString(),
@@ -379,7 +377,6 @@ class MovimientoController extends Controller{
                     tmo.estado = true AND
                     mov.estado = true AND
                     tmo.tei_id = ? AND
-                    tmo.sed_id = ? AND
                     mov.sed_id = ? AND
                     mov.mov_fecha >= ? AND
                     mov.mov_fecha <= ?
@@ -388,7 +385,6 @@ class MovimientoController extends Controller{
                     ", [
                 $id_tipo_egreso_ingreso,
                 $id_sede,
-                $id_sede,
                 $fecha_inicio->toDateString(),
                 $fecha_fin->toDateString(),
                 ]
@@ -396,6 +392,67 @@ class MovimientoController extends Controller{
         }
         
         return response()->json($results,200);
+    }
+
+    public function estadisticas_mensual(Request $request){
+        $id_sede = intval($request->route('id_sede'));
+        $validator = Validator::make($request->all(),[
+            'fecha' => 'nullable | date',
+            'id_tipo_egreso_ingreso' => 'nullable | integer',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $id_tipo_egreso_ingreso = intval($request->query('id_tipo_egreso_ingreso',1));
+        $fecha = $request->query('fecha',null);
+        if(is_null($fecha)){
+            $fecha = Carbon::now();
+        } else {
+            $fecha = Carbon::parse($fecha);
+        }
+
+        $fecha_inicio = $fecha->startOfMonth()->toDateString();
+        $fecha_fin = $fecha->endOfMonth()->toDateString();
+        $results = DB::select("
+                SELECT 
+                    sum(mov.mov_monto) as total,
+                    count(mov.mov_monto) as cantidad,
+                    sum(if(mov.tmo_id = 1,mov.mov_monto,0)) as cuota_total,
+                    sum(if(mov.tmo_id = 1,1,0)) as cuota_cantidad,
+                    sum(if(mov.tmo_id = 2,mov.mov_monto,0)) as matricula_total,
+                    sum(if(mov.tmo_id = 2,1,0)) as matricula_cantidad,
+                    sum(if(mov.tmo_id != 1 and mov.tmo_id != 2,mov.mov_monto,0)) as otros_total,
+                    sum(if(mov.tmo_id != 1 and mov.tmo_id != 2,1,0)) as otros_cantidad
+                FROM tbl_tipo_movimiento tmo
+                INNER JOIN tbl_movimientos mov ON tmo.tmo_id = mov.tmo_id
+                WHERE 
+                tmo.estado = true AND
+                mov.estado = true AND
+                mov.tei_id = ? AND
+                mov.sed_id = ? AND
+                mov.mov_fecha >= ? AND
+                mov.mov_fecha <= ?
+                GROUP BY mov.estado;
+                ", [
+            $id_tipo_egreso_ingreso,
+            $id_sede,
+            $fecha_inicio,
+            $fecha_fin,
+            ]
+        );
+        if(count($results)>0){
+            $results = $results[0];
+        }
+        return response()->json([
+            'total' => $results->total??0,
+            'cantidad' => $results->cantidad??0,
+            'cuota_total' => $results->cuota_total??0,
+            'cuota_cantidad' => $results->cuota_cantidad??0,
+            'matricula_total' => $results->matricula_total??0,
+            'matricula_cantidad' => $results->matricula_cantidad??0,
+            'otros_total' => $results->otros_total??0,
+            'otros_cantidad' => $results->otros_cantidad??0,
+        ],200);
     }
 
 }

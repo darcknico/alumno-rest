@@ -2,6 +2,9 @@
 
 namespace App\Filters;
 
+use App\Models\Carrera;
+use App\Models\Inscripcion;
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +26,7 @@ class PlanPagoFilter{
           $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
           $anio = $request->query('anio',0);
           $deudores = $request->query('deudores',0); //0 TODOS - 1 SI - 2 NO
+          $id_tipo_inscripcion_estado = $request->query('id_tipo_inscripcion_estado',null); //0 TODOS - 1 SI - 2 NO
 
           return PlanPagoFilter::fill([
               'search' => $search,
@@ -32,6 +36,7 @@ class PlanPagoFilter{
               'id_tipo_materia_lectivo' => $id_tipo_materia_lectivo,
               'anio' => $anio,
               'deudores' => $deudores,
+              'id_tipo_inscripcion_estado' => $id_tipo_inscripcion_estado,
             ],
             $query
           );
@@ -45,6 +50,7 @@ class PlanPagoFilter{
         $id_tipo_materia_lectivo = $filters['id_tipo_materia_lectivo']??0;
         $anio = $filters['anio']??0;
         $deudores = $filters['deudores']??0;
+        $id_tipo_inscripcion_estado = $filters['id_tipo_inscripcion_estado']??null;
 
         $query = $query
           ->when($id_departamento>0,function($q)use($id_departamento){
@@ -106,6 +112,20 @@ class PlanPagoFilter{
                         });
                 });
             });
+          })
+          ->when( !is_null($id_tipo_inscripcion_estado) ,function($q)use($id_tipo_inscripcion_estado){
+            if(is_numeric($id_tipo_inscripcion_estado) and $id_tipo_inscripcion_estado>0){
+                $q->whereHas('inscripcion',function($qt)use($id_tipo_inscripcion_estado){
+                  $qt->where('id_tipo_inscripcion_estado',$id_tipo_inscripcion_estado);
+                });
+            } else if($id_tipo_inscripcion_estado!=0) {
+                $q->whereHas('inscripcion',function($qt)use($id_tipo_inscripcion_estado){
+                  $tipos = explode(',', $id_tipo_inscripcion_estado);
+                  if(count($tipos)>0){
+                      return $qt->whereIn('id_tipo_inscripcion_estado', array_map('intval',$tipos) );
+                  }
+                });
+            }
           });
         $values = explode(" ", $search);
         if(count($values)>0){
@@ -132,7 +152,10 @@ class PlanPagoFilter{
         return $query;
     }
 
-    public static function query($search,$id_departamento,$id_carrera,$id_tipo_materia_lectivo,$anio,$deudores,Builder $query){
+    public static function query(
+      $search,
+      $id_departamento,$id_carrera,$id_tipo_materia_lectivo,$anio,$deudores,$id_tipo_inscripcion_estado,
+      Builder $query){
         $query = $query
           ->when($id_departamento>0,function($q)use($id_departamento){
             $carreras = Carrera::where([
@@ -186,6 +209,20 @@ class PlanPagoFilter{
                         });
                 });
             });
+          })
+          ->when( !is_null($id_tipo_inscripcion_estado) ,function($q)use($id_tipo_inscripcion_estado){
+            if(is_numeric($id_tipo_inscripcion_estado) and $id_tipo_inscripcion_estado>0){
+                $q->whereHas('inscripcion',function($qt)use($id_tipo_inscripcion_estado){
+                  $qt->where('id_tipo_inscripcion_estado',$id_tipo_inscripcion_estado);
+                });
+            } else if($id_tipo_inscripcion_estado!=0) {
+                $q->whereHas('inscripcion',function($qt)use($id_tipo_inscripcion_estado){
+                  $tipos = explode(',', $id_tipo_inscripcion_estado);
+                  if(count($tipos)>0){
+                      return $qt->whereIn('id_tipo_inscripcion_estado', array_map('intval',$tipos) );
+                  }
+                });
+            }
           });
         $values = explode(" ", $search);
         if(count($values)>0){

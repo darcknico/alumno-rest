@@ -240,13 +240,6 @@ class AlumnoMateriaNotaController extends Controller
         )->execute();
         
         $filename ='alumno_analitico-'.$inscripcion->alumno->documento;
-
-        //header('Access-Control-Allow-Origin: *');
-        header('Content-Description: application/pdf');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition:attachment; filename=' . $filename . '.' . $ext);
-        readfile($output . '.' . $ext);
-        unlink($output. '.'  . $ext);
-        flush();
+        return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
     }
 }

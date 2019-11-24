@@ -18,6 +18,8 @@ class MesaExamen extends Model
 
   protected $casts = [
       'estado'=>'boolean',
+      'mes_notificacion_push'=>'boolean',
+      'mes_notificacion_email'=>'boolean',
   ];
 
   protected $hidden = [
@@ -28,6 +30,8 @@ class MesaExamen extends Model
     'mes_fecha_fin',
     'mes_numero',
     'mes_nombre',
+    'mes_notificacion_push',
+    'mes_notificacion_email',
     'deleted_at',
     'usu_id_baja',
   ];
@@ -40,6 +44,8 @@ class MesaExamen extends Model
       'fecha_fin' => 'mes_fecha_fin',
       'numero' => 'mes_numero',
       'nombre'=>'mes_nombre',
+      'notificacion_push'=>'mes_notificacion_push',
+      'notificacion_email'=>'mes_notificacion_email',
   ];
 
   protected $appends = [
@@ -50,6 +56,8 @@ class MesaExamen extends Model
       'fecha_fin',
       'numero',
       'nombre',
+      'notificacion_push',
+      'notificacion_email',
 
       'totales',
       'inscriptos',

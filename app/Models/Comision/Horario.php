@@ -15,10 +15,12 @@ class Horario extends Model
 
   protected $with = [
     'dia',
+    'aula',
   ];
 
   protected $casts = [
       'estado'=>'boolean',
+      'cho_asistencia'=>'boolean',
   ];
 
   protected $hidden = [
@@ -27,6 +29,9 @@ class Horario extends Model
     'dia_id',
     'cho_hora_inicial',
     'cho_hora_final',
+    'aul_id',
+    'cho_nombre',
+    'cho_asistencia',
   ];
 
   protected $maps = [
@@ -35,6 +40,9 @@ class Horario extends Model
       'id_dia' => 'dia_id',
       'hora_inicial' => 'cho_hora_inicial',
       'hora_final' => 'cho_hora_final',
+      'id_aula' => 'aul_id',
+      'nombre' => 'cho_nombre',
+      'asistencia' => 'cho_asistencia',
   ];
 
   protected $appends = [
@@ -43,6 +51,9 @@ class Horario extends Model
       'id_dia',
       'hora_inicial',
       'hora_final',
+      'id_aula',
+      'nombre',
+      'asistencia',
   ];
 
 
@@ -52,6 +63,10 @@ class Horario extends Model
 
   public function comision(){
     return $this->hasOne('App\Models\Comision','com_id','com_id');
+  }
+
+  public function aula(){
+    return $this->hasOne('App\Models\Academico\Aula','aul_id','aul_id');
   }
 
 }

@@ -12,10 +12,22 @@ use Validator;
 class ModalidadController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/modalidades",
+    *     tags={"Modalidades"},
+    *     summary="Listado de modalidades",
+    *     description="Mostrar todos las modalidades",
+    *     operationId="index",
+    *     @OA\Response(
+    *         response=200,
+    *         description="Mostrar todos las modalidades."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
         $id_carrera = $request->route('id_carrera');
@@ -28,10 +40,38 @@ class ModalidadController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/modalidades",
+    *     tags={"Modalidades"},
+    *     summary="Nueva modalidad",
+    *     description="Guardar nueva modalidad",
+    *     operationId="create",
+    *     @OA\RequestBody(
+    *          description="Datos para crear una nueva modalidad",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Modalidad")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo modalidad.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Modalidad")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -54,11 +94,27 @@ class ModalidadController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/modalidades/{id_modalidad}",
+    *     tags={"Modalidades"},
+    *     summary="Mostrar modalidad",
+    *     description="Recupera la modalidad de acuerdo al id",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_modalidad"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo modalidad.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Modalidad")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_modalidad = $request->route('id_modalidad');
@@ -67,23 +123,39 @@ class ModalidadController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/modalidades/{id_modalidad}",
+    *     tags={"Modalidades"},
+    *     summary="Editar modalidad",
+    *     description="Edita la modalidad de acuerdo al id",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_modalidad"),
+    *     @OA\RequestBody(
+    *          description="Datos del modalidad",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Modalidad")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola modalidad.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Modalidad")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -107,11 +179,23 @@ class ModalidadController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/modalidades/{id_modalidad}",
+    *     tags={"Modalidades"},
+    *     summary="Eliminar modalidad",
+    *     description="Elimina la modalidad de acuerdo al id",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_modalidad"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo una modalidad.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Modalidad")
+    *          )
+    *     ),
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();

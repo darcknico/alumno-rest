@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Sofa\Eloquence\Eloquence;
 use Sofa\Eloquence\Mappable;
 
+/**
+* @OA\Schema(
+*   schema="Departamento",
+*   type="object",
+*   required={"nombre"},
+* )
+* Class Departamento
+* @package App\Models
+*/
 class Departamento extends Model
 {
   use Eloquence, Mappable;
@@ -31,6 +40,13 @@ class Departamento extends Model
       'id_sede' => 'sed_id',
       'id_usuario' => 'usu_id',
   ];
+
+  /**
+   * @OA\Property(property="id",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="id_sede",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="id_usuario",type="integer", format="int64", readOnly=true, description="Usuario responsable del registro")
+   * @OA\Property(property="nombre",type="string",maxLength=255)
+   */
 
   protected $appends = [
       'id',

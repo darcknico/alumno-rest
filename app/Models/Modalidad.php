@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Sofa\Eloquence\Eloquence;
 use Sofa\Eloquence\Mappable;
 
+/**
+* @OA\Schema(
+*   schema="Modalidad",
+*   type="object",
+*   required={"nombre"},
+* )
+* Class Modalidad
+* @package App\Models
+*/
 class Modalidad extends Model
 {
   use Eloquence, Mappable;
@@ -32,6 +41,12 @@ class Modalidad extends Model
       'id_usuario' => 'usu_id',
   ];
 
+   /**
+   * @OA\Property(property="id",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="id_usuario",type="integer", format="int64", readOnly=true, description="Usuario responsable del registro")
+   * @OA\Property(property="nombre",type="string",maxLength=255)
+   * @OA\Property(property="descripcion",type="string",maxLength=255)
+   */
   protected $appends = [
       'id',
       'nombre',

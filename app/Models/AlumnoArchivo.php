@@ -25,6 +25,7 @@ class AlumnoArchivo extends Model
     'tad_id',
     'alu_id',
     'usu_id',
+    'aar_observaciones',
   ];
 
   protected $maps = [
@@ -33,6 +34,7 @@ class AlumnoArchivo extends Model
       'id_tipo_alumno_documentacion' => 'tad_id',
       'id_alumno' => 'alu_id',
       'id_usuario' => 'usu_id',
+      'observaciones' => 'aar_observaciones',
   ];
 
   protected $appends = [
@@ -41,6 +43,7 @@ class AlumnoArchivo extends Model
       'id_tipo_alumno_documentacion',
       'id_alumno',
       'id_usuario',
+      'observaciones',
   ];
 
   public function usuario(){

@@ -7,6 +7,10 @@ use App\Models\Novedad\Sistema;
 use App\Models\Novedad\Usuario as NovedadUsuario;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Validator;
+use Carbon\Carbon;
+
 use App\Http\Controllers\Controller;
 use voku\CssToInlineStyles\CssToInlineStyles;
 
@@ -25,16 +29,24 @@ class SistemaController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
+        $id_usuario = $request->query('id_usuario',0);
         
         $registros = Sistema::where([
             'sed_id' => $id_sede,
             'estado' => 1,
-        ]);
+        ])
+        ->when($id_usuario>0,function($q)use($id_usuario){
+            $q
+            ->where('mostrar',1)
+            ->whereHas('usuarios',function($qt)use($id_usuario){
+                $qt->where('id_usuario',$id_usuario);
+            });
+        });
 
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $length==0 ){
             $todo = $registros->orderBy('created_at','desc')
             ->get();
-            return response()->json($todo,200);
+            return response()->json($todo);
         }
         /*
         $values = explode(" ", $search);
@@ -71,10 +83,21 @@ class SistemaController extends Controller
             $registros = $registros->get();
         }
 
+        $no_visto = [];
+        if($id_usuario>0){
+            $no_visto = NovedadUsuario::whereHas('novedad',function($q)use($id_usuario){
+                    $q->where('mostrar',1);
+                })
+                ->where('id_usuario',$id_usuario)
+                ->whereNull('visto')
+                ->get();
+        }
+
         return response()->json([
             'total_count'=>intval($total_count),
             'items'=>$registros,
-        ],200);
+            'no_visto' => $no_visto,
+        ]);
     }
 
     /**
@@ -98,12 +121,10 @@ class SistemaController extends Controller
         }
         $titulo = $request->input('titulo');
         $descripcion = $request->input('descripcion');
-        $cuerpo = $request->input('cuerpo');
-        $cssToInlineStyles->setHTML($cuerpo);
+
         $todo = new Sistema;
         $todo->titulo = $titulo;
         $todo->descripcion = $descripcion;
-        $todo->nsi_cuerpo = $cssToInlineStyles->convert();
         $todo->id_sede = $id_sede;
         $todo->id_usuario = $user->id;
         $todo->save();
@@ -116,7 +137,7 @@ class SistemaController extends Controller
             $novedad->save();
         }
 
-        return response()->json($todo,200);
+        return response()->json($todo);
     }
 
     /**
@@ -127,9 +148,22 @@ class SistemaController extends Controller
      */
     public function show(Request $request)
     {
-        $todo = Sistema::find($request->novedadSistema);
+        $id_usuario = $request->query('id_usuario',0);
+        $todo = Sistema::find($request->sistema);
         $todo->cuerpo = $todo->nsi_cuerpo;
-        return response()->json($todo,200);
+
+        if($id_usuario>0){
+            $usuario = NovedadUsuario::where('id_usuario',$id_usuario)
+            ->where('estado',1)
+            ->where('id_novedad_sistema',$todo->id)
+            ->whereNull('visto')
+            ->first();
+            if($usuario){
+                $usuario->visto = Carbon::now();
+                $usuario->save();
+            }
+        }
+        return response()->json($todo);
     }
 
     /**
@@ -154,7 +188,7 @@ class SistemaController extends Controller
         $cuerpo = $request->input('cuerpo');
         $cssToInlineStyles->setHTML($cuerpo);
         
-        $todo = Sistema::find($request->novedadSistema);
+        $todo = Sistema::find($request->sistema);
         $todo->titulo = $titulo;
         $todo->descripcion = $descripcion;
         $todo->nsi_cuerpo = $cssToInlineStyles->convert();
@@ -172,7 +206,7 @@ class SistemaController extends Controller
             }
             $novedad->save();
         }
-        return response()->json($todo,200);
+        return response()->json($todo);
     }
 
     /**
@@ -183,7 +217,7 @@ class SistemaController extends Controller
      */
     public function destroy(Request $request)
     {
-        $todo = Sistema::find($request->novedadSistema);
+        $todo = Sistema::find($request->sistema);
         $todo->estado = 0;
         $todo->save();
         $usuarios = NovedadUsuario::where('id_novedad_sistema',$todo->id)->get();
@@ -192,7 +226,7 @@ class SistemaController extends Controller
             $novedad->estado = 0;
             $novedad->save();
         }
-        return response()->json($todo,200);
+        return response()->json($todo);
     }
 
     public function mostrar(Request $request){
@@ -207,13 +241,13 @@ class SistemaController extends Controller
         $todo = Sistema::find($id_novedad_sistema);
         $todo->mostrar = $request->input('mostrar');
         $todo->save();
-        return response()->json($todo,200);
+        return response()->json($todo);
     }
 
     public function usuarios(Request $request){
         $id_novedad_sistema = $request->route('id_novedad_sistema');
         $usuarios = NovedadUsuario::with('usuario')
             ->where('id_novedad_sistema',$id_novedad_sistema)->get();
-        return response()->json($usuarios,200);
+        return response()->json($usuarios);
     }
 }

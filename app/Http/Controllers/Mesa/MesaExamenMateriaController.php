@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 
+use App\Functions\MesaExamenFunction;
 use App\Exports\MesaExamenMateriaExport;
 use App\Imports\MesaExamenMateriaImport;
 use App\Filters\MesaExamenMateriaFilter;
@@ -206,6 +207,10 @@ class MesaExamenMateriaController extends Controller
         return response()->json($todo,200);
     }
 
+    /**
+    * Inscripcion a una materia de la mesa de examen
+    *   Si este no posee una inscripcion previa
+    */
     public function alumno_asociar(Request $request){
         $user = Auth::user();
         $id_sede = $request->route('id_sede');
@@ -282,7 +287,7 @@ class MesaExamenMateriaController extends Controller
                 $todo->usu_id = $user->id;
                 $todo->save();
             }
-            $this->actualizar($mesa_examen_materia);
+            MesaExamenFunction::actualizar_materia($mesa_examen_materia);
             return response()->json($todo,200);
         }
         return response()->json([
@@ -311,7 +316,7 @@ class MesaExamenMateriaController extends Controller
                 $todo->deleted_at = Carbon::now();
                 $todo->save();
             }
-            $this->actualizar($mesa_examen_materia);
+            MesaExamenFunction::actualizar_materia($mesa_examen_materia);
             return response()->json($todo,200);
         }
         return response()->json([
@@ -511,7 +516,7 @@ class MesaExamenMateriaController extends Controller
                 }
             }
         }
-        $this->actualizar($mesa_examen);
+        MesaExamenFunction::actualizar_materia($mesa_examen);
         $mesa_examen->fecha_cierre = $fecha_cierre;
         $mesa_examen->observaciones = $observaciones;
         $mesa_examen->folio_libre = $folio_libre;
@@ -558,6 +563,9 @@ class MesaExamenMateriaController extends Controller
         return $salida;
     }
 
+    /**
+    *   Muestra las mesas que estan disponibles de acuerdo a su carrera
+    */
     public function inscripcion_disponibles(Request $request){
         $id_sede = $request->route('id_sede');
         $id_inscripcion = $request->route('id_inscripcion');
@@ -566,7 +574,7 @@ class MesaExamenMateriaController extends Controller
             'estado' => 1,
             'car_id' => $inscripcion->id_carrera,
         ])
-        ->pluck('mes_id')->toArray();
+        ->pluck('mes_id');
         $todo = MesaExamen::where([
             'estado' => 1,
             'sed_id' => $id_sede,
@@ -577,6 +585,9 @@ class MesaExamenMateriaController extends Controller
         return response()->json($todo,200);
     }
 
+    /**
+    *   Muestra el listado de materias de la mesa en de la cual no tenga inscripcion
+    */
     public function inscripcion_materias_disponibles(Request $request){
         $id_mesa_examen = $request->route('id_mesa_examen');
         $id_inscripcion = $request->route('id_inscripcion');
@@ -739,27 +750,6 @@ class MesaExamenMateriaController extends Controller
         RerpoteMesaActa::dispatch($todo,$reporte);
 
         return response()->json($reporte,200);
-    }
-
-    public static function actualizar(MesaExamenMateria $materia){
-        $alumnos_cantidad_presente = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
-            ->where([
-                'estado' => 1,
-                'mma_id' => $materia->id,
-                'mam_asistencia' => 1,
-            ])->groupBy('mma_id')->first();
-        $materia->alumnos_cantidad_presente = $alumnos_cantidad_presente->total??0;
-
-        $alumnos_cantidad = MesaExamenMateriaAlumno::selectRaw('count(*) as total, SUM(IF(mam_nota_final<6,1,0)) as no_aprobado, SUM(IF(mam_nota_final>5,1,0)) as aprobado')
-            ->where([
-                'estado' => 1,
-                'mma_id' => $materia->id,
-            ])
-            ->whereNotNull('nota')
-            ->groupBy('mma_id')->first();
-        $materia->alumnos_cantidad_aprobado = $alumnos_cantidad->aprobado??0;
-        $materia->alumnos_cantidad_no_aprobado = $alumnos_cantidad->no_aprobado??0;
-        $materia->save();
     }
 
 }

@@ -16,10 +16,12 @@ class Sistema extends Model
 
   protected $casts = [
       'estado'=>'boolean',
+      'nsi_mostrar'=>'boolean',
   ];
 
   protected $hidden = [
     'nsi_id',
+    'sed_id',
     'nsi_titulo',
     'nsi_descripcion',
     'nsi_cuerpo',
@@ -29,6 +31,7 @@ class Sistema extends Model
 
   protected $maps = [
       'id' => 'nsi_id',
+      'id_sede' => 'sed_id',
       'titulo' => 'nsi_titulo',
       'descripcion' => 'nsi_descripcion',
       'id_usuario' => 'usu_id',
@@ -37,6 +40,7 @@ class Sistema extends Model
 
   protected $appends = [
       'id',
+      'id_sede',
       'titulo',
       'descripcion',
       'id_usuario',

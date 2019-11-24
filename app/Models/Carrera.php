@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Sofa\Eloquence\Eloquence;
 use Sofa\Eloquence\Mappable;
 
+/**
+* @OA\Schema(
+*   schema="Carrera",
+*   type="object",
+*   required={"nombre","nombre_corto","titulo"},
+* )
+* Class Carrera
+* @package App\Models
+*/
 class Carrera extends Model
 {
   use Eloquence, Mappable;
@@ -40,6 +49,15 @@ class Carrera extends Model
       'id_usuario' => 'usu_id',
   ];
 
+  /**
+  * @OA\Property(property="id",type="integer", format="int64", readOnly=true)
+  * @OA\Property(property="id_departamento",type="integer", format="int64", description="Departamento que pertenece la carrera")
+  * @OA\Property(property="id_usuario",type="integer", format="int64", readOnly=true, description="Usuario responsable del registro")
+  * @OA\Property(property="nombre",type="string",maxLength=255)
+  * @OA\Property(property="nombre_corto",type="string",maxLength=255)
+  * @OA\Property(property="descripcion",type="string",maxLength=255)
+  * @OA\Property(property="titulo",type="string",maxLength=255)
+  */
   protected $appends = [
       'id',
       'nombre',

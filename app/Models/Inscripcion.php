@@ -14,6 +14,12 @@ class Inscripcion extends Model
   protected $table ='tbl_inscripciones';
   protected $primaryKey = 'ins_id';
 
+  protected $with = [
+    'beca',
+    'tipo_estado',
+    'modalidad',
+  ];
+
   protected $casts = [
       'estado'=>'boolean',
   ];

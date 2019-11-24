@@ -34,5 +34,14 @@ return [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
     ],
+    'sendinblue' => [
+        'key_identifier' => env('SENDINBLUE_KEY_IDENTIFIER', 'api-key'),
+        'key' => env('SENDINBLUE_KEY'),
+    ],
+
+    'onesignal' => [
+        'app_id' => env('ONESIGNAL_APP_ID'),
+        'rest_api_key' => env('ONESIGNAL_REST_API_KEY')
+    ],
 
 ];

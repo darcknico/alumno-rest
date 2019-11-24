@@ -28,6 +28,9 @@ class Kernel extends ConsoleKernel
         'App\Console\Commands\NotificacionEnviar',
         'App\Console\Commands\PlanPagoInteres',
         'App\Console\Commands\PlanPagoRearmar',
+        'App\Console\Commands\ComisionAsistencia',
+        'App\Console\Commands\MesaExamenActualizar',
+        'App\Console\Commands\MesaExamenNotificacion',
     ];
 
     /**
@@ -44,6 +47,24 @@ class Kernel extends ConsoleKernel
         $schedule->command('notificacion:enviar')->everyMinute();
 
         $schedule->command('plan_pago:interes')->monthlyOn(1,'1:00');
+
+        $schedule->command('comision:asistencia')->daily()->at('01:00');
+
+        $schedule->command('mesa_examen:notificacion')->everyMinute()->when(function () {
+            $materias = MesaExamenMateria::whereHas('mesa_examen',function($q){
+                $q->where('estado',1)->where(function($qt){
+                    $qt->where('notificacion_push',true)->orWhere('notificacion_email',true);
+                });
+            })
+            ->where('estado',1)
+            ->whereRaw('mma_fecha = NOW() - INTERVAL 30 MINUTE')
+            ->get();
+            if(count($materias)){
+                return true;
+            } else {
+                return false;
+            }
+        });
 
         //ABRIR DIARIA
         //$schedule->command('diaria:abrir')->daily()->at('02:00');

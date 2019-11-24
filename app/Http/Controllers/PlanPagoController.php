@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use App\Functions\CuentaCorrienteFunction;
 use App\Functions\DiariaFunction;
 use App\Functions\PlanPagoFunction;
+use App\Functions\ObligacionFunction;
 
 use App\Exports\PlanPagoExport;
 use App\Exports\AlumnoPlanPagoExport;
@@ -509,13 +510,10 @@ class PlanPagoController extends Controller
       $parcial->pag_id = $pago->pag_id;
       $parcial->id_usuario = $user->id;
       $parcial->save();
+
       $obligacion = Obligacion::where('obl_id',$detalle['id_obligacion'])->first();
-      $saldo = $obligacion->saldo - $detalle['pagado'];
-      if($saldo<0){
-        $saldo = 0;
-      }
-      $obligacion->saldo = $saldo;
-      $obligacion->save();
+      $obligacion = ObligacionFunction::actualizar($obligacion);
+
       if($obligacion->tob_id == 1 and $saldo > 0){
         if($detalle['bonificado']){
           $sede = Sede::find($id_sede);
@@ -554,9 +552,8 @@ class PlanPagoController extends Controller
           $parcial_bonificado->pag_id = $pago_bonificado->pag_id;
           $parcial_bonificado->id_usuario = $user->id;
           $parcial_bonificado->save();
-          $obligacion = Obligacion::where('obl_id',$obligacion->id)->first();
-          $obligacion->saldo = $obligacion->saldo - $plan_pago_precio->bonificacion_monto;
-          $obligacion->save();
+          $obligacion = Obligacion::find($obligacion->id);
+          $obligacion = ObligacionFunction::actualizar($obligacion);
         }
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
@@ -651,8 +648,7 @@ class PlanPagoController extends Controller
       $parcial->id_usuario = $user->id;
       $parcial->save();
       $obligacion = Obligacion::where('obl_id',$detalle['id_obligacion'])->first();
-      $obligacion->saldo = $obligacion->saldo - $detalle['pagado'];
-      $obligacion->save();
+      $obligacion = ObligacionFunction::actualizar($obligacion);
       if($obligacion->tob_id == 1){
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
@@ -883,6 +879,8 @@ class PlanPagoController extends Controller
     $parcial->id_pago = $pago->id;
     $parcial->id_usuario = $user->id;
     $parcial->save();
+    
+    $obligacion_matricula = ObligacionFunction::actualizar($obligacion_matricula);
 
     PlanPagoFunction::actualizar($plan_pago);
 
@@ -897,6 +895,7 @@ class PlanPagoController extends Controller
     $deudores = $request->query('deudores',0);
     $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
     $anio = $request->query('anio',0);
+    $id_tipo_inscripcion_estado = $request->query('id_tipo_inscripcion_estado',null);
 
     return (new PlanPagoExport(
       $id_sede,
@@ -905,17 +904,15 @@ class PlanPagoController extends Controller
       $id_carrera,
       $deudores,
       $id_tipo_materia_lectivo,
-      $anio
+      $anio,
+      $id_tipo_inscripcion_estado
     ))->download('pagos.xlsx');
   }
 
   public function exportar_alumnos(Request $request){
     $id_sede = $request->route('id_sede');
-    $anio = $request->query('anio',2019);
-    $id_carrera = $request->query('id_carrera',0);
-    $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
 
-    $reporte = new AlumnoPlanPagoExport($id_sede,$anio,$id_carrera,$id_tipo_materia_lectivo);
+    $reporte = new AlumnoPlanPagoExport($id_sede,$request->all());
     $reporte->custom();
     return $reporte->download('alumnos_planes_pagos.xlsx');
   }

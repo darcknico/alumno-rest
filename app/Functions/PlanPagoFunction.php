@@ -14,7 +14,14 @@ use Carbon\Carbon;
 
 class PlanPagoFunction{
 
-	public static function actualizar(PlanPago $plan){
+	public static function actualizarById($id_plan_pago,$todo = false){
+		$plan = PlanPago::find($id_plan_pago);
+		if($plan){
+			PlanPagoFunction::actualizar($plan,$todo);
+		}
+	}
+
+	public static function actualizar(PlanPago $plan,$todo = false){
 		$obligacion = Obligacion::selectRaw('ppa_id,sum(obl_monto) as total')->where([
 	      'ppa_id' => $plan->id,
 	      'estado' => 1,
@@ -57,6 +64,17 @@ class PlanPagoFunction{
     		$obligacion_matricula->save();
     	}
 	    $plan->save();
+
+	    if($todo){
+	    	$obligaciones = Obligacion::where('id_plan_pago',$plan->id)
+	    	->whereIn('id_tipo_obligacion',[1,2])
+	    	->where('estado',1)
+	    	->get();
+	    	foreach ($obligaciones as $obligacion) {
+	    		$obligacion = Obligacion::find($obligacion->id);
+	    		ObligacionFunction::actualizar($obligacion);
+	    	}
+	    }
 	    return $plan;
 	}
 

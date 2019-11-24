@@ -44,6 +44,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 	Route::apiResources([
 		'docentes' => 'Academico\DocenteController',
 		'chat' => 'Ajustes\ChatController',
+		'dispositivos' => 'App\DispositivoController',
+		'asistencias' => 'App\AsistenciaController',
 	]);
 	Route::apiResource('obligaciones','ObligacionController',[
 		'parameters' => [
@@ -134,6 +136,11 @@ Route::group(['middleware' => 'auth:api'], function(){
 				],
 			]);
 
+			Route::prefix('novedades/sistemas')->group(function(){
+				Route::post('{id_novedad_sistema}/mostrar','Novedad\SistemaController@mostrar')->where('id_novedad_sistema','[0-9]+');
+				Route::get('{id_novedad_sistema}/usuarios','Novedad\SistemaController@usuarios')->where('id_novedad_sistema','[0-9]+');
+			});
+
 			Route::apiResource('reportes','Extra\ReporteJobController',[
 				'as' => 'reporteJob',
 				'parameters' => [
@@ -195,6 +202,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 					Route::get('reportes/ficha','InscripcionController@reporte_ficha');
 					Route::get('reportes/constancia','InscripcionController@reporte_constancia_regular');
 					Route::get('reportes/analitico','Mesa\AlumnoMateriaNotaController@reporte');
+					Route::get('reportes/cursadas','InscripcionController@reporte_constancia_cursadas');
 
 					Route::prefix('estados')->group(function(){
 						Route::get('deuda','InscripcionController@estado_deuda');
@@ -368,6 +376,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 				Route::prefix('estadisticas')->group(function(){
 					Route::get('diarias','MovimientoController@estadisticas_diaria');
 					Route::get('tipos','MovimientoController@estadisticas_tipo');
+					Route::get('mensual','MovimientoController@estadisticas_mensual');
 				});
 			});
 
@@ -428,6 +437,24 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 				Route::get('carreras/{id_carrera}','ComisionController@index');
 				Route::get('materias/{id_materia}','ComisionController@index');
+
+				Route::prefix('asistencias/alumnos')->group(function(){
+					Route::group([
+						'prefix'=> '{id_asistencia_alumno}',
+						'where'  => ['id_asistencia_alumno' => '[0-9]+'],
+					],function () {
+						Route::get('reportes/constancia','Comision\AsistenciaAlumnoController@reporte_constancia');
+					});
+				});
+				Route::prefix('examenes/alumnos')->group(function(){
+					Route::group([
+						'prefix'=> '{id_examen_alumno}',
+						'where'  => ['id_examen_alumno' => '[0-9]+'],
+					],function () {
+						Route::get('reportes/constancia','Comision\ExamenAlumnoController@reporte_constancia');
+						
+					});
+				});
 			});
 
 			Route::prefix('asistencias')->group(function(){
@@ -561,6 +588,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 							Route::delete('','Mesa\MesaExamenMateriaAlumnoController@update');
 
 							Route::get('reportes/constancia','Mesa\MesaExamenMateriaAlumnoController@reporte_constancia');
+							Route::get('reportes/asistencia','Mesa\MesaExamenMateriaAlumnoController@reporte_constancia_asistencia');
 						});
 					});
 
@@ -577,6 +605,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 						});
 
 					    Route::get('reportes','Mesa\MesaExamenMateriaDocenteController@reporte_docente_mesa');
+					    Route::post('reportes/masivo','Mesa\MesaExamenMateriaDocenteController@reporte_docente_mesa_masivo');
 					});
 				});
 			});
@@ -757,7 +786,10 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 		Route::get('','AlumnoController@index');
 
-		Route::get('estadisticas','AlumnoController@estadisticas');
+		Route::prefix('estadisticas')->group(function () {
+			Route::get('','AlumnoController@estadisticas');
+			Route::get('planes','AlumnoController@estadisticas_planes');
+		});
 
 		Route::apiResource('sedes','Academico\AlumnoSedeController',[
 			'as' => 'alumnoSede',
@@ -780,6 +812,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 			Route::post('archivos','AlumnoController@archivoAlta');
 			Route::get('archivos/{id_alumno_archivo}','AlumnoController@archivo')->where('id_alumno_archivo','[0-9]+');
+			Route::put('archivos/{id_alumno_archivo}','AlumnoController@archivoEdita')->where('id_alumno_archivo','[0-9]+');
 			Route::delete('archivos/{id_alumno_archivo}','AlumnoController@archivoBaja')->where('id_alumno_archivo','[0-9]+');
 
 			Route::get('inscripciones','AlumnoController@inscripciones');

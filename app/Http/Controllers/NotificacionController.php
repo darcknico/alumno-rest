@@ -33,10 +33,11 @@ class NotificacionController extends Controller
           'ano_token'=>$token,
           'estado'=>1,
         ])->first();
-        $token->ano_visto = Carbon::now();
-        $token->save();
+        if($token){
+          $token->ano_visto = Carbon::now();
+          $token->save();
+        }
       }
-
       return Glide::server('images')->imageResponse($path, request()->all());
     }
 

@@ -6,6 +6,7 @@ use App\Models\Sede;
 use App\Models\PlanPago;
 
 use App\Functions\CuentaCorrienteFunction;
+use App\Functions\PlanPagoFunction;
 
 use Illuminate\Console\Command;
 
@@ -43,16 +44,17 @@ class PlanPagoRearmar extends Command
     public function handle()
     {
         $sedes = Sede::where('estado',1)->get();
-        $salida = [];
         foreach ($sedes as $sede) {
-          $planes = PlanPago::where([
-            'estado' => 1,
-            'sed_id' => $sede->id,
-          ])->get();
-          foreach ($planes as $plan) {
-            $todo = CuentaCorrienteFunction::armar($sede->id,$plan->id);
-            $salida[]=$plan;
-          }
+            $planes = PlanPago::where([
+                'estado' => 1,
+                'sed_id' => $sede->id,
+                ])
+            ->get();
+            $this->info('Sede: '.$sede->nombre.' Cantidad: '.count($planes));
+            foreach ($planes as $plan) {
+                $todo = CuentaCorrienteFunction::armar($sede->id,$plan->id);
+                PlanPagoFunction::actualizarById($plan->id,true);
+            }
         }
     }
 }

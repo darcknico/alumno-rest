@@ -7,8 +7,12 @@ use App\Models\UsuarioSede;
 use App\Models\Sede;
 use App\Models\Comision;
 
+use App\Functions\CorreoFunction;
+use App\Mails\UsuarioPassword as UsuarioPasswordMail;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Validator;
 
 class UsuarioController extends Controller
@@ -233,10 +237,23 @@ class UsuarioController extends Controller
       if($validator->fails()){
         return response()->json(['error'=>$validator->errors()],403);
       }
+      $password = $request->input('password');
+      $notificacion = $request->input('notificacion',false);
+      $email = $request->input('email');
+
       $usuario = User::where('usu_id',$id_usuario)->first();
       if($usuario){
-        $usuario->usu_password = bcrypt($request->input('password'));
+        $usuario->usu_password = bcrypt($password);
         $usuario->save();
+
+        if($notificacion){
+          Mail::to($email)->send( new UsuarioPasswordMail($usuario,$password) );
+          if (Mail::failures()) {
+              $enviado = false;
+          } else {
+              $enviado = true;
+          }
+        }
       }
       return response()->json($usuario,200);
     }

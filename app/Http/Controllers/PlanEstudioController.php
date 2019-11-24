@@ -14,10 +14,22 @@ use JasperPHP\JasperPHP;
 class PlanEstudioController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/planes_estudio",
+    *     tags={"PlanesEstudios"},
+    *     summary="Listado de planes de estudio",
+    *     description="Mostrar todos los planes de estudio",
+    *     operationId="index",
+    *     @OA\Response(
+    *         response=200,
+    *         description="Mostrar todos los planes de estudio."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
         $id_carrera = $request->route('id_carrera',0);
@@ -33,11 +45,38 @@ class PlanEstudioController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/planes_estudio",
+    *     tags={"PlanesEstudios"},
+    *     summary="Nuevo plan de estudio",
+    *     description="Guardar nuevo plan de estudio",
+    *     operationId="create",
+    *     @OA\RequestBody(
+    *          description="Datos para crear un nuevo plan de estudio",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/PlanEstudio")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo plan de estudio.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/PlanEstudio")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $id_carrera = $request->route('id_carrera');
@@ -69,12 +108,29 @@ class PlanEstudioController extends Controller
         return response()->json($todo,200);
     }
 
+
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/planes_estudio/{id_plan_estudio}",
+    *     tags={"PlanesEstudios"},
+    *     summary="Mostrar plan de estudio",
+    *     description="Recupera el plan de estudio de acuerdo al id",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_plan_estudio"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo plan de estudio.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/PlanEstudio")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_plan_estudio = $request->route('id_plan_estudio');
@@ -83,23 +139,39 @@ class PlanEstudioController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/planes_estudio/{id_plan_estudio}",
+    *     tags={"PlanesEstudios"},
+    *     summary="Editar carreras",
+    *     description="Edita el plan de estudio de acuerdo al id",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_plan_estudio"),
+    *     @OA\RequestBody(
+    *          description="Datos del plan de estudio",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/PlanEstudio")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo plan de estudio.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/PlanEstudio")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -131,11 +203,23 @@ class PlanEstudioController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/planes_estudio/{id_plan_estudio}",
+    *     tags={"PlanesEstudios"},
+    *     summary="Eliminar carrera",
+    *     description="Elimina el plan de estudio de acuerdo al id",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_plan_estudio"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo plan de estudio.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/PlanEstudio")
+    *          )
+    *     ),
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();

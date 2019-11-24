@@ -10,13 +10,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 
+
+/**
+* Class SedeController
+* @package App\Http\Controllers
+*/
 class SedeController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/sedes",
+    *     tags={"Sedes"},
+    *     summary="Listado de sedes",
+    *     description="Mostrar todas las sedes",
+    *     operationId="index",
+    *     @OA\Response(
+    *         response=200,
+    *         description="listado de todas las sedes."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -61,11 +78,38 @@ class SedeController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/sedes",
+    *     tags={"Sedes"},
+    *     summary="Nueva sede",
+    *     description="Guardar nueva sede",
+    *     operationId="create",
+    *     @OA\RequestBody(
+    *          description="Datos para crear nueva sede",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Sede")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve la sede creada.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Sede")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -108,11 +152,27 @@ class SedeController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/sedes/{id_sede}",
+    *     tags={"Sedes"},
+    *     summary="Mostrar Sede",
+    *     description="Recupera la sede de acuerdo al id",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola sede.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_sede = $request->route('id_sede');
@@ -121,23 +181,39 @@ class SedeController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/sedes/{id_sede}",
+    *     tags={"Sedes"},
+    *     summary="Editar sede",
+    *     description="Edita la sede de acuerdo al id",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\RequestBody(
+    *          description="Datos de la sede",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Sede")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola sede.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Sede")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -181,11 +257,23 @@ class SedeController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/sedes/{id_sede}",
+    *     tags={"Sedes"},
+    *     summary="Eliminar sede",
+    *     description="Elimina la sede",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola sede.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Sede")
+    *          )
+    *     )
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();

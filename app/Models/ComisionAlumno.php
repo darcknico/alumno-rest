@@ -63,6 +63,8 @@ class ComisionAlumno extends Model
 
       'asistencia_presente_promedio',
       'examen_presente_promedio',
+      'examen_parcial_promedio',
+      'examen_practico_promedio',
   ];
 
   public function usuario(){
@@ -111,5 +113,30 @@ class ComisionAlumno extends Model
           ->where('estado',1)
           ->groupBy('estado')
           ->first()->avg??0)*100;
+  }
+
+  public function getExamenParcialPromedioAttribute(){
+    $id_comision = $this['com_id'];
+    return ExamenAlumno::selectRaw('estado, AVG(cae_nota) as avg')
+          ->where('id_alumno',$this['alu_id'])
+          ->whereHas('examen',function($q)use($id_comision){
+            $q->where('id_comision',$id_comision);
+          })
+          ->where('estado',1)
+          ->whereIn('id_tipo_asistencia_alumno',[1,2])
+          ->groupBy('estado')
+          ->first()->avg??0;
+  }
+  public function getExamenPracticoPromedioAttribute(){
+    $id_comision = $this['com_id'];
+    return ExamenAlumno::selectRaw('estado, AVG(cae_nota) as avg')
+          ->where('id_alumno',$this['alu_id'])
+          ->whereHas('examen',function($q)use($id_comision){
+            $q->where('id_comision',$id_comision);
+          })
+          ->where('estado',1)
+          ->whereIn('id_tipo_asistencia_alumno',[3])
+          ->groupBy('estado')
+          ->first()->avg??0;
   }
 }

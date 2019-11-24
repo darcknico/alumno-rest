@@ -34,4 +34,8 @@ class TipoAlumnoDocumentacion extends Model
     'nombre',
   ];
 
+  public function alumnos(){
+    return $this->hasMany('App\Models\AlumnoArchivo','tad_id','tad_id');
+  }
+
 }

@@ -6,6 +6,8 @@ use App\Models\Carrera;
 use App\Models\Academico\Docente;
 use App\Models\Mesa\MesaExamenMateria;
 use App\Models\Mesa\MesaExamenMateriaDocente;
+use App\Models\Extra\ReporteJob;
+
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,7 @@ use Carbon\Carbon;
 use JasperPHP\JasperPHP;
 
 use App\Filters\MesaExamenMateriaDocenteFilter;
+use App\Jobs\ReporteNotificacionDocente;
 
 class MesaExamenMateriaDocenteController extends Controller
 {
@@ -196,7 +199,7 @@ class MesaExamenMateriaDocenteController extends Controller
         $validator = Validator::make($request->all(),[
             'id_usuario' => 'required | integer',
             'fecha_inicial' => 'required | date',
-            'fecha_final' => 'required | date',
+            'fecha_final' => 'required | date | after_or_equal:fecha_inicial',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -209,8 +212,11 @@ class MesaExamenMateriaDocenteController extends Controller
         $diff = $fecha_inicial->diffInMonths($fecha_final);
         $periodo = "";
         if($diff>0){
-            $periodo = $fecha_inicial->formatLocalized('%B')." / ".$fecha_final->formatLocalized('%B')." ".$fecha_inicial->year;
-
+            if($fecha_inicial->year == $fecha_final->year){
+                $periodo = $fecha_inicial->formatLocalized('%B')." / ".$fecha_final->formatLocalized('%B')." ".$fecha_final->year;
+            } else {
+                $periodo = $fecha_inicial->formatLocalized('%B')." ".$fecha_inicial->year." / ".$fecha_final->formatLocalized('%B')." ".$fecha_final->year;
+            }
         } else {
             $periodo = $fecha_inicial->formatLocalized('%B')." ".$fecha_inicial->year;
         }
@@ -238,5 +244,66 @@ class MesaExamenMateriaDocenteController extends Controller
         
         $filename = $docente->usuario->apellido.' '.$docente->usuario->nombre.$ext;
         return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
+    }
+
+    public function reporte_docente_mesa_masivo(Request $request){
+        $validator = Validator::make($request->all(),[
+            'fecha_inicial' => 'date | required',
+            'fecha_final' => 'date | required | after_or_equal:fecha_inicial',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+
+        $user = Auth::user();
+        $id_sede = $request->route('id_sede');
+        $fecha_inicial = Carbon::parse($request->query('fecha_inicial'));
+        $fecha_final = Carbon::parse($request->query('fecha_final'));
+
+        $registros = MesaExamenMateriaDocente::whereHas('mesa_examen_materia',function($q)use($id_sede){
+                $q->whereHas('mesa_examen',function($qt)use($id_sede){
+                    $qt->where([
+                        'estado' => 1,
+                        'sed_id' => $id_sede,
+                    ]);
+                })
+                ->where('estado',1);
+            })
+            ->where([
+            'estado' => 1,
+        ]);
+        $registros = MesaExamenMateriaDocenteFilter::fill([
+            'fecha_inicial' => $fecha_inicial->toDateString(),
+            'fecha_final' => $fecha_final->toDateString(),
+        ],$registros);
+        $registros = $registros->get()->pluck('usu_id');
+
+        $todo = Docente::whereIn('usu_id',$registros)->get();
+        $cantidad = count($todo);
+
+        if($cantidad==0){
+            return response()->json([
+                'error' => 'No puede realizar la peticion si la cantidad de reportes a generar es cero.'
+            ],403);
+        }
+        $fecha = Carbon::now();
+
+        $nombre = $request->input('nombre',null);
+
+        $reporte = new ReporteJob;
+        if(is_null($nombre)){
+            $reporte->nombre = $fecha->format('d-m-Y').'_notificacion_docente_'.$cantidad;
+        } else {
+            $reporte->nombre = $nombre;
+        }
+        $reporte->cantidad = $cantidad;
+        $reporte->ruta = $request->getRequestUri();
+        $reporte->id_usuario = $user->id;
+        $reporte->id_sede = $id_sede;
+        $reporte->save();
+
+        ReporteNotificacionDocente::dispatch($id_sede,$fecha_inicial,$fecha_final,$reporte);
+
+        return response()->json($reporte,200);
     }
 }

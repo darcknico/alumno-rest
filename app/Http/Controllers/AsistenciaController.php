@@ -51,12 +51,6 @@ class AsistenciaController extends Controller
             'estado' => 1,
         ]);
 
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('created_at','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
-
         $id_departamento = $request->query('id_departamento',0);
         $id_carrera = $request->query('id_carrera',0);
         $id_materia = $request->query('id_materia',0);
@@ -96,12 +90,26 @@ class AsistenciaController extends Controller
             ->when($id_comision>0,function($q)use($id_comision){
                 return $q->where('id_comision',$id_comision);
             });
+
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $todo = $registros->orderBy('created_at','desc')
+            ->get();
+            return response()->json($todo,200);
+        }
+        
         $values = explode(" ", $search);
         if(count($values)>0){
             foreach ($values as $key => $value) {
                 if(strlen($value)>0){
                     $registros = $registros->where(function($query) use  ($value) {
-                        $query->whereRaw("DATE_FORMAT(asi_fecha, '%d/%m/%Y') ",'like','%'.$value.'%');
+                        $query->whereRaw("DATE_FORMAT(asi_fecha, '%d/%m/%Y') like '%".$value."%'")
+                        ->orWhereHas('comision',function($q)use($value){
+                            $q->where('estado',1)
+                            ->whereHas('materia',function($qt)use($value){
+                                $qt->where('mat_nombre','like','%'.$value.'%')
+                                    ->orWhere('mat_codigo','like','%'.$value.'%');
+                            });
+                        });
                     });
                 }
             }

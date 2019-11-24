@@ -1,0 +1,1575 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Alumno",
+        "description": "Documentación para la API REST del sistema de Gestion de Alumnos",
+        "contact": {
+            "email": "neraricardo2013@gmail.io"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/sedes/{id_sede}/alumnos": {
+            "get": {
+                "tags": [
+                    "Alumnos"
+                ],
+                "summary": "Listado de alumno",
+                "description": "Mostrar todos los alumnos de la sede",
+                "operationId": "index",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mostrar todos los alumnos."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Alumnos"
+                ],
+                "summary": "Nuevo alumno",
+                "description": "Guardar nuevo alumno en la sede",
+                "operationId": "create",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos para crear nuevo alumno",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Alumno"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo alumno.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alumno"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/sedes/{id_sede}/alumnos/{id_alumno}": {
+            "get": {
+                "tags": [
+                    "Alumnos"
+                ],
+                "summary": "Mostrar alumno",
+                "description": "Recupera al alumno de acuerdo al id y sede",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    },
+                    {
+                        "$ref": "#/components/parameters/id_alumno"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo alumno.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alumno"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Alumnos"
+                ],
+                "summary": "Editar alumno",
+                "description": "Edita el alumno de acuerdo al id y sede",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    },
+                    {
+                        "$ref": "#/components/parameters/id_alumno"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del alumno",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Alumno"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo alumno.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alumno"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Alumnos"
+                ],
+                "summary": "Eliminar alumno",
+                "description": "Elimina al alumno de acuerdo al id. Si el alumno posse inscripciones activas, no puede ser eliminado",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    },
+                    {
+                        "$ref": "#/components/parameters/id_alumno"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo alumno.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alumno"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Si el alumno posse inscripciones activas, no puede ser eliminado."
+                    }
+                }
+            }
+        },
+        "/becas": {
+            "get": {
+                "tags": [
+                    "Becas"
+                ],
+                "summary": "Listado de beca",
+                "description": "Mostrar todos las beca",
+                "operationId": "index",
+                "responses": {
+                    "200": {
+                        "description": "Mostrar todos las beca."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Becas"
+                ],
+                "summary": "Nueva beca",
+                "description": "Guardar nueva beca",
+                "operationId": "create",
+                "requestBody": {
+                    "description": "Datos para crear una nueva beca",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Beca"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo beca.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Beca"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/becas/{id_beca}": {
+            "get": {
+                "tags": [
+                    "Becas"
+                ],
+                "summary": "Mostrar beca",
+                "description": "Recupera la beca de acuerdo al id",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_beca"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo beca.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Beca"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Becas"
+                ],
+                "summary": "Editar beca",
+                "description": "Edita la beca de acuerdo al id",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_beca"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del beca",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Beca"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola beca.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Beca"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Becas"
+                ],
+                "summary": "Eliminar beca",
+                "description": "Elimina la beca de acuerdo al id",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_beca"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo una beca.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Beca"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/carreras": {
+            "get": {
+                "tags": [
+                    "Carreras"
+                ],
+                "summary": "Listado de carreras",
+                "description": "Mostrar todas las carreras",
+                "operationId": "index",
+                "responses": {
+                    "200": {
+                        "description": "Mostrar todas las carreras."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Carreras"
+                ],
+                "summary": "Nueva carrera",
+                "description": "Guardar nueva carrera",
+                "operationId": "create",
+                "requestBody": {
+                    "description": "Datos para crear una nueva carrera",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Carrera"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola carrera.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Carrera"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/carreras/{id_carrera}": {
+            "get": {
+                "tags": [
+                    "Carreras"
+                ],
+                "summary": "Mostrar carreras",
+                "description": "Recupera la carrera de acuerdo al id",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_carrera"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo carreras.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Carrera"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Carreras"
+                ],
+                "summary": "Editar carreras",
+                "description": "Edita la carrera de acuerdo al id",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_carrera"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del carrera",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Carrera"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola carrera.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Carrera"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Carreras"
+                ],
+                "summary": "Eliminar carrera",
+                "description": "Elimina la carreras de acuerdo al id",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_carrera"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo una carrera.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Carrera"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/departamentos": {
+            "get": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Listado de departamentos",
+                "description": "Mostrar todos los departamentos",
+                "operationId": "index",
+                "responses": {
+                    "200": {
+                        "description": "Mostrar todos los departamentos."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Nuevo departamento",
+                "description": "Guardar nuevo departamento",
+                "operationId": "create",
+                "requestBody": {
+                    "description": "Datos para crear un nuevo departamento",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Departamento"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo departamento.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Departamento"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/departamentos/{id_departamento}": {
+            "get": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Mostrar departamento",
+                "description": "Recupera el departamento de acuerdo al id",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_departamento"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo departamento.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Departamento"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Editar departamento",
+                "description": "Edita el departamento de acuerdo al id",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_departamento"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del departamento",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Departamento"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo departamento.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Departamento"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Eliminar departamento",
+                "description": "Elimina al departamento de acuerdo al id",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_departamento"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo departamento.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Departamento"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/modalidades": {
+            "get": {
+                "tags": [
+                    "Modalidades"
+                ],
+                "summary": "Listado de modalidades",
+                "description": "Mostrar todos las modalidades",
+                "operationId": "index",
+                "responses": {
+                    "200": {
+                        "description": "Mostrar todos las modalidades."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Modalidades"
+                ],
+                "summary": "Nueva modalidad",
+                "description": "Guardar nueva modalidad",
+                "operationId": "create",
+                "requestBody": {
+                    "description": "Datos para crear una nueva modalidad",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Modalidad"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo modalidad.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Modalidad"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/modalidades/{id_modalidad}": {
+            "get": {
+                "tags": [
+                    "Modalidades"
+                ],
+                "summary": "Mostrar modalidad",
+                "description": "Recupera la modalidad de acuerdo al id",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_modalidad"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo modalidad.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Modalidad"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Modalidades"
+                ],
+                "summary": "Editar modalidad",
+                "description": "Edita la modalidad de acuerdo al id",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_modalidad"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del modalidad",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Modalidad"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola modalidad.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Modalidad"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Modalidades"
+                ],
+                "summary": "Eliminar modalidad",
+                "description": "Elimina la modalidad de acuerdo al id",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_modalidad"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo una modalidad.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Modalidad"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/planes_estudio": {
+            "get": {
+                "tags": [
+                    "PlanesEstudios"
+                ],
+                "summary": "Listado de planes de estudio",
+                "description": "Mostrar todos los planes de estudio",
+                "operationId": "index",
+                "responses": {
+                    "200": {
+                        "description": "Mostrar todos los planes de estudio."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "PlanesEstudios"
+                ],
+                "summary": "Nuevo plan de estudio",
+                "description": "Guardar nuevo plan de estudio",
+                "operationId": "create",
+                "requestBody": {
+                    "description": "Datos para crear un nuevo plan de estudio",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlanEstudio"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo plan de estudio.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanEstudio"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/planes_estudio/{id_plan_estudio}": {
+            "get": {
+                "tags": [
+                    "PlanesEstudios"
+                ],
+                "summary": "Mostrar plan de estudio",
+                "description": "Recupera el plan de estudio de acuerdo al id",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_plan_estudio"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo plan de estudio.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanEstudio"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "PlanesEstudios"
+                ],
+                "summary": "Editar carreras",
+                "description": "Edita el plan de estudio de acuerdo al id",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_plan_estudio"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos del plan de estudio",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlanEstudio"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo plan de estudio.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanEstudio"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "PlanesEstudios"
+                ],
+                "summary": "Eliminar carrera",
+                "description": "Elimina el plan de estudio de acuerdo al id",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_plan_estudio"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve un solo plan de estudio.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanEstudio"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/sedes": {
+            "get": {
+                "tags": [
+                    "Sedes"
+                ],
+                "summary": "Listado de sedes",
+                "description": "Mostrar todas las sedes",
+                "operationId": "index",
+                "responses": {
+                    "200": {
+                        "description": "listado de todas las sedes."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Sedes"
+                ],
+                "summary": "Nueva sede",
+                "description": "Guardar nueva sede",
+                "operationId": "create",
+                "requestBody": {
+                    "description": "Datos para crear nueva sede",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Sede"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve la sede creada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Sede"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            }
+        },
+        "/sedes/{id_sede}": {
+            "get": {
+                "tags": [
+                    "Sedes"
+                ],
+                "summary": "Mostrar Sede",
+                "description": "Recupera la sede de acuerdo al id",
+                "operationId": "show",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola sede.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alumno"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Sedes"
+                ],
+                "summary": "Editar sede",
+                "description": "Edita la sede de acuerdo al id",
+                "operationId": "update",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos de la sede",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Sede"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola sede.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Sede"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Error Validator."
+                    },
+                    "default": {
+                        "description": "Ha ocurrido un error."
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Sedes"
+                ],
+                "summary": "Eliminar sede",
+                "description": "Elimina la sede",
+                "operationId": "destroy",
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/id_sede"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devuelve una sola sede.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Sede"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Alumno": {
+                "required": [
+                    "nombre",
+                    "documento",
+                    "id_tipo_documento"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_sede": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "apellido": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "domicilio": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "calle": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "numero": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "piso": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "depto": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "id_localidad": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "localidad": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "id_provincia": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "codigo_postal": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "telefono": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "celular": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "id_tipo_documento": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "documento": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "fecha_nacimiento": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "ciudad_nacimiento": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "nacionalidad": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "sexo": {
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "id_tipo_alumno_civil": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id_tipo_alumno_estado": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "observaciones": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "type": "object"
+            },
+            "Beca": {
+                "required": [
+                    "nombre",
+                    "porcentaje"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_usuario": {
+                        "description": "Usuario responsable del registro",
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "descripcion": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "porcentaje": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "type": "object"
+            },
+            "Carrera": {
+                "required": [
+                    "nombre",
+                    "nombre_corto",
+                    "titulo"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_departamento": {
+                        "description": "Departamento que pertenece la carrera",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id_usuario": {
+                        "description": "Usuario responsable del registro",
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "nombre_corto": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "descripcion": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "titulo": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "type": "object"
+            },
+            "Departamento": {
+                "required": [
+                    "nombre"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_sede": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_usuario": {
+                        "description": "Usuario responsable del registro",
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "type": "object"
+            },
+            "Modalidad": {
+                "required": [
+                    "nombre"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_usuario": {
+                        "description": "Usuario responsable del registro",
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "descripcion": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "type": "object"
+            },
+            "PlanEstudio": {
+                "required": [
+                    "nombre",
+                    "codigo",
+                    "anio"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "id_carrera": {
+                        "description": "Carrera",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id_usuario": {
+                        "description": "Usuario responsable del registro",
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "codigo": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "anio": {
+                        "type": "integer"
+                    },
+                    "horas": {
+                        "type": "integer"
+                    },
+                    "cantidad_horas": {
+                        "type": "integer",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            },
+            "Sede": {
+                "required": [
+                    "nombre"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "nombre": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "ubicacion": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitud": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "longitud": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "codigo_postal": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "direccion": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "localidad": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "telefono": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "celular": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "id_localidad": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "punto_venta": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "pago_numero": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "mesa_numero": {
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    },
+                    "room_id": {
+                        "description": "Identificacion de la sala en Pusher ChatKit",
+                        "type": "integer",
+                        "format": "int64",
+                        "readOnly": true
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "parameters": {
+            "id_sede": {
+                "name": "id_sede",
+                "in": "path",
+                "description": "Identificación de la sede",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_alumno": {
+                "name": "id_alumno",
+                "in": "path",
+                "description": "Identificación del alumno",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_departamento": {
+                "name": "id_departamento",
+                "in": "path",
+                "description": "Identificación del departamento",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_modalidad": {
+                "name": "id_modalidad",
+                "in": "path",
+                "description": "Identificación de la modalidad",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_beca": {
+                "name": "id_beca",
+                "in": "path",
+                "description": "Identificación de la beca",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_carrera": {
+                "name": "id_carrera",
+                "in": "path",
+                "description": "Identificación de la carrera",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_plan_estudio": {
+                "name": "id_plan_estudio",
+                "in": "path",
+                "description": "Identificación del plan de estudio",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "id_materia": {
+                "name": "id_materia",
+                "in": "path",
+                "description": "Identificación de la materia",
+                "required": true,
+                "schema": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Alumnos",
+            "description": "Todo lo que tenga que ver con Alumnos"
+        },
+        {
+            "name": "Sedes",
+            "description": "Operaciones realizables en las Sedes"
+        },
+        {
+            "name": "Departamentos",
+            "description": "Departamentos asignables a las carreras"
+        },
+        {
+            "name": "Modalidades",
+            "description": "Modalidad de cursada e inscripcion de la Carrera/Materia"
+        },
+        {
+            "name": "Becas",
+            "description": "Becas disponibles para la inscripcion y planes de pagos"
+        },
+        {
+            "name": "Carreras",
+            "description": "Gestion de las Carreras"
+        },
+        {
+            "name": "PlanesEstudios",
+            "description": "Planes de estudios para las carreras"
+        },
+        {
+            "name": "Materias",
+            "description": "Materias del Plan de estudio"
+        }
+    ]
+}

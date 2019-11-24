@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use App\Functions\CuentaCorrienteFunction;
 use App\Functions\DiariaFunction;
 use App\Functions\PlanPagoFunction;
+use App\Functions\ObligacionFunction;
 use JasperPHP\JasperPHP; 
 
 use App\Exports\PagoExport;
@@ -200,9 +201,9 @@ class PagoController extends Controller
 						'pag_id' => $id_pago,
 						'obl_id' => $obligacion->obl_id,
 					])->first();
+					
 					$obligacion = Obligacion::find($obligacion->obl_id);
-					$obligacion->obl_saldo = round($obligacion->obl_saldo + $pago->opa_monto,2);
-					$obligacion->save();
+					$obligacion = ObligacionFunction::actualizar($obligacion);
 				}
 			} else {
 				$pago_original->estado = 1;

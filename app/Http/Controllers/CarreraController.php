@@ -19,10 +19,22 @@ use Carbon\Carbon;
 class CarreraController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/carreras",
+    *     tags={"Carreras"},
+    *     summary="Listado de carreras",
+    *     description="Mostrar todas las carreras",
+    *     operationId="index",
+    *     @OA\Response(
+    *         response=200,
+    *         description="Mostrar todas las carreras."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
 
@@ -163,10 +175,38 @@ class CarreraController extends Controller
     }
 
     /**
-     * Store
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/carreras",
+    *     tags={"Carreras"},
+    *     summary="Nueva carrera",
+    *     description="Guardar nueva carrera",
+    *     operationId="create",
+    *     @OA\RequestBody(
+    *          description="Datos para crear una nueva carrera",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Carrera")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola carrera.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Carrera")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $id_departamento = $request->route('id_departamento',null);
@@ -262,11 +302,27 @@ class CarreraController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/carreras/{id_carrera}",
+    *     tags={"Carreras"},
+    *     summary="Mostrar carreras",
+    *     description="Recupera la carrera de acuerdo al id",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_carrera"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo carreras.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Carrera")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_carrera = $request->route('id_carrera');
@@ -286,23 +342,39 @@ class CarreraController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/carreras/{id_carrera}",
+    *     tags={"Carreras"},
+    *     summary="Editar carreras",
+    *     description="Edita la carrera de acuerdo al id",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_carrera"),
+    *     @OA\RequestBody(
+    *          description="Datos del carrera",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Carrera")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola carrera.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Carrera")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -350,11 +422,23 @@ class CarreraController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/carreras/{id_carrera}",
+    *     tags={"Carreras"},
+    *     summary="Eliminar carrera",
+    *     description="Elimina la carreras de acuerdo al id",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_carrera"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo una carrera.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Carrera")
+    *          )
+    *     ),
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();

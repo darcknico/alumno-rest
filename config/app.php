@@ -162,7 +162,8 @@ return [
         Laravel\Passport\PassportServiceProvider::class,
         OwenIt\Auditing\AuditingServiceProvider::class,
         Chumper\Zipper\ZipperServiceProvider::class,
-
+        Webup\LaravelSendinBlue\SendinBlueServiceProvider::class,
+        NotificationChannels\OneSignal\OneSignalServiceProvider::class,
     ],
 
     /*

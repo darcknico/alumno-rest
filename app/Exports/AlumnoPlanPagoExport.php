@@ -16,7 +16,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -24,29 +24,34 @@ use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use \DB;
 
-class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMapping, WithHeadings, WithColumnFormatting, WithTitle
+class AlumnoPlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, WithHeadings, WithColumnFormatting, WithTitle
 {
     use Exportable;
  
-    public function __construct($id_sede,$anio,$id_carrera,$id_tipo_materia_lectivo)
+    public function __construct($id_sede,$inputs)
     {
         $this->id_sede = $id_sede;
-        $this->anio = $anio;
-        $this->id_carrera = $id_carrera;
-        $this->id_tipo_materia_lectivo = $id_tipo_materia_lectivo;
-        $this->carrera = Carrera::find($id_carrera);
+        $this->inputs = $inputs;
+        $this->carrera = Carrera::find($inputs['id_carrera']);
         $this->sede = Sede::find($id_sede);
-        $this->tipo = TipoMateriaLectivo::find($id_tipo_materia_lectivo);
+        $this->tipo = TipoMateriaLectivo::find($inputs['id_tipo_materia_lectivo']);
+        $this->enumeracion = 1;
     }
 
-    public function collection()
+    public function array(): array
     {
         $id_sede = $this->id_sede;
-        $anio = $this->anio;
-        $id_carrera = $this->id_carrera;
-        $id_tipo_materia_lectivo = $this->id_tipo_materia_lectivo;
+        $anio = $this->inputs['anio'];
+        $id_carrera = $this->inputs['id_carrera'];
+        $id_tipo_materia_lectivo = $this->inputs['id_tipo_materia_lectivo'];
+        $id_tipo_inscripcion_estado = $this->inputs['id_tipo_inscripcion_estado']??null;
 
-        $registros = PlanPago::where([
+        $registros = PlanPago::with([
+          'inscripcion.alumno',
+          'inscripcion.carrera',
+          'inscripcion.beca',
+          'inscripcion.tipo_estado',
+        ])->where([
             'ppa_anio' => $anio,
             'sed_id' => $id_sede,
             'estado' => 1,
@@ -67,14 +72,33 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
                     });
             });
         })
-        ->get();
+        ->when( !is_null($id_tipo_inscripcion_estado) ,function($q)use($id_tipo_inscripcion_estado){
+            if(is_numeric($id_tipo_inscripcion_estado) and $id_tipo_inscripcion_estado>0){
+                $q->whereHas('inscripcion',function($qt)use($id_tipo_inscripcion_estado){
+                  $qt->where('id_tipo_inscripcion_estado',$id_tipo_inscripcion_estado);
+                });
+            } else if($id_tipo_inscripcion_estado!=0) {
+                $q->whereHas('inscripcion',function($qt)use($id_tipo_inscripcion_estado){
+                  $tipos = explode(',', $id_tipo_inscripcion_estado);
+                  if(count($tipos)>0){
+                      return $qt->whereIn('id_tipo_inscripcion_estado', array_map('intval',$tipos) );
+                  }
+                });
+            }
+        })
+        ->get()->toArray();
+        usort($registros, function($a1,$a2){
+            return strcmp($a1['inscripcion']['alumno']['apellido'],$a2['inscripcion']['alumno']['apellido']);
+        });
         return $registros;
     }
  
     public function headings(): array
     {
         return [
+            'N°',
             'ALUMNO',
+            'BECA',
             'FEBRERO',
             'MARZO',
             'ABRIL',
@@ -87,14 +111,13 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
             'NOVIEMBRE',
             'DICIEMBRE',
             'TOTAL',
+            'ESTADO',
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'B' => "$#,##0.00",
-            'C' => "$#,##0.00",
             'D' => "$#,##0.00",
             'E' => "$#,##0.00",
             'F' => "$#,##0.00",
@@ -105,13 +128,19 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
             'K' => "$#,##0.00",
             'L' => "$#,##0.00",
             'M' => "$#,##0.00",
+            'N' => "$#,##0.00",
+            'O' => "$#,##0.00",
         ];
     }
 
     public $index = 1;
     public function map($registro): array
     {
-        $alumno = $registro->inscripcion->alumno->apellido.', '.$registro->inscripcion->alumno->nombre;
+        $inscripcion = $registro['inscripcion'];
+        $alumno = $inscripcion['alumno']['apellido'] .", ".$inscripcion['alumno']['apellido'];
+        $beca = $inscripcion['beca']['nombre'];
+        $estado = $inscripcion['tipo_estado']['nombre'];
+
         $results = DB::select("
                 SELECT 
                     cobranza_mes(ppa_id,2) as febrero,
@@ -127,7 +156,7 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
                     cobranza_mes(ppa_id,12) as diciembre
                 FROM tbl_planes_pago where ppa_id = ?;
                 ", [
-            $registro->id,
+            $registro['id'],
             ]
             );
         $result = [];
@@ -146,8 +175,13 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
         $noviembre = $result->noviembre??0;
         $diciembre = $result->diciembre??0;
         $this->index = $this->index + 1;
+
+        $enumeracion = $this->enumeracion;
+        $this->enumeracion = $this->enumeracion + 1;
         return [
+            $enumeracion,
             $alumno,
+            $beca,
             $febrero,
             $marzo,
             $abril,
@@ -159,8 +193,8 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
             $octubre,
             $noviembre,
             $diciembre,
-            '=SUM(B'.$this->index.':M'.$this->index.')'
-            //$febrero + $marzo + $abril + $mayo + $junio + $julio + $agosto + $septiembre + $octubre + $noviembre + $diciembre,
+            '=SUM(D'.$this->index.':O'.$this->index.')',
+            $estado,
         ];
     }
 
@@ -173,7 +207,7 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
         $carrera = $this->carrera;
         $sede = $this->sede;
         $tipo = $this->tipo;
-        $anio = $this->anio;
+        $anio = $this->inputs['anio'];
         Excel::extend(static::class, function (AlumnoPlanPagoExport $export, $writer)use($carrera,$sede,$tipo,$anio){
             $sheet = $writer->getSheetByIndex(0);
             
@@ -185,13 +219,13 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
                     ),
                 ),
             );
-            $sheet->getStyle('A1:M1')->applyFromArray($styleArray);
+            $sheet->getStyle('A1:O1')->applyFromArray($styleArray);
+            $sheet->getStyle('P1:P1')->applyFromArray($styleArray);
             $ultima = $sheet->getHighestRow();
-            $sheet->getStyle('A2:M'.($ultima+1))->applyFromArray($styleArray);
+            $sheet->getStyle('A2:O'.($ultima+1))->applyFromArray($styleArray);
+            $sheet->getStyle('P2:P'.($ultima))->applyFromArray($styleArray);
             $ultima++;
-            $sheet->SetCellValue('A'.$ultima,'TOTAL');
-            $sheet->SetCellValue('B'.$ultima,'=SUM(B2:B'.($ultima-1).')');
-            $sheet->SetCellValue('C'.$ultima,'=SUM(C2:C'.($ultima-1).')');
+            $sheet->SetCellValue('B'.$ultima,'TOTAL');
             $sheet->SetCellValue('D'.$ultima,'=SUM(D2:D'.($ultima-1).')');
             $sheet->SetCellValue('E'.$ultima,'=SUM(E2:E'.($ultima-1).')');
             $sheet->SetCellValue('F'.$ultima,'=SUM(F2:F'.($ultima-1).')');
@@ -202,16 +236,18 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromCollection, WithMappin
             $sheet->SetCellValue('K'.$ultima,'=SUM(K2:K'.($ultima-1).')');
             $sheet->SetCellValue('L'.$ultima,'=SUM(L2:L'.($ultima-1).')');
             $sheet->SetCellValue('M'.$ultima,'=SUM(M2:M'.($ultima-1).')');
-            $sheet->getStyle('B'.$ultima.':M'.$ultima)
+            $sheet->SetCellValue('N'.$ultima,'=SUM(N2:N'.($ultima-1).')');
+            $sheet->SetCellValue('O'.$ultima,'=SUM(O2:O'.($ultima-1).')');
+            $sheet->getStyle('D'.$ultima.':O'.$ultima)
                 ->getNumberFormat()
                 ->setFormatCode("$#,##0.00");
             $ultima++;
             $ultima++;
-            $sheet->SetCellValue('A'.$ultima++, 'DETALLE DE CUOTA COBRADAS POR CARRERA' );
-            $sheet->SetCellValue('A'.$ultima++, $carrera->nombre );
-            $sheet->SetCellValue('A'.$ultima++, 'Año de cursado: '.$tipo->nombre );
-            $sheet->SetCellValue('A'.$ultima++, 'Año de pago: '.$anio );
-            $sheet->SetCellValue('A'.$ultima++, $sede->nombre );
+            $sheet->SetCellValue('B'.$ultima++, 'DETALLE DE CUOTA COBRADAS POR CARRERA' );
+            $sheet->SetCellValue('B'.$ultima++, $carrera->nombre );
+            $sheet->SetCellValue('B'.$ultima++, 'Año de cursado: '.$tipo->nombre );
+            $sheet->SetCellValue('B'.$ultima++, 'Año de pago: '.$anio );
+            $sheet->SetCellValue('B'.$ultima++, $sede->nombre );
         });
     }
 }

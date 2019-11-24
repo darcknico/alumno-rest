@@ -41,6 +41,7 @@ class HorarioController extends Controller
         $id_materia = $request->query('id_materia',0);
         $id_comision = $request->query('id_comision',0);
         $id_dia = $request->query('id_dia',0);
+        $id_aula = $request->query('id_aula',0);
         $anio = $request->query('anio',null);
 
         $registros = $registros
@@ -73,6 +74,9 @@ class HorarioController extends Controller
             })
             ->when($id_dia>0,function($q)use($id_dia){
                 return $q->where('id_dia',$id_dia);
+            })
+            ->when($id_aula>0,function($q)use($id_aula){
+                return $q->where('id_aula',$id_aula);
             });
 
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
@@ -135,6 +139,8 @@ class HorarioController extends Controller
             'id_comision' => 'required',
             'hora_inicial' => 'required',
             'hora_final' => 'required',
+            'id_aula' => 'integer | nullable',
+            'asistencia' => 'boolean | nullable',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -143,6 +149,9 @@ class HorarioController extends Controller
         $id_comision = $request->input('id_comision');
         $hora_inicial = $request->input('hora_inicial');
         $hora_final = $request->input('hora_final');
+        $nombre = $request->input('nombre');
+        $asistencia = $request->input('asistencia',false);
+        $id_aula = $request->input('id_aula');
 
         $horarios = Horario::where([
             'estado' => 1,
@@ -182,6 +191,9 @@ class HorarioController extends Controller
         $horario->id_comision = $id_comision;
         $horario->hora_inicial = $hora_inicial;
         $horario->hora_final = $hora_final;
+        $horario->nombre = $nombre;
+        $horario->id_aula = $id_aula;
+        $horario->asistencia = $asistencia;
         $horario->save();
 
         return response()->json($horario,200);
@@ -211,6 +223,8 @@ class HorarioController extends Controller
         $validator = Validator::make($request->all(),[
             'hora_inicial' => 'required',
             'hora_final' => 'required',
+            'id_aula' => 'integer | nullable',
+            'asistencia' => 'boolean | nullable',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
@@ -218,10 +232,16 @@ class HorarioController extends Controller
         $id_dia = $request->input('id_dia');
         $hora_inicial = $request->input('hora_inicial');
         $hora_final = $request->input('hora_final');
+        $nombre = $request->input('nombre');
+        $asistencia = $request->input('asistencia',false);
+        $id_aula = $request->input('id_aula');
 
         $horario = Horario::find($request->comisionHorario);
         $horario->hora_inicial = $hora_inicial;
         $horario->hora_final = $hora_final;
+        $horario->nombre = $nombre;
+        $horario->id_aula = $id_aula;
+        $horario->asistencia = $asistencia;
         $horario->save();
         return response()->json($horario,200);
     }

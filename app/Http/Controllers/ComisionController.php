@@ -181,6 +181,9 @@ class ComisionController extends Controller
             'id_usuario' => 'required',
             'responsable_nombre' => 'required',
             'responsable_apellido' => 'required',
+            'clase_inicio' => 'date | nullable',
+            'clase_final' => 'date | nullable',
+            'asistencia' => 'boolean | nullable',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],404);
@@ -192,6 +195,9 @@ class ComisionController extends Controller
         $responsable_nombre = $request->input('responsable_nombre');
         $responsable_apellido = $request->input('responsable_apellido');
         $id_modalidad = $request->input('id_modalidad',1);
+        $clase_inicio = $request->input('clase_inicio');
+        $clase_final = $request->input('clase_final');
+        $asistencia = $request->input('asistencia',false);
         $docentes = $request->input('docentes',[]);
         if(is_null($docentes)){
             $docentes = [];
@@ -211,6 +217,9 @@ class ComisionController extends Controller
         $todo->responsable_apellido = $responsable_apellido;
         $todo->id_modalidad = $id_modalidad;
         $todo->id_sede = $id_sede;
+        $todo->clase_inicio = $clase_inicio;
+        $todo->clase_final = $clase_final;
+        $todo->asistencia = $asistencia;
         $todo->usu_id_alta = $user->id;
         $todo->save();
 
@@ -365,6 +374,10 @@ class ComisionController extends Controller
             'id_usuario' => 'required',
             'responsable_nombre' => 'required',
             'responsable_apellido' => 'required',
+            'clase_inicio' => 'date | nullable',
+            'clase_final' => 'date | nullable',
+            'asistencia' => 'boolean | nullable',
+            'cerrado' => 'boolean | nullable',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],404);
@@ -376,6 +389,9 @@ class ComisionController extends Controller
         $responsable_apellido = $request->input('responsable_apellido');
         $id_modalidad = $request->input('id_modalidad',1);
         $cerrado = $request->input('cerrado',false);
+        $clase_inicio = $request->input('clase_inicio');
+        $clase_final = $request->input('clase_final');
+        $asistencia = $request->input('asistencia',false);
         $docentes = $request->input('docentes');
 
         $todo = Comision::find($id_comision);
@@ -386,6 +402,9 @@ class ComisionController extends Controller
         $todo->responsable_apellido = $responsable_apellido;
         $todo->id_modalidad = $id_modalidad;
         $todo->cerrado = $cerrado;
+        $todo->clase_inicio = $clase_inicio;
+        $todo->clase_final = $clase_final;
+        $todo->asistencia = $asistencia;
         $todo->save();
 
         $docentes_old = ComisionDocente::where('id_comision',$id_comision)->where('estado',1)->get()->toArray();

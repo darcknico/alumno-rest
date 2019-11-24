@@ -72,7 +72,7 @@ class MateriaController extends Controller
                 return $q->where('tml_id',$id_tipo_materia_lectivo);
             });
 
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $page==0 ){
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 ){
             $todo = $registros->orderBy('codigo','asc')
             ->get();
             return response()->json($todo,200);

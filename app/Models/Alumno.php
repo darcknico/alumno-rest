@@ -2,12 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\AlumnoArchivo;
+use App\Models\TipoAlumnoDocumentacion;
+
 use Illuminate\Database\Eloquent\Model;
 use Sofa\Eloquence\Eloquence;
 use Sofa\Eloquence\Mappable;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Redactors\LeftRedactor;
 
+/**
+ * @OA\Schema(
+ *   schema="Alumno",
+ *   type="object",
+ *   required={"nombre","documento", "id_tipo_documento"},
+ * )
+ * Class Alumno
+ * @package App\Models
+ */
 class Alumno extends Model implements Auditable
 {
 
@@ -92,6 +104,33 @@ class Alumno extends Model implements Auditable
       'id_usuario_baja' => 'usu_id_baja',
   ];
 
+  /**
+   * @OA\Property(property="id",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="id_sede",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="nombre",type="string",maxLength=255)
+   * @OA\Property(property="apellido",type="string",maxLength=255)
+   * @OA\Property(property="domicilio",type="string",maxLength=255)
+   * @OA\Property(property="calle",type="string",maxLength=255)
+   * @OA\Property(property="numero",type="string",maxLength=255)
+   * @OA\Property(property="piso",type="string",maxLength=255)
+   * @OA\Property(property="depto",type="string",maxLength=255)
+   * @OA\Property(property="id_localidad",type="integer", format="int64")
+   * @OA\Property(property="localidad",type="string",maxLength=255)
+   * @OA\Property(property="id_provincia",type="integer", format="int64")
+   * @OA\Property(property="codigo_postal",type="integer", format="int64")
+   * @OA\Property(property="telefono",type="string",maxLength=255)
+   * @OA\Property(property="celular",type="string",maxLength=255)
+   * @OA\Property(property="email",type="string",maxLength=255,format="email")
+   * @OA\Property(property="id_tipo_documento",type="integer", format="int64")
+   * @OA\Property(property="documento",type="integer", format="int64")
+   * @OA\Property(property="fecha_nacimiento",type="string",format="date")
+   * @OA\Property(property="ciudad_nacimiento",type="string",maxLength=255)
+   * @OA\Property(property="nacionalidad",type="string",maxLength=255)
+   * @OA\Property(property="sexo",type="string",maxLength=1)
+   * @OA\Property(property="id_tipo_alumno_civil",type="integer", format="int64")
+   * @OA\Property(property="id_tipo_alumno_estado",type="integer", format="int64")
+   * @OA\Property(property="observaciones",type="string",maxLength=255)
+   */
   protected $appends = [
       'id',
       'id_sede',
@@ -122,6 +161,9 @@ class Alumno extends Model implements Auditable
       'observaciones',
       'id_usuario',
       'id_usuario_baja',
+
+      'archivos_subidos',
+      'archivos_faltantes',
   ];
 
   public function usuario(){
@@ -172,7 +214,26 @@ class Alumno extends Model implements Auditable
     return $this->hasMany('App\Models\AlumnoNotificacion','alu_id','alu_id');
   }
 
-   protected $attributeModifiers = [
-        'alu_password' => LeftRedactor::class,
-    ];
+  protected $attributeModifiers = [
+    'alu_password' => LeftRedactor::class,
+  ];
+
+  public function getArchivosSubidosAttribute(){
+    $id_alumno = $this->id??0;
+    $archivos = TipoAlumnoDocumentacion::whereHas('alumnos',function($q)use($id_alumno){
+      $q->where('estado',1)->where('id_alumno',$id_alumno);
+    })
+    ->where('estado',1)
+    ->get();
+    return $archivos;
+  }
+  public function getArchivosFaltantesAttribute(){
+    $id_alumno = $this->id??0;
+    $archivos = TipoAlumnoDocumentacion::whereDoesntHave('alumnos',function($q)use($id_alumno){
+      $q->where('estado',1)->where('id_alumno',$id_alumno);
+    })
+    ->where('estado',1)
+    ->get();
+    return $archivos;
+  }
 }

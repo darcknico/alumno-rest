@@ -37,6 +37,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 
+use \DB;
 use Carbon\Carbon;
 use App\Functions\CorreoFunction;
 use App\Functions\CuentaCorrienteFunction;
@@ -47,10 +48,23 @@ use Maatwebsite\Excel\Facades\Excel;
 class AlumnoController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/sedes/{id_sede}/alumnos",
+    *     tags={"Alumnos"},
+    *     summary="Listado de alumno",
+    *     description="Mostrar todos los alumnos de la sede",
+    *     operationId="index",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Mostrar todos los alumnos."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
         $id_sede = $request->route('id_sede',null);
@@ -166,6 +180,21 @@ class AlumnoController extends Controller
     }
 
     public function estadisticas(Request $request){
+        $validator = Validator::make($request->all(),[
+            'id_sede' => 'required',
+            'fecha' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $id_sede = $request->query('id_sede');
+        $fecha = $request->query('fecha',null);
+        if(is_null($fecha)){
+            $fecha = Carbon::now();
+        } else {
+            $fecha = Carbon::parse($fecha);
+        }
+
         $totales = \DB::table('tbl_alumnos')
         ->selectRaw('
             sum(if(tae_id=1,1,0)) as no_inscriptos,
@@ -174,6 +203,7 @@ class AlumnoController extends Controller
             ')
         ->where([
             'estado' => 1,
+            'sed_id' => $id_sede,
         ])
         ->groupBy('sed_id')
         ->first();
@@ -191,8 +221,9 @@ class AlumnoController extends Controller
             ')
         ->where([
             'estado' => 1,
+            'sed_id' => $id_sede,
         ])
-        ->whereYear('created_at',Carbon::now()->year)
+        ->whereYear('created_at',$fecha->year)
         ->groupBy('sed_id')
         ->first();
         if(!$totales_hoy){
@@ -205,6 +236,83 @@ class AlumnoController extends Controller
             'totales' => $totales,
             'totales_hoy' => $totales_hoy,
         ], 200);
+    }
+
+    public function estadisticas_planes(Request $request){
+        $validator = Validator::make($request->all(),[
+            'id_sede' => 'required',
+            'fecha' => 'required | date',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $id_sede = $request->query('id_sede');
+        $fecha = $request->query('fecha',null);
+        if(is_null($fecha)){
+            $fecha = Carbon::now();
+        } else {
+            $fecha = Carbon::parse($fecha);
+        }
+        $anio = $fecha->year;
+
+        $results = DB::select("
+                SELECT 
+                    count(*) as total,
+                    SUM(if(obligaciones.no_pagados = 0,1,0)) as al_dia,
+                    SUM(if(obligaciones.no_pagados = 1,1,0)) as deuda_1,
+                    SUM(if(obligaciones.no_pagados = 2,1,0)) as deuda_2,
+                    SUM(if(obligaciones.no_pagados = 3,1,0)) as deuda_3,
+                    SUM(if(obligaciones.no_pagados > 3,1,0)) as deuda_3_mas
+                FROM tbl_alumnos alu
+                RIGHT JOIN tbl_inscripciones ins ON alu.alu_id = ins.alu_id
+                RIGHT JOIN 
+                (
+                    SELECT COUNT(*) as cantidad,SUM( IF(obl_pagado = 0,1,0) ) as no_pagados, obl.ppa_id, ppa.ins_id
+                    FROM tbl_obligaciones obl
+                    RIGHT JOIN tbl_planes_pago ppa ON obl.ppa_id = ppa.ppa_id
+                    WHERE
+                    obl.estado = 1 AND
+                    obl.tob_id = 1 AND
+                    ppa.ppa_anio = ? AND
+                    ppa.sed_id = ? AND
+                    ppa.estado = 1 AND
+                    obl.obl_monto > 0 AND
+                    obl.obl_fecha_vencimiento <= ?
+                    GROUP BY obl.ppa_id, ppa.ins_id
+                ) AS obligaciones ON ins.ins_id = obligaciones.ins_id
+                WHERE
+                alu.estado = 1
+                GROUP BY alu.estado;
+                ", [
+            $anio,
+            $id_sede,
+            $fecha->toDateString(),
+            ]
+        );
+        $total = 0;
+        $al_dia = 0;
+        $deuda_1 = 0;
+        $deuda_2 = 0;
+        $deuda_3 = 0;
+        $deuda_3_mas = 0;
+        if($results){
+            $total = $results[0]->total??0;
+            $al_dia = $results[0]->al_dia??0;
+            $deuda_1 = $results[0]->deuda_1??0;
+            $deuda_2 = $results[0]->deuda_2??0;
+            $deuda_3 = $results[0]->deuda_3??0;
+            $deuda_3_mas = $results[0]->deuda_3_mas??0;
+        }
+
+        return response()->json([
+            'total' => $total,
+            'al_dia' => $al_dia,
+            'deuda_1_2' => $deuda_1 + $deuda_2,
+            'deuda_1' => $deuda_1,
+            'deuda_2' => $deuda_2,
+            'deuda_3' => $deuda_3,
+            'deuda_3_mas' => $deuda_3_mas,
+        ]);
     }
 
     public function buscar(Request $request){
@@ -255,10 +363,39 @@ class AlumnoController extends Controller
     }
 
     /**
-     * Store
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/sedes/{id_sede}/alumnos",
+    *     tags={"Alumnos"},
+    *     summary="Nuevo alumno",
+    *     description="Guardar nuevo alumno en la sede",
+    *     operationId="create",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\RequestBody(
+    *          description="Datos para crear nuevo alumno",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo alumno.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $id_sede = $request->route('id_sede');
@@ -337,11 +474,28 @@ class AlumnoController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/sedes/{id_sede}/alumnos/{id_alumno}",
+    *     tags={"Alumnos"},
+    *     summary="Mostrar alumno",
+    *     description="Recupera al alumno de acuerdo al id y sede",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\Parameter(ref="#/components/parameters/id_alumno"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo alumno.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_alumno = $request->alumno;
@@ -384,24 +538,42 @@ class AlumnoController extends Controller
         ],200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/sedes/{id_sede}/alumnos/{id_alumno}",
+    *     tags={"Alumnos"},
+    *     summary="Editar alumno",
+    *     description="Edita el alumno de acuerdo al id y sede",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\Parameter(ref="#/components/parameters/id_alumno"),
+    *     @OA\RequestBody(
+    *          description="Datos del alumno",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo alumno.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -469,11 +641,28 @@ class AlumnoController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/sedes/{id_sede}/alumnos/{id_alumno}",
+    *     tags={"Alumnos"},
+    *     summary="Eliminar alumno",
+    *     description="Elimina al alumno de acuerdo al id. Si el alumno posse inscripciones activas, no puede ser eliminado",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_sede"),
+    *     @OA\Parameter(ref="#/components/parameters/id_alumno"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo alumno.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Alumno")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=403,
+    *         description="Si el alumno posse inscripciones activas, no puede ser eliminado."
+    *     )
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();
@@ -582,26 +771,48 @@ class AlumnoController extends Controller
         $user = Auth::user();
         $id_alumno = $request->route('id_alumno');
         $validator = Validator::make($request->all(),[
-            'archivo' => 'required',
             'id_tipo_alumno_documentacion' => 'required',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
         }
-        $todo = null;
+        $id_tipo_alumno_documentacion = $request->input('id_tipo_alumno_documentacion');
+        $observaciones = $request->input('observaciones');
+
+        $todo = new AlumnoArchivo;
+        $todo->alu_id = $id_alumno;
+        $todo->tad_id = $id_tipo_alumno_documentacion;
+        $todo->usu_id = $user->id;
+        $todo->observaciones = $observaciones;
+
         if($request->hasFile('archivo')){
-            $id_tipo_alumno_documentacion = $request->input('id_tipo_alumno_documentacion');
             $archivo = $request->file('archivo');
             $filename = $archivo->store('alumnos/archivos');
-            $todo = new AlumnoArchivo;
-            $todo->alu_id = $id_alumno;
+
             $todo->aar_nombre = $archivo->getClientOriginalName();
             $todo->aar_dir = $filename;
-            $todo->tad_id = $id_tipo_alumno_documentacion;
-            $todo->usu_id = $user->id;
-            $todo->save();
+        }
+        
+        $todo->save();
+        return response()->json($todo,200);
+    }
 
-            $todo = AlumnoArchivo::with('tipo_documentacion')->find($todo->aar_id);
+    public function archivoEdita(Request $request){
+        $id_alumno_archivo = $request->route('id_alumno_archivo');
+        $validator = Validator::make($request->all(),[
+            'id_tipo_alumno_documentacion' => 'required',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],403);
+        }
+        $id_tipo_alumno_documentacion = $request->input('id_tipo_alumno_documentacion');
+        $observaciones = $request->input('observaciones');
+
+        $todo = AlumnoArchivo::find($id_alumno_archivo);
+        if($todo){
+            $todo->tad_id = $id_tipo_alumno_documentacion;
+            $todo->observaciones = $observaciones;
+            $todo->save();
         }
         return response()->json($todo,200);
     }

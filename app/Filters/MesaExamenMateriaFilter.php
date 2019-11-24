@@ -2,6 +2,8 @@
 
 namespace App\Filters;
 
+use App\Models\Carrera;
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,6 +27,33 @@ class MesaExamenMateriaFilter{
         $fecha_fin = $request->query('fecha_fin',null);
         $cierre = $request->query('cierre',null);
         $id_usuario = $request->query('id_usuario',0);
+
+        return MesaExamenMateriaFilter::fill([
+                'search' => $search,
+                'id_departamento' => $id_departamento,
+                'id_carrera' => $id_carrera,
+                'id_materia' => $id_materia,
+                'id_mesa_examen' => $id_mesa_examen,
+                'fecha_ini' => $fecha_ini,
+                'fecha_fin' => $fecha_fin,
+                'cierre' => $cierre,
+                'id_usuario' => $id_usuario,
+                ],
+                $query
+            );
+	}
+
+    public static function fill($filters,Builder $query){
+        $search = $filters['search']??"";
+        $id_departamento = $filters['id_departamento']??0;
+        $id_carrera = $filters['id_carrera']??0;
+        $id_materia = $filters['id_materia']??0;
+        $id_mesa_examen = $filters['id_mesa_examen']??0;
+        $fecha_ini = $filters['fecha_ini']??null;
+        $fecha_fin = $filters['fecha_fin']??null;
+        $cierre = $filters['cierre']??null;
+        $id_usuario = $filters['id_usuario']??null;
+
 
         $query = $query
             ->when($id_departamento>0,function($q)use($id_departamento){
@@ -92,5 +121,5 @@ class MesaExamenMateriaFilter{
         }
 
         return $query;
-	}
+    }
 }

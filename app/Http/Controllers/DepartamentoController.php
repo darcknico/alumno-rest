@@ -12,10 +12,22 @@ use Validator;
 class DepartamentoController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/departamentos",
+    *     tags={"Departamentos"},
+    *     summary="Listado de departamentos",
+    *     description="Mostrar todos los departamentos",
+    *     operationId="index",
+    *     @OA\Response(
+    *         response=200,
+    *         description="Mostrar todos los departamentos."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
         $todo = Departamento::where([
@@ -25,10 +37,38 @@ class DepartamentoController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/departamentos",
+    *     tags={"Departamentos"},
+    *     summary="Nuevo departamento",
+    *     description="Guardar nuevo departamento",
+    *     operationId="create",
+    *     @OA\RequestBody(
+    *          description="Datos para crear un nuevo departamento",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Departamento")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo departamento.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Departamento")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -50,11 +90,27 @@ class DepartamentoController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/departamentos/{id_departamento}",
+    *     tags={"Departamentos"},
+    *     summary="Mostrar departamento",
+    *     description="Recupera el departamento de acuerdo al id",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_departamento"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo departamento.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Departamento")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_departamento = $request->route('id_departamento');
@@ -63,23 +119,39 @@ class DepartamentoController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/departamentos/{id_departamento}",
+    *     tags={"Departamentos"},
+    *     summary="Editar departamento",
+    *     description="Edita el departamento de acuerdo al id",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_departamento"),
+    *     @OA\RequestBody(
+    *          description="Datos del departamento",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Departamento")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo departamento.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Departamento")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -100,11 +172,23 @@ class DepartamentoController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/departamentos/{id_departamento}",
+    *     tags={"Departamentos"},
+    *     summary="Eliminar departamento",
+    *     description="Elimina al departamento de acuerdo al id",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_departamento"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo departamento.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Departamento")
+    *          )
+    *     ),
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();

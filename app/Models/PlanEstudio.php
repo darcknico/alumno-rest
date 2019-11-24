@@ -9,6 +9,15 @@ use Sofa\Eloquence\Mappable;
 
 use App\Models\Materia;
 
+/**
+* @OA\Schema(
+*   schema="PlanEstudio",
+*   type="object",
+*   required={"nombre","codigo","anio"},
+* )
+* Class PlanEstudio
+* @package App\Models
+*/
 class PlanEstudio extends Model
 {
   use Eloquence, Mappable;
@@ -42,6 +51,16 @@ class PlanEstudio extends Model
       'id_usuario' => 'usu_id',
   ];
 
+  /**
+  * @OA\Property(property="id",type="integer", format="int64", readOnly=true)
+  * @OA\Property(property="id_carrera",type="integer", format="int64", description="Carrera")
+  * @OA\Property(property="id_usuario",type="integer", format="int64", readOnly=true, description="Usuario responsable del registro")
+  * @OA\Property(property="nombre",type="string",maxLength=255)
+  * @OA\Property(property="codigo",type="string",maxLength=255)
+  * @OA\Property(property="anio",type="integer")
+  * @OA\Property(property="horas",type="integer")
+  * @OA\Property(property="cantidad_horas",type="integer", readOnly=true)
+  */
   protected $appends = [
       'id',
       'nombre',

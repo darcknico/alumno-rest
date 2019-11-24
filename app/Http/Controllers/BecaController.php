@@ -12,10 +12,22 @@ use Validator;
 class BecaController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/becas",
+    *     tags={"Becas"},
+    *     summary="Listado de beca",
+    *     description="Mostrar todos las beca",
+    *     operationId="index",
+    *     @OA\Response(
+    *         response=200,
+    *         description="Mostrar todos las beca."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function index(Request $request)
     {
         $id_carrera = $request->route('id_carrera');
@@ -28,10 +40,38 @@ class BecaController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Post(
+    *     path="/becas",
+    *     tags={"Becas"},
+    *     summary="Nueva beca",
+    *     description="Guardar nueva beca",
+    *     operationId="create",
+    *     @OA\RequestBody(
+    *          description="Datos para crear una nueva beca",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Beca")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo beca.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Beca")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -57,11 +97,27 @@ class BecaController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Get(
+    *     path="/becas/{id_beca}",
+    *     tags={"Becas"},
+    *     summary="Mostrar beca",
+    *     description="Recupera la beca de acuerdo al id",
+    *     operationId="show",
+    *     @OA\Parameter(ref="#/components/parameters/id_beca"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo beca.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Beca")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function show(Request $request)
     {
         $id_beca = $request->route('id_beca');
@@ -70,23 +126,39 @@ class BecaController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TipoUsuario $tipoUsuario)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Put(
+    *     path="/becas/{id_beca}",
+    *     tags={"Becas"},
+    *     summary="Editar beca",
+    *     description="Edita la beca de acuerdo al id",
+    *     operationId="update",
+    *     @OA\Parameter(ref="#/components/parameters/id_beca"),
+    *     @OA\RequestBody(
+    *          description="Datos del beca",
+    *          required=true,
+    *          @OA\MediaType(
+    *              mediaType="application/json",
+    *              @OA\Schema(ref="#/components/schemas/Beca")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve una sola beca.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Beca")
+    *          )
+    *     ),
+    *     @OA\Response(
+    *         response="403",
+    *         description="Error Validator."
+    *     ),
+    *     @OA\Response(
+    *         response="default",
+    *         description="Ha ocurrido un error."
+    *     )
+    * )
+    */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -113,11 +185,23 @@ class BecaController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\TipoUsuario  $tipoUsuario
-     * @return \Illuminate\Http\Response
-     */
+    * @OA\Delete(
+    *     path="/becas/{id_beca}",
+    *     tags={"Becas"},
+    *     summary="Eliminar beca",
+    *     description="Elimina la beca de acuerdo al id",
+    *     operationId="destroy",
+    *     @OA\Parameter(ref="#/components/parameters/id_beca"),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Devuelve un solo una beca.",
+    *         @OA\MediaType(
+    *           mediaType="application/json",
+    *           @OA\Schema(ref="#/components/schemas/Beca")
+    *          )
+    *     ),
+    * )
+    */
     public function destroy(Request $request)
     {
         $user = Auth::user();

@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\Comision;
 
 use App\Models\AsistenciaAlumno;
+use App\Models\Comision;
+use App\Models\ComisionAlumno;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+
+use Carbon\Carbon;
+use JasperPHP\JasperPHP;
 
 class AsistenciaAlumnoController extends Controller
 {
@@ -182,5 +187,49 @@ class AsistenciaAlumnoController extends Controller
     {
         //
         return response()->json([],401);
+    }
+
+    public function reporte_constancia(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_asistencia_alumno = $request->route('id_asistencia_alumno');
+        $alumno = AsistenciaAlumno::find($id_asistencia_alumno);
+        if(!$alumno){
+            return response()->json(['error'=>'La asistencia no existe.'],403);
+        }
+        $fecha = Carbon::parse($alumno->asistencia->fecha)->toDateString();
+        $alumno = ComisionAlumno::where('id_alumno',$alumno->id_alumno)
+        ->where('id_comision',$alumno->asistencia->id_comision)
+        ->where('estado',1)
+        ->first();
+        if(!$alumno){
+            return response()->json(['error'=>'El alumno se encuentra en la comision.'],403);
+        }
+        $id_inscripcion = $alumno->id_inscripcion;
+        $id_materia = $alumno->comision->id_materia;
+        $tipo = "asistencia";
+
+        $jasper = new JasperPHP;
+        $input = storage_path("app/reportes/alumno_constancia_general.jasper");
+        $output = storage_path("app/reportes/".uniqid());
+        $ext = "pdf";
+
+        $jasper->process(
+            $input,
+            $output,
+            [$ext],
+            [
+                'id_materia' => $id_materia,
+                'id_inscripcion' => $id_inscripcion,
+                'id_sede' => $id_sede,
+                'fecha' => $fecha,
+                'tipo' => $tipo,
+                'logo'=> storage_path("app/images/logo_constancia.png")??null,
+                'REPORT_LOCALE' => 'es_AR',
+            ],
+            \Config::get('database.connections.mysql')
+        )->execute();
+        
+        $filename ='constancia_asistencia_mesa-'.$alumno->id.$ext;
+        return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 }

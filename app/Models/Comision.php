@@ -16,6 +16,8 @@ class Comision extends Model
 
   protected $casts = [
       'estado'=>'boolean',
+      'com_cerrado'=>'boolean',
+      'com_asistencia'=>'boolean',
   ];
 
   protected $hidden = [
@@ -30,6 +32,9 @@ class Comision extends Model
     'com_responsable_nombre',
     'com_responsable_apellido',
     'com_cerrado',
+    'com_clase_inicio',
+    'com_clase_final',
+    'com_asistencia',
     'mod_id',
     'usu_id_alta',
     'usu_id_baja',
@@ -49,6 +54,9 @@ class Comision extends Model
       'responsable_apellido' => 'com_responsable_apellido',
       'cerrado' => 'com_cerrado',
       'id_modalidad' => 'mod_id',
+      'clase_inicio' => 'com_clase_inicio',
+      'clase_final' => 'com_clase_final',
+      'asistencia' => 'com_asistencia',
   ];
 
   protected $appends = [
@@ -64,6 +72,9 @@ class Comision extends Model
       'responsable_apellido',
       'cerrado',
       'id_modalidad',
+      'clase_inicio',
+      'clase_final',
+      'asistencia',
   ];
 
   public function responsable(){

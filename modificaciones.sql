@@ -278,3 +278,38 @@ ALTER TABLE `tbl_tipo_docente_cargo`
 
 ALTER TABLE `tbl_docente_materia` ADD `tdc_id` INT NULL AFTER `car_id`, ADD `dma_fecha_asignacion` DATE NULL AFTER `tdc_id`, ADD `dma_horas_catedra` INT NULL DEFAULT '0' AFTER `dma_fecha_asignacion`;
 */
+
+composer require "darkaonline/l5-swagger:5.8.*"
+php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"
+
+/*
+ALTER TABLE `tbl_comision_horario` ADD `aul_id` INT NULL AFTER `cho_hora_final`, ADD `cho_nombre` VARCHAR(255) NULL AFTER `aul_id`, ADD `cho_asistencia` BOOLEAN NOT NULL DEFAULT FALSE AFTER `cho_nombre`;
+
+ALTER TABLE `tbl_comisiones` ADD `com_clase_inicio` DATE NULL AFTER `com_cerrado`, ADD `com_clase_final` DATE NULL AFTER `com_clase_inicio`, ADD `com_asistencia` BOOLEAN NOT NULL DEFAULT FALSE AFTER `com_clase_final`;
+
+ALTER TABLE `tbl_asistencias` CHANGE `usu_id` `usu_id` INT(11) NULL;
+*/
+/*
+ALTER TABLE tbl_alumno_archivo CHANGE aar_nombre aar_nombre VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_spanish_ci NULL;
+ALTER TABLE tbl_alumno_archivo CHANGE aar_dir aar_dir VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_spanish_ci NULL;
+ALTER TABLE `tbl_alumno_archivo` ADD `aar_observaciones` VARCHAR(255) NULL AFTER `aar_nombre`;
+*/
+/*
+composer require laravel-notification-channels/onesignal
+
+ALTER TABLE `tbl_usuarios` ADD `google_id` VARCHAR(255) NULL AFTER `updated_at`, ADD `facebook_id` VARCHAR(255) NULL AFTER `google_id`;
+
+CREATE TABLE `sch_alumno`.`tbl_usuario_dispositivo` ( `udi_id` INT NOT NULL AUTO_INCREMENT , `usu_id` INT NOT NULL , `udi_device_id` VARCHAR(255) NULL , `udi_device_os` INT NULL , `udi_device_model` INT NULL , `udi_manufacturer` INT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`udi_id`)) ENGINE = InnoDB;
+
+CREATE TABLE `sch_alumno`.`tbl_usuario_asistencia` ( `uas_id` INT NOT NULL AUTO_INCREMENT , `usu_id` INT NOT NULL , `uas_fecha` DATETIME NULL , `uas_latitud` DECIMAL(10,8) NULL , `uas_longitud` DECIMAL(11,8) NULL , `udi_id` INT NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`uas_id`)) ENGINE = InnoDB;
+
+ALTER TABLE `tbl_usuario_asistencia` ADD `sed_id` INT NOT NULL AFTER `usu_id`;
+
+ALTER TABLE `tbl_novedades_sistema` ADD `sed_id` INT NOT NULL DEFAULT '0' AFTER `nsi_id`;
+
+ALTER TABLE `tbl_novedades_sistema` CHANGE `created_at` `created_at` TIMESTAMP NULL DEFAULT NULL;
+
+ALTER TABLE `tbl_novedades_sistema` CHANGE `updated_at` `updated_at` TIMESTAMP NULL DEFAULT NULL;
+
+ALTER TABLE `tbl_mesas_examen` ADD `mes_notificacion_push` BOOLEAN NOT NULL DEFAULT FALSE AFTER `mes_nombre`, ADD `mes_notificacion_email` BOOLEAN NOT NULL DEFAULT FALSE AFTER `mes_notificacion_push`;
+*/

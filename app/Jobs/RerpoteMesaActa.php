@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Extra\ReporteJob;
 use App\Models\Mesa\TipoCondicionAlumno;
 use App\Models\Mesa\MesaExamenMateria;
+use App\Models\Mesa\MesaExamenMateriaDocente;
 
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -13,8 +14,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Storage;
-
-use App\Jobs\RerpoteMesaActa;
 
 use Carbon\Carbon;
 use JasperPHP\JasperPHP;

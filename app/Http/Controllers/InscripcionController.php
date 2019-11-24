@@ -471,6 +471,31 @@ class InscripcionController extends Controller
         $filename ='constancia_alumno_regular-'.$inscripcion->alumno->documento;
         return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
     }
+    public function reporte_constancia_cursadas(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_inscripcion = $request->route('id_inscripcion');
+        $inscripcion = Inscripcion::find($id_inscripcion);
+
+        $jasper = new JasperPHP;
+        $input = storage_path("app/reportes/alumno_inscripcion_cursadas.jasper");
+        $output = storage_path("app/reportes/".uniqid());
+        $ext = "pdf";
+
+        $jasper->process(
+            $input,
+            $output,
+            [$ext],
+            [
+                'id_inscripcion' => $id_inscripcion,
+                'logo'=> storage_path("app/images/logo_constancia.png")??null,
+                'REPORT_LOCALE' => 'es_AR',
+            ],
+            \Config::get('database.connections.mysql')
+        )->execute();
+        
+        $filename ='constancia_materias_cursadas-'.$inscripcion->alumno->documento;
+        return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
+    }
 
     public function estadisticas_rendimientos(Request $request){
         $id_sede = $request->route('id_sede');
@@ -496,14 +521,14 @@ class InscripcionController extends Controller
                     AND YEAR(d.date) = YEAR(cex.cex_fecha)
                     AND cex.estado = 1
                 left join 
-                    tbl_comision_examen_alumno cae on cae.cex_id = cex.cex_id
-                left join 
                     tbl_comisiones com on cex.com_id = com.com_id
                     AND com.estado = 1
                     AND com.sed_id = ?
                 left join 
                     tbl_comision_alumno cal on cal.com_id = com.com_id 
                     AND cal.ins_id = ?
+                left join 
+                    tbl_comision_examen_alumno cae on cae.cex_id = cex.cex_id AND cae.alu_id = cal.alu_id
             group by 1,2
             order by 1,2
                 ";

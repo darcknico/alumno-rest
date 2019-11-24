@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Sofa\Eloquence\Eloquence;
 use Sofa\Eloquence\Mappable;
 
+/**
+ * @OA\Schema(
+ *   schema="Sede",
+ *   type="object",
+ *   required={"nombre"},
+ * )
+ * Class Sede
+ * @package App\Models
+ */
 class Sede extends Model
 {
   use Eloquence, Mappable;
@@ -57,6 +66,25 @@ class Sede extends Model
       'id_usuario' => 'usu_id',
       'room_id' => 'sed_room_id',
   ];
+
+  /**
+   * @OA\Property(property="id",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="nombre",type="string",maxLength=255)
+   * @OA\Property(property="ubicacion",type="string",maxLength=255)
+   * @OA\Property(property="latitud",type="number", format="float")
+   * @OA\Property(property="longitud",type="number", format="float")
+   * @OA\Property(property="codigo_postal",type="integer", format="int64")
+   * @OA\Property(property="direccion",type="string",maxLength=255)
+   * @OA\Property(property="localidad",type="string",maxLength=255)
+   * @OA\Property(property="telefono",type="string",maxLength=255)
+   * @OA\Property(property="celular",type="string",maxLength=255)
+   * @OA\Property(property="email",type="string",maxLength=255,format="email")
+   * @OA\Property(property="id_localidad",type="integer", format="int64")
+   * @OA\Property(property="punto_venta",type="integer", format="int64")
+   * @OA\Property(property="pago_numero",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="mesa_numero",type="integer", format="int64", readOnly=true)
+   * @OA\Property(property="room_id",type="integer", format="int64", readOnly=true, description="Identificacion de la sala en Pusher ChatKit")
+   */
 
   protected $appends = [
       'id',

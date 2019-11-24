@@ -98,6 +98,8 @@ class MesaExamenController extends Controller
         $user = Auth::user();
         $validator = Validator::make($request->all(),[
             'fecha_inicio' => 'required',
+            'notificacion_push' => 'nullable | boolean',
+            'notificacion_email' => 'nullable | boolean',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],404);
@@ -108,12 +110,16 @@ class MesaExamenController extends Controller
             $fecha_fin = $fecha_inicio;
         }
         $nombre = $request->input('nombre');
+        $notificacion_push = $request->input('notificacion_push',false);
+        $notificacion_email = $request->input('notificacion_email',false);
 
         $sede = Sede::find($id_sede);
         $numero = $sede->mesa_numero + 1;
         $todo = new MesaExamen;
         $todo->numero = $numero;
         $todo->nombre = $nombre;
+        $todo->notificacion_push = $notificacion_push;
+        $todo->notificacion_email = $notificacion_email;
         $todo->fecha_inicio = $fecha_inicio;
         $todo->fecha_fin = $fecha_fin;
         $todo->id_sede = $id_sede;
@@ -235,16 +241,22 @@ class MesaExamenController extends Controller
         $id_mesa_examen = $request->route('id_mesa_examen');
         $validator = Validator::make($request->all(),[
             'fecha_fin' => 'required',
+            'notificacion_push' => 'nullable | boolean',
+            'notificacion_email' => 'nullable | boolean',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],404);
         }
         $fecha_fin = $request->input('fecha_fin');
         $nombre = $request->input('nombre');
+        $notificacion_push = $request->input('notificacion_push',false);
+        $notificacion_email = $request->input('notificacion_email',false);
 
         $todo = MesaExamen::find($id_mesa_examen);
         $todo->nombre = $nombre;
         $todo->fecha_fin = $fecha_fin;
+        $todo->notificacion_push = $notificacion_push;
+        $todo->notificacion_email = $notificacion_email;
         $todo->save();
         return response()->json($todo,200);
     }
@@ -451,8 +463,16 @@ class MesaExamenController extends Controller
         $id_sede = $request->route('id_sede');
         $id_mesa_examen = $request->route('id_mesa_examen');
 
-        $id_departamento = $request->query('id_departamento',0);
-        $id_carrera = $request->query('id_carrera',0);
+        $validator = Validator::make($request->all(),[
+            'id_departamento' => 'required | integer',
+            'id_carrera' => 'required  | integer',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],404);
+        }
+
+        $id_departamento = $request->input('id_departamento');
+        $id_carrera = $request->input('id_carrera');
 
         $mesa_examen = MesaExamen::find($id_mesa_examen);
 
@@ -467,15 +487,13 @@ class MesaExamenController extends Controller
         })
         ->whereNotNull('id_plan_estudio')
         ->get()
-        ->pluck('id_plan_estudio')
-        ->toArray();
+        ->pluck('id_plan_estudio');
         $existentes = MesaExamenMateria::where([
             'estado' => 1,
         ])
         ->where('id_mesa_examen',$id_mesa_examen)
         ->get()
-        ->pluck('id_materia')
-        ->toArray();
+        ->pluck('id_materia');
 
         $materias = Materia::where('estado',1)
         ->whereIn('id_plan_estudio',$carreras)
@@ -483,7 +501,6 @@ class MesaExamenController extends Controller
         ->get();
 
         $fecha = Carbon::parse($mesa_examen->mes_fecha_inicio);
-        $salida = [];
         foreach ($materias as $materia) {
             $todo = new MesaExamenMateria;
             $todo->id_mesa_examen = $id_mesa_examen;
@@ -492,9 +509,8 @@ class MesaExamenController extends Controller
             $todo->usu_id = $user->id;
             $todo->fecha = $fecha;
             $todo->save();
-            $salida[] = $salida;
         }
-        return response()->json($salida,200);
+        return response()->json($materias,200);
     }
 
 }

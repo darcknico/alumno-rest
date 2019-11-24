@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Comision;
 
 use App\Models\Carrera;
+use App\Models\Comision;
+use App\Models\ComisionAlumno;
 use App\Models\Comision\ExamenAlumno;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+
+use Carbon\Carbon;
+use JasperPHP\JasperPHP;
 
 class ExamenAlumnoController extends Controller
 {
@@ -183,5 +188,49 @@ class ExamenAlumnoController extends Controller
     public function destroy(Request $request, ExamenAlumno $examenAlumno)
     {
         return response()->json([],401);
+    }
+
+    public function reporte_constancia(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_examen_alumno = $request->route('id_examen_alumno');
+        $alumno = ExamenAlumno::find($id_examen_alumno);
+        if(!$alumno){
+            return response()->json(['error'=>'El examen no existe.'.$id_examen_alumno],403);
+        }
+        $fecha = Carbon::parse($alumno->examen->fecha)->toDateString();
+        $alumno = ComisionAlumno::where('id_alumno',$alumno->id_alumno)
+        ->where('id_comision',$alumno->examen->id_comision)
+        ->where('estado',1)
+        ->first();
+        if(!$alumno){
+            return response()->json(['error'=>'El alumno se encuentra en la comision.'],403);
+        }
+        $id_inscripcion = $alumno->id_inscripcion;
+        $id_materia = $alumno->comision->id_materia;
+        $tipo = "examen";
+
+        $jasper = new JasperPHP;
+        $input = storage_path("app/reportes/alumno_constancia_general.jasper");
+        $output = storage_path("app/reportes/".uniqid());
+        $ext = "pdf";
+
+        $jasper->process(
+            $input,
+            $output,
+            [$ext],
+            [
+                'id_materia' => $id_materia,
+                'id_inscripcion' => $id_inscripcion,
+                'id_sede' => $id_sede,
+                'fecha' => $fecha,
+                'tipo' => $tipo,
+                'logo'=> storage_path("app/images/logo_constancia.png")??null,
+                'REPORT_LOCALE' => 'es_AR',
+            ],
+            \Config::get('database.connections.mysql')
+        )->execute();
+        
+        $filename ='constancia_asistencia_mesa-'.$alumno->id.$ext;
+        return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 }

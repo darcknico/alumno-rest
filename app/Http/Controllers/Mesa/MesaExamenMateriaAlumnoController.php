@@ -22,6 +22,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 
+use App\Functions\MesaExamenFunction;
+
 use Carbon\Carbon;
 use JasperPHP\JasperPHP;
 
@@ -210,7 +212,7 @@ class MesaExamenMateriaAlumnoController extends Controller
             $todo->adeuda = $adeuda;
             $todo->save();
         }
-        MesaExamenMateriaController::actualizar($materia);
+        MesaExamenFunction::actualizar_materia($materia);
         return response()->json($todo,200);
     }
 
@@ -263,7 +265,7 @@ class MesaExamenMateriaAlumnoController extends Controller
         $alumno->save();
 
         $mesa_examen_materia = MesaExamenMateria::find($alumno->id_mesa_examen_materia);
-        MesaExamenMateriaController::actualizar($mesa_examen_materia);
+        MesaExamenFunction::actualizar_materia($mesa_examen_materia);
         return response()->json($alumno,200);
     }
 
@@ -303,6 +305,41 @@ class MesaExamenMateriaAlumnoController extends Controller
         )->execute();
         
         $filename ='constancia_inscripcion_mesa-'.$alumno->id.$ext;
+        return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
+    }
+
+    public function reporte_constancia_asistencia(Request $request){
+        $id_sede = $request->route('id_sede');
+        $id_mesa_examen_materia_alumno = $request->route('id_mesa_examen_materia_alumno');
+        $alumno = MesaExamenMateriaAlumno::find($id_mesa_examen_materia_alumno);
+        $id_inscripcion = $alumno->id_inscripcion;
+        $id_materia = $alumno->mesa_examen_materia->id_materia;
+        $fecha = Carbon::parse($alumno->mesa_examen_materia->fecha)->toDateString();
+        $tipo = "mesa";
+
+
+        $jasper = new JasperPHP;
+        $input = storage_path("app/reportes/alumno_constancia_general.jasper");
+        $output = storage_path("app/reportes/".uniqid());
+        $ext = "pdf";
+
+        $jasper->process(
+            $input,
+            $output,
+            [$ext],
+            [
+                'id_materia' => $id_materia,
+                'id_inscripcion' => $id_inscripcion,
+                'id_sede' => $id_sede,
+                'fecha' => $fecha,
+                'tipo' => $tipo,
+                'logo'=> storage_path("app/images/logo_constancia.png")??null,
+                'REPORT_LOCALE' => 'es_AR',
+            ],
+            \Config::get('database.connections.mysql')
+        )->execute();
+        
+        $filename ='constancia_asistencia_mesa-'.$alumno->id.$ext;
         return response()->download($output . '.' . $ext, $filename)->deleteFileAfterSend();
     }
 }
