@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models\Extra;
+
+use Illuminate\Database\Eloquent\Model;
+
+use Sofa\Eloquence\Eloquence;
+use Sofa\Eloquence\Mappable;
+
+class Feriado extends Model
+{
+  use Eloquence, Mappable;
+
+  protected $table ='tbl_feriados';
+  protected $primaryKey = 'fer_id';
+
+  protected $casts = [
+      'estado'=>'boolean',
+  ];
+
+  protected $fillable = [
+    'estado'
+  ];
+
+  protected $hidden = [
+    'fer_id',
+    'fer_motivo',
+    'fer_tipo',
+    'fer_dia',
+    'fer_mes',
+    'fer_identificador',
+    'fer_anio',
+    'fer_fecha',
+  ];
+
+  protected $maps = [
+    'id' => 'fer_id',
+    'motivo' => 'fer_motivo',
+    'tipo' => 'fer_tipo',
+    'dia' => 'fer_dia',
+    'mes' => 'fer_mes',
+    'identificador' => 'fer_identificador',
+    'anio' => 'fer_anio',
+    'fecha' => 'fer_fecha',
+  ];
+
+  protected $appends = [
+    'id',
+    'motivo',
+    'tipo',
+    'dia',
+    'mes',
+    'identificador',
+    'anio',
+    'fecha',
+  ];
+}

@@ -313,3 +313,12 @@ ALTER TABLE `tbl_novedades_sistema` CHANGE `updated_at` `updated_at` TIMESTAMP N
 
 ALTER TABLE `tbl_mesas_examen` ADD `mes_notificacion_push` BOOLEAN NOT NULL DEFAULT FALSE AFTER `mes_nombre`, ADD `mes_notificacion_email` BOOLEAN NOT NULL DEFAULT FALSE AFTER `mes_notificacion_push`;
 */
+
+CREATE TABLE `sch_alumno`.`tbl_feriados` ( `fer_id` INT NOT NULL AUTO_INCREMENT , `fer_motivo` VARCHAR(255) NULL , `fer_tipo` VARCHAR(255) NULL , `fer_dia` INT NULL , `fer_mes` INT NULL , `fer_identificador` VARCHAR(255) NULL , `fer_anio` INT NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`fer_id`)) ENGINE = InnoDB;
+
+composer require guzzlehttp/guzzle
+ALTER TABLE `tbl_feriados` ADD `fer_fecha` DATE NULL AFTER `fer_anio`;
+
+ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_device_os` `udi_device_os` VARCHAR(255) NULL DEFAULT NULL;
+ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_device_model` `udi_device_model` VARCHAR(255) NULL DEFAULT NULL;
+ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_manufacturer` `udi_manufacturer` VARCHAR(255) NULL DEFAULT NULL;

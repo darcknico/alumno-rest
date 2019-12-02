@@ -2,6 +2,7 @@
 
 namespace App\Functions;
 
+use App\Models\PlanPago;
 use App\Models\Mesa\MesaExamen;
 use App\Models\Mesa\MesaExamenMateria;
 use App\Models\Mesa\MesaExamenMateriaAlumno;
@@ -17,12 +18,20 @@ class MesaExamenFunction{
 			->get();
 			foreach ($materias as $materia) {
 				$materia = MesaExamenMateria::find($materia->id);
-				MesaExamenFunction::actualizar_materia($materia);
+				MesaExamenFunction::actualizar_materia($materia,$todo);
 			}
 		}
 	}
 
-	public static function actualizar_materia(MesaExamenMateria $materia){
+    public static function actualizar_materiaById($id_mesa_examen_materia,$todo = false){
+        $materia = MesaExamenMateria::find($id_mesa_examen_materia);
+        if($materia){
+            return MesaExamenFunction::actualizar_materia($materia,$todo);
+        }
+        return $materia;
+    }
+
+	public static function actualizar_materia(MesaExamenMateria $materia,$todo = false){
 		$alumnos_cantidad_presente = MesaExamenMateriaAlumno::selectRaw('count(*) as total')
             ->where([
                 'estado' => 1,
@@ -42,5 +51,32 @@ class MesaExamenFunction{
         $materia->alumnos_cantidad_no_aprobado = $alumnos_cantidad->no_aprobado??0;
         $materia->save();
 
+        if($todo){
+            $fecha = Carbon::parse($materia->fecha);
+            $alumnos = MesaExamenMateriaAlumno::where([
+                'estado' => 1,
+                'mma_id' => $materia->id,
+            ])->get();
+            foreach ($alumnos as $alumno) {
+                $alumno = MesaExamenMateriaAlumno::find($alumno->id);
+                $planes_pago = PlanPago::where('estado',1)
+                ->where('id_inscripcion',$alumno->id_inscripcion)
+                ->where('anio',$fecha->year)
+                ->get();
+                $deuda = 0;
+                foreach ($planes_pago as $plan_pago) {
+                    if($plan_pago->saldo_hoy>0){
+                        $deuda = $deuda + $plan_pago->saldo_hoy;
+                    }
+                }
+                if($deuda>0){ //adeuda
+                    $alumno->adeuda = true;
+                } else {
+                    $alumno->adeuda = false;
+                }
+                $alumno->save();
+            }
+        }
+        return $materia;
 	}
 }

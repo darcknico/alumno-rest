@@ -100,7 +100,7 @@ class DispositivoController extends Controller
         $manufacturer = $request->input('manufacturer');
 
         $dispositivo = Dispositivo::where('estado',1)
-        ->where('id_usuario',$id_usuario)
+        ->where('id_usuario',$user->id)
         ->where('device_id',$device_id)
         ->first();
         if($dispositivo){

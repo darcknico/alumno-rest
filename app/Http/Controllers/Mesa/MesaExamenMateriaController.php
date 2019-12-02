@@ -637,6 +637,12 @@ class MesaExamenMateriaController extends Controller
         return response()->json($todo,200);
     }
 
+    public function actualizar(Request $request){
+        $id_mesa_examen_materia = $request->route('id_mesa_examen_materia');
+        $materia = MesaExamenFunction::actualizar_materiaById($id_mesa_examen_materia,true);
+        return response()->json($materia);
+    }
+
     /**
      * Remove the specified resource from storage.
      *

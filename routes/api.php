@@ -567,11 +567,12 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 						Route::prefix('docentes')->group(function(){
 							Route::get('','Mesa\MesaExamenMateriaController@docentes');
-							
 						});
 						
 						Route::post('cerrar','Mesa\MesaExamenMateriaController@cerrar');
 						Route::get('reportes/acta','Mesa\MesaExamenMateriaController@reporte_acta');
+						
+						Route::get('actualizar','Mesa\MesaExamenMateriaController@actualizar');
 					});
 					
 					Route::post('reportes/acta','Mesa\MesaExamenMateriaController@reporte_acta_masivo');

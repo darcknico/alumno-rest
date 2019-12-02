@@ -30,7 +30,9 @@ class Kernel extends ConsoleKernel
         'App\Console\Commands\PlanPagoRearmar',
         'App\Console\Commands\ComisionAsistencia',
         'App\Console\Commands\MesaExamenActualizar',
+        'App\Console\Commands\MesaExamenAdeuda',
         'App\Console\Commands\MesaExamenNotificacion',
+        'App\Console\Commands\FeriadoActualizar',
     ];
 
     /**
@@ -49,6 +51,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('plan_pago:interes')->monthlyOn(1,'1:00');
 
         $schedule->command('comision:asistencia')->daily()->at('01:00');
+        
+        $schedule->command('mesa_examen:adeuda')->daily()->at('02:00');
 
         $schedule->command('mesa_examen:notificacion')->everyMinute()->when(function () {
             $materias = MesaExamenMateria::whereHas('mesa_examen',function($q){
