@@ -457,6 +457,7 @@ class PlanPagoController extends Controller
       return response()->json(['error'=>$validator->errors()],403);
     }
     $bonificar_intereses = $request->input('bonificar_intereses',false);
+    $bonificar_cuotas = $request->input('bonificar_cuotas',true);
     $monto = round($request->input('monto'),2);
     $descripcion = $request->input('descripcion','');
     $numero_oficial = $request->input('numero_oficial');
@@ -469,9 +470,9 @@ class PlanPagoController extends Controller
     $saldo = $monto;
     $fecha = new Carbon($request->input('fecha'));
     if($bonificar_intereses){
-      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,true);
+      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,$bonificar_cuotas);
     } else {
-      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,true);
+      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,$bonificar_cuotas);
     }
     $plan_pago = PlanPago::find($id_plan_pago);
 
@@ -514,7 +515,7 @@ class PlanPagoController extends Controller
       $obligacion = Obligacion::where('obl_id',$detalle['id_obligacion'])->first();
       $obligacion = ObligacionFunction::actualizar($obligacion);
 
-      if($obligacion->tob_id == 1 and $saldo > 0){
+      if($obligacion->id_tipo_obligacion == 1 and $saldo >= 0){
         if($detalle['bonificado']){
           $sede = Sede::find($id_sede);
           $descripcion = "Bonificacion adelanto - ".$obligacion->descripcion;
@@ -574,13 +575,14 @@ class PlanPagoController extends Controller
       return response()->json(['error'=>$validator->errors()],403);
     }
     $bonificar_intereses = $request->input('bonificar_intereses',false);
+    $bonificar_cuotas = $request->input('bonificar_cuotas',true);
     $monto = round($request->input('monto'),2);
     $fecha = Carbon::parse($request->input('fecha'));
     $saldo = $monto;
     if($bonificar_intereses){
-      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo);
+      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,$bonificar_cuotas);
     } else {
-      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo);
+      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,$bonificar_cuotas);
     }
 
     return response()->json([
@@ -681,7 +683,7 @@ class PlanPagoController extends Controller
     ],200);
   }
 
-  public static function detallePreparar($id_plan_pago,$id_tipo_pago,$fecha,&$monto,$aplicar = false){
+  public static function detallePreparar($id_plan_pago,$id_tipo_pago,$fecha,&$monto,$bonificar_cuotas = true){
     $plan_pago = PlanPago::find($id_plan_pago);
     $plan_pago_precio = CuentaCorrienteFunction::ultimo_precio_plan($plan_pago->id_sede);
     switch ($id_tipo_pago) {
@@ -713,10 +715,13 @@ class PlanPagoController extends Controller
       $saldo_actual = round($obligacion->saldo,2);
       $fecha_vencimiento = Carbon::parse($obligacion->fecha_vencimiento);
       $bonificado = false;
-      if($fecha<=$fecha_vencimiento->subDays(5) 
-        and ($id_tipo_pago == 1 or $id_tipo_pago == 2) 
-        and $obligacion->tob_id == 1 
-        and ($monto - $saldo_actual + $plan_pago_precio->bonificacion_monto)>=0 ){
+      if(
+        $bonificar_cuotas and
+        $fecha<=$fecha_vencimiento->subDays(5) and 
+        ($id_tipo_pago == 1 or $id_tipo_pago == 2) and 
+        $obligacion->tob_id == 1  and 
+        ($monto - $saldo_actual + $plan_pago_precio->bonificacion_monto)>=0 
+      ){
         $saldo_actual = $saldo_actual - $plan_pago_precio->bonificacion_monto;
         if($saldo_actual<0){
           $saldo_actual = 0;
@@ -889,24 +894,20 @@ class PlanPagoController extends Controller
 
   public function exportar(Request $request){
     $id_sede = $request->route('id_sede');
-    $search = $request->query('search','');
-    $id_departamento = $request->query('id_departamento',0);
-    $id_carrera = $request->query('id_carrera',0);
-    $deudores = $request->query('deudores',0);
-    $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
-    $anio = $request->query('anio',0);
-    $id_tipo_inscripcion_estado = $request->query('id_tipo_inscripcion_estado',null);
-
-    return (new PlanPagoExport(
+    $array = $request->all();
+    $sin_cobranzas = $request->query('sin_cobranzas',false);
+    $excel = new PlanPagoExport(
       $id_sede,
-      $search,
-      $id_departamento,
-      $id_carrera,
-      $deudores,
-      $id_tipo_materia_lectivo,
-      $anio,
-      $id_tipo_inscripcion_estado
-    ))->download('pagos.xlsx');
+      $array
+    );
+    $excel->custom();
+    $fecha = Carbon::now();
+    if($sin_cobranzas){
+      $filename = "cuentas_corrientes_sin_cobranazas_".$fecha->format('d-m-Y');
+    } else {
+      $filename = "cuentas_corrientes_".$fecha->format('d-m-Y');
+    }
+    return $excel->download($filename.'.xlsx');
   }
 
   public function exportar_alumnos(Request $request){

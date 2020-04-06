@@ -6,6 +6,7 @@ use App\Models\Sede;
 use App\Models\Plantilla;
 use App\Models\Notificacion;
 use App\Models\AlumnoNotificacion;
+use App\Models\Mesa\MesaExamenMateria;
 use App\Functions\CorreoFunction;
 use App\Functions\DiariaFunction;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
+        'App\Console\Commands\AlumnoMovil',
         'App\Console\Commands\DiariaAbrir',
         'App\Console\Commands\DiariaCerrar',
         'App\Console\Commands\DiariaRearmar',
@@ -33,6 +35,7 @@ class Kernel extends ConsoleKernel
         'App\Console\Commands\MesaExamenAdeuda',
         'App\Console\Commands\MesaExamenNotificacion',
         'App\Console\Commands\FeriadoActualizar',
+        'App\Console\Commands\PlanPagoSede',
     ];
 
     /**

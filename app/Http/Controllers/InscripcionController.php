@@ -17,6 +17,7 @@ use App\Models\ComisionAlumno;
 use App\Models\Comision\ExamenAlumno;
 use App\Models\AsistenciaAlumno;
 use App\Models\TipoInscripcionEstado;
+use App\Models\Academico\InscripcionAbandono;
 
 use App\Functions\DiariaFunction;
 use App\Filters\InscripcionFilter;
@@ -381,11 +382,13 @@ class InscripcionController extends Controller
 
         $validator = Validator::make($request->all(),[
             'id_tipo_inscripcion_estado' => 'required',
+            'fecha_egreso' => 'nullable | date',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
         }
         $id_tipo_inscripcion_estado = $request->input('id_tipo_inscripcion_estado');
+        $fecha_egreso = $request->input('fecha_egreso');
         $estado = TipoInscripcionEstado::find($id_tipo_inscripcion_estado);
         if(!$estado){
           return response()->json(['error'=>'El estado no existe.'],403);
@@ -393,7 +396,19 @@ class InscripcionController extends Controller
 
         $inscripcion = Inscripcion::find($id_inscripcion);
         $inscripcion->id_tipo_inscripcion_estado = $id_tipo_inscripcion_estado;
+        if($id_tipo_inscripcion_estado == 2){
+            $inscripcion->fecha_egreso = $fecha_egreso;
+        } else {
+            $inscripcion->fecha_egreso = null;
+        }
         $inscripcion->save();
+        if($id_tipo_inscripcion_estado == 1 or $id_tipo_inscripcion_estado == 2){
+            InscripcionAbandono::where('estado',1)
+                ->where('id_inscripcion',$id_inscripcion)
+            ->update([
+            'estado' => 0,
+            ]);
+        }
         return response()->json($inscripcion,200);
     }
 

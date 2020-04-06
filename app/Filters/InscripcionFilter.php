@@ -2,6 +2,8 @@
 
 namespace App\Filters;
 
+use App\Models\Carrera;
+
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;

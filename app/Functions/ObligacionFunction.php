@@ -11,7 +11,7 @@ class ObligacionFunction{
 
 	public static function actualizar(Obligacion $obligacion) 
 	{
-		$pagado = ObligacionFunction::pagado($obligacion);
+		$pagado = self::pagado($obligacion);
 		$saldo = $obligacion->monto - $pagado;
 		if($saldo<0){
 			$saldo = 0;

@@ -41,7 +41,21 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
  
     public function headings(): array
     {
-        return ['Documento','Apellido','Nombre','Departamento','Carrera','Plan de Estudio','Beca','Año Inscripcion','Estado','Observaciones','Alta'];
+        return [
+            'Tipo',
+            'Documento',
+            'Apellido',
+            'Nombre',
+            'Email',
+            'Departamento',
+            'Carrera',
+            'Plan de Estudio',
+            'Beca',
+            'Año Inscripcion',
+            'Estado',
+            'Observaciones',
+            'Alta',
+        ];
     }
 
     public function map($registro): array
@@ -50,10 +64,17 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
         if($registro->beca){
             $beca = $registro->beca->nombre;
         }
+        $alumno = $registro->alumno;
+        $tipo_documento = "";
+        if($alumno->tipoDocumento){
+            $tipo_documento = $alumno->tipoDocumento->nombre;
+        }
         return [
-            $registro->alumno->documento,
-            $registro->alumno->apellido,
-            $registro->alumno->nombre,
+            $tipo_documento,
+            $alumno->documento,
+            $alumno->apellido,
+            $alumno->nombre,
+            $alumno->email,
             $registro->carrera->departamento->nombre,
             $registro->carrera->nombre,
             $registro->plan_estudio->nombre,

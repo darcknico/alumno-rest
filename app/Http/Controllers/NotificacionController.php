@@ -11,6 +11,8 @@ use App\Models\AlumnoNotificacion;
 use App\Models\Carrera;
 use App\Models\Inscripcion;
 
+use App\Http\Requests\NotificacionRequest;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -105,17 +107,11 @@ class NotificacionController extends Controller
      * @param  int $id_sede
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(NotificacionRequest $request)
     {
       $user = Auth::user();
       $id_sede = $request->route('id_sede');
 
-      $validator = Validator::make($request->all(),[
-        'nombre' => 'required',
-      ]);
-      if($validator->fails()){
-        return response()->json(['error'=>$validator->errors()],403);
-      }
       $alumnos_asociados = $request->input('alumnos_asociados',[]);
       $nombre = $request->input('nombre');
       $descripcion = $request->input('descripcion');
@@ -156,17 +152,11 @@ class NotificacionController extends Controller
     * @param  int $id_notificacion
     * @return \Illuminate\Http\Response
     */
-    public function update(Request $request)
+    public function update(NotificacionRequest $request)
     {
       $user = Auth::user();
       $id_notificacion = $request->route('id_notificacion');
-
-      $validator = Validator::make($request->all(),[
-        'nombre' => 'required',
-      ]);
-      if($validator->fails()){
-        return response()->json(['error'=>$validator->errors()],403);
-      }
+      
       $alumnos_asociados = $request->input('alumnos_asociados',[]);
       $nombre = $request->input('nombre');
       $descripcion = $request->input('descripcion');
@@ -189,7 +179,7 @@ class NotificacionController extends Controller
       $asociados = AlumnoNotificacion::where([
         'not_id' => $id_notificacion,
         'estado' => 1,
-      ])->get()->toArray();
+      ])->get();
       foreach ($asociados as $asociado) {
         if(!AuxiliarFunction::if_in_array($alumnos_asociados,$asociado,"id","id_alumno")){
           $alumno = AlumnoNotificacion::find($asociado->id);
@@ -200,7 +190,7 @@ class NotificacionController extends Controller
       $asociados = AlumnoNotificacion::where([
         'not_id' => $id_notificacion,
         'estado' => 1,
-      ])->get()->toArray();
+      ])->get();
       foreach ($alumnos_asociados as $asociado) {
         if(!AuxiliarFunction::if_in_array($asociados,$asociado,"id_alumno","id")){
           $alumno = new AlumnoNotificacion;
@@ -247,12 +237,20 @@ class NotificacionController extends Controller
       $id_carrera = $request->input('id_carrera',0);
       $id_tipo_alumno_estado = $request->input('id_tipo_alumno_estado',0);
 
+      $email = $request->input('email',true);
+      $push = $request->input('push',true);
       $olgado = $request->input('olgado',false);
 
       $base = Alumno::where([
         'sed_id'=>$id_sede,
         'estado'=>1,
-      ])->whereNotNull('alu_email');
+      ]);
+      if($email){
+        $base->whereNotNull('alu_email');
+      }
+      if($push){
+
+      }
       if(!$olgado){
         if(!is_null($sexo)){
           if($sexo != "A"){

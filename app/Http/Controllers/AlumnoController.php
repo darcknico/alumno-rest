@@ -463,6 +463,7 @@ class AlumnoController extends Controller
         $todo->tae_id = $id_tipo_alumno_estado;
         $todo->alu_observaciones = $observaciones;
         $todo->usu_id = $user->id;
+        $todo->alu_password = bcrypt($documento);
         $todo->save();
 
         $sede = new AlumnoSede;
@@ -943,7 +944,7 @@ class AlumnoController extends Controller
                     'materias' => $materias,
                     'sede' => $sede,
                 ], function($message) use ($user,$carrera,$alumno){
-                    $message->from($user->email, $user->apellido." ".$user->nombre);
+                    $message->from('informes@ariasdesaavedra.edu.ar', 'informes');
                     $message->replyTo("no-replay@prueba.com","No Responder");
                     $message->to($alumno->email)->subject("Inscripcion a Carrera ".$carrera->nombre);
                     

@@ -21,6 +21,8 @@ class Notificacion extends Model
   protected $casts = [
       'estado'=>'boolean',
       'not_enviado'=>'boolean',
+      'puede_email'=>'boolean',
+      'puede_push'=>'boolean',
   ];
 
   protected $hidden = [
@@ -32,6 +34,8 @@ class Notificacion extends Model
     'not_asunto',
     'not_responder_email',
     'not_responder_nombre',
+    'not_puede_email',
+    'not_puede_push',
     'pla_id',
     'sed_id',
     'usu_id', 
@@ -46,6 +50,8 @@ class Notificacion extends Model
     'asunto' => 'not_asunto',
     'responder_email' => 'not_responder_email',
     'responder_nombre' => 'not_responder_nombre',
+    'puede_email' => 'not_puede_email',
+    'puede_push' => 'not_puede_push',
     'id_plantilla' => 'pla_id',
     'id_sede' => 'sed_id',
     'id_usuario' => 'usu_id',
@@ -60,6 +66,8 @@ class Notificacion extends Model
     'asunto',
     'responder_email',
     'responder_nombre',
+    'puede_email',
+    'puede_push',
     'id_plantilla',
     'id_sede',
     'id_usuario',

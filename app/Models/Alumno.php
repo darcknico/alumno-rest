@@ -164,6 +164,7 @@ class Alumno extends Model implements Auditable
 
       'archivos_subidos',
       'archivos_faltantes',
+      'password',
   ];
 
   public function usuario(){
@@ -214,6 +215,10 @@ class Alumno extends Model implements Auditable
     return $this->hasMany('App\Models\AlumnoNotificacion','alu_id','alu_id');
   }
 
+  public function dispositivos(){
+    return $this->hasMany('App\Models\AlumnoDispositivo','alu_id','alu_id');
+  }
+
   protected $attributeModifiers = [
     'alu_password' => LeftRedactor::class,
   ];
@@ -235,5 +240,9 @@ class Alumno extends Model implements Auditable
     ->where('estado',1)
     ->get();
     return $archivos;
+  }
+
+  public function getPasswordAttribute(){
+    return !is_null($this->alu_password);
   }
 }

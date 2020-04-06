@@ -569,54 +569,68 @@ class MesaExamenMateriaController extends Controller
     public function inscripcion_disponibles(Request $request){
         $id_sede = $request->route('id_sede');
         $id_inscripcion = $request->route('id_inscripcion');
+        $anio = $request->query('anio',null);
+
         $inscripcion = Inscripcion::find($id_inscripcion);
-        $materias = MesaExamenMateria::where([
-            'estado' => 1,
-            'car_id' => $inscripcion->id_carrera,
-        ])
-        ->pluck('mes_id');
+
         $todo = MesaExamen::where([
             'estado' => 1,
             'sed_id' => $id_sede,
         ])
-        ->whereIn('mes_id',$materias)
+        ->whereHas('materias',function($q)use($inscripcion){
+            $q->where([
+                'estado' => 1,
+                'car_id' => $inscripcion->id_carrera,
+            ]);
+        })
+        ->when(!is_null($anio),function($q)use($anio){
+            $q->whereYear('fecha_inicio','=',$anio);
+        })
         ->orderBy('fecha_inicio','desc')
         ->get();
         return response()->json($todo,200);
     }
 
     /**
-    *   Muestra el listado de materias de la mesa en de la cual no tenga inscripcion
+    *   Muestra el listado de materias de la mesa de la cual no tenga inscripcion
     */
     public function inscripcion_materias_disponibles(Request $request){
         $id_mesa_examen = $request->route('id_mesa_examen');
         $id_inscripcion = $request->route('id_inscripcion');
 
         $inscripcion = Inscripcion::find($id_inscripcion);
-        $inscripciones = MesaExamenMateriaAlumno::where([
-            'estado' => 1,
-            'ins_id' => $id_inscripcion,
-        ])->pluck('mma_id')->toArray();
-        $materias = MesaExamenMateria::where([
-            'estado' => 1,
-            'mes_id' => $id_mesa_examen,
-            'car_id' => $inscripcion->id_carrera,
-        ])
-        ->whereIn('mma_id',$inscripciones)
-        ->pluck('mat_id')->toArray();
+
         $todo = MesaExamenMateria::with('mesa_examen','materia.planEstudio')
+        ->whereDoesntHave('alumnos',function($q)use($id_inscripcion){
+            $q->where([
+                'estado' => 1,
+                'ins_id' => $id_inscripcion,
+            ]);
+        })
         ->where([
             'estado' => 1,
             'mes_id' => $id_mesa_examen,
             'car_id' => $inscripcion->id_carrera,
         ])
-        ->whereNotIn('mat_id',$materias)
         ->orderBy('mat_id','desc')->get();
         $salida = [];
         foreach ($todo as $materia) {
-            $materia->comision = Comision::whereHas('alumnos',function($q)use($id_inscripcion){
-                $q->where('id_inscripcion',$id_inscripcion)->where('estado',1);
-            })->where('id_materia',$materia->id_materia)->where('estado',1)->orderBy('anio','desc')->first();
+            $materia->inscripcion_ultima = MesaExamenMateriaAlumno::with('mesa_examen_materia.mesa_examen')
+            ->where('estado',1)
+            ->whereHas('mesa_examen_materia',function($q)use($materia){
+                $q->where('id_materia',$materia->id_materia)->where('estado',1);
+            })
+            ->where('id_inscripcion',$id_inscripcion)
+            ->orderBy('created_at','desc')
+            ->first();
+
+            $materia->comision = ComisionAlumno::with('comision')->whereHas('comision',function($q)use($materia){
+                $q->where('id_materia',$materia->id_materia)->where('estado',1);
+            })
+            ->where('id_inscripcion',$id_inscripcion)
+            ->where('estado',1)
+            ->orderBy('created_at','desc')
+            ->first();
             $salida[]=$materia;
         }
         return response()->json($salida,200);

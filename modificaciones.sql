@@ -319,6 +319,39 @@ CREATE TABLE `sch_alumno`.`tbl_feriados` ( `fer_id` INT NOT NULL AUTO_INCREMENT 
 composer require guzzlehttp/guzzle
 ALTER TABLE `tbl_feriados` ADD `fer_fecha` DATE NULL AFTER `fer_anio`;
 
-ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_device_os` `udi_device_os` VARCHAR(255) NULL DEFAULT NULL;
-ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_device_model` `udi_device_model` VARCHAR(255) NULL DEFAULT NULL;
-ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_manufacturer` `udi_manufacturer` VARCHAR(255) NULL DEFAULT NULL;
+#ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_device_os` `udi_device_os` VARCHAR(255) NULL DEFAULT NULL;
+#ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_device_model` `udi_device_model` VARCHAR(255) NULL DEFAULT NULL;
+#ALTER TABLE `tbl_usuario_dispositivo` CHANGE `udi_manufacturer` `udi_manufacturer` VARCHAR(255) NULL DEFAULT NULL;
+/*
+INSERT INTO `tbl_tipo_alumno_documentacion` (`tad_id`, `tad_nombre`, `estado`) VALUES (NULL, 'Certificado de Nacimiento', '1');
+*/
+
+#CREATE TABLE `sch_alumno`.`tbl_alumno_dispositivo` ( `adi_id` INT NOT NULL AUTO_INCREMENT , `alu_id` INT NOT NULL , `adi_device_id` VARCHAR(255) NULL , `adi_device_os` VARCHAR(255) NULL , `adi_device_model` VARCHAR(255) NULL , `adi_manufacturer` VARCHAR(255) NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`adi_id`)) ENGINE = InnoDB;
+
+### 2019-12-27
+#CREATE TABLE `sch_alumno`.`tbl_tipo_inscripcion_abandono` ( `tia_id` INT NOT NULL AUTO_INCREMENT , `tia_nombre` VARCHAR(255) NOT NULL , `tia_descripcion` TEXT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , `usu_id` INT NOT NULL , PRIMARY KEY (`tia_id`)) ENGINE = InnoDB;
+
+#CREATE TABLE `sch_alumno`.`tbl_inscripcion_abandono` ( `iab_id` INT NOT NULL AUTO_INCREMENT , `ins_id` INT NOT NULL , `tia_id` INT NOT NULL , `usu_id` INT NOT NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , `estado` BOOLEAN NOT NULL DEFAULT TRUE , PRIMARY KEY (`iab_id`)) ENGINE = InnoDB;
+
+#UPDATE `tbl_plan_pago_precio` SET `ppp_matricula_monto` = '3500', `ppp_cuota_monto` = '3500', `ppp_bonificacion_monto` = '500', `deleted_at` = NULL WHERE `tbl_plan_pago_precio`.`ppp_id` = 1
+
+### 2020-02-19
+/*
+ALTER TABLE `tbl_tipo_materia_regimen` ADD `tmr_nombre_corto` VARCHAR(255) NULL AFTER `tmr_nombre`;
+UPDATE `tbl_tipo_materia_regimen` SET `tmr_nombre_corto` = 'Cuat.' WHERE `tbl_tipo_materia_regimen`.`tmr_id` = 1;
+UPDATE `tbl_tipo_materia_regimen` SET `tmr_nombre_corto` = 'An.' WHERE `tbl_tipo_materia_regimen`.`tmr_id` = 2;
+
+ALTER TABLE `tbl_tipo_materia_lectivo` ADD `tml_nombre_corto` VARCHAR(255) NULL AFTER `tml_nombre`;
+
+UPDATE `tbl_tipo_materia_lectivo` SET `tml_nombre_corto` = '1°' WHERE `tbl_tipo_materia_lectivo`.`tml_id` = 1;
+UPDATE `tbl_tipo_materia_lectivo` SET `tml_nombre_corto` = '2°' WHERE `tbl_tipo_materia_lectivo`.`tml_id` = 2;
+UPDATE `tbl_tipo_materia_lectivo` SET `tml_nombre_corto` = '3°' WHERE `tbl_tipo_materia_lectivo`.`tml_id` = 3;
+UPDATE `tbl_tipo_materia_lectivo` SET `tml_nombre_corto` = '4°' WHERE `tbl_tipo_materia_lectivo`.`tml_id` = 4;
+UPDATE `tbl_tipo_materia_lectivo` SET `tml_nombre_corto` = '5°' WHERE `tbl_tipo_materia_lectivo`.`tml_id` = 5;
+*/
+
+### 2020-04-05
+/*
+ALTER TABLE `tbl_notificaciones` ADD `not_puede_email` BOOLEAN NOT NULL DEFAULT TRUE AFTER `not_responder_nombre`, ADD `not_puede_push` BOOLEAN NOT NULL DEFAULT TRUE AFTER `not_puede_email`;
+composer require alymosul/laravel-exponent-push-notifications
+*/

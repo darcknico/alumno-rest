@@ -16,6 +16,10 @@ class MesaExamenMateriaAlumno extends Model
   protected $table ='tbl_mesa_alumno_materia';
   protected $primaryKey = 'mam_id';
 
+  protected $with = [
+    'condicion',
+  ];
+
   protected $casts = [
       'estado'=>'boolean',
       'mam_asistencia'=>'boolean',

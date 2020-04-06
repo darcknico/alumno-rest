@@ -270,9 +270,9 @@ ul.sidebar li a h1,ul.sidebar li a h2,ul.sidebar li a h3,ul.sidebar li a h4,ul.s
 <td style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;">
   <h3 style="margin: 0;padding: 0;font-family: &quot;HelveticaNeue-Light&quot;, &quot;Helvetica Neue Light&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Lucida Grande&quot;, sans-serif;line-height: 1.1;margin-bottom: 15px;color: #000;font-weight: 500;font-size: 27px;"> Inscripcion </h3>
 <p class="lead" style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 17px;line-height: 1.6;"></p>
-  <p style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 14px;line-height: 1.6;">Al Sr o Sra: {{ $alumno->apellido}} {{$alumno->nombre}} con documento {{$alumno->tipoDocumento->nombre}} {{$alumno->documento}} domiciliado en {{$alumno->domicilio}} con los siguientes datos: </p>
+  <p style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 14px;line-height: 1.6;">Al Sr o Sra: {{ $alumno->apellido}} {{$alumno->nombre}} con documento {{$alumno->tipoDocumento->nombre??''}} {{$alumno->documento}} domiciliado en {{$alumno->domicilio}} con los siguientes datos: </p>
   <p style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 14px;line-height: 1.6;">Calle:{{$alumno->calle}} Nro{{$alumno->nro}} Piso:{{$alumno->piso}} Depto:{{$alumno->depto}}</p>
-  <p style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 14px;line-height: 1.6;">Provincia:{{$alumno->provincia->nombre}} Localidad:{{$alumno->localidad}} CP:{{$alumno->cogido_postal}}</p>
+  <p style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 14px;line-height: 1.6;">Provincia:{{$alumno->provincia->nombre??''}} Localidad:{{$alumno->localidad}} CP:{{$alumno->cogido_postal}}</p>
   <p style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;margin-bottom: 10px;font-weight: normal;font-size: 14px;line-height: 1.6;">
     Se a inscripto en la siguiente Carrera: "{{ $carrera->nombre}}", con titulo "{{ $carrera->titulo}}" en el Plan de Estudio {{ $plan_estudio->nombre}} {{ $plan_estudio->anio}} con una duracion de {{ $plan_estudio->horas}} horas. Por las siguientes materias
   </p>
@@ -306,7 +306,7 @@ ul.sidebar li a h1,ul.sidebar li a h2,ul.sidebar li a h3,ul.sidebar li a h4,ul.s
           {{ $materia->horas}}
         </td>
         <td style="margin: 0;padding: 0;font-family: &quot;Helvetica Neue&quot;, &quot;Helvetica&quot;, Helvetica, Arial, sans-serif;">
-          {{ $materia->tipoLectivo->nombre}}
+          {{ $materia->tipoLectivo->nombre??''}}
         </td>
       </tr>
       @endforeach

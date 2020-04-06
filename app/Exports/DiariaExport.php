@@ -7,6 +7,7 @@ use Carbon\Carbon;
 
 use Maatwebsite\Excel\Facades\Excel;
 
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -47,6 +48,17 @@ class DiariaExport implements WithMultipleSheets
             $sheetCount = $writer->getSheetCount();
             for ($i = 0; $i < $sheetCount; $i++) {
                 $sheet = $writer->getSheet($i);
+                $sheet->getPageSetup()
+                    ->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+                $sheet->getPageSetup()
+                    ->setPaperSize(PageSetup::PAPERSIZE_A4);
+                $sheet->getPageSetup()
+                    ->setScale(80);
+                $sheet->getPageMargins()->setTop(1);
+                $sheet->getPageMargins()->setRight(0.75);
+                $sheet->getPageMargins()->setLeft(0.75);
+                $sheet->getPageMargins()->setBottom(1);
+
                 $styleArray = array(
                     'borders' => array(
                         'outline' => array(

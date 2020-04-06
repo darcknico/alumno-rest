@@ -118,6 +118,7 @@ class Comision extends Model
   }
 
   public function docentes(){
-    return $this->hasMany('App\Models\Comision\Docente','com_id','com_id');
+    return $this->hasMany('App\Models\Comision\Docente','com_id','com_id')->where('estado',1);
   }
+  
 }

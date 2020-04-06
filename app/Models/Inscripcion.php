@@ -109,6 +109,9 @@ class Inscripcion extends Model
   public function tipo_estado(){
     return $this->hasOne('App\Models\TipoInscripcionEstado','tie_id','tie_id');
   }
+  public function tipo_abandonos(){
+    return $this->hasOne('App\Models\Academico\InscripcionEstado','ins_id','ins_id');
+  }
 
   public function modalidad(){
     return $this->hasOne('App\Models\Modalidad','mod_id','mod_id');

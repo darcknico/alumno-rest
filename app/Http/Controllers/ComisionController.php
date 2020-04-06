@@ -13,6 +13,7 @@ use App\Models\ComisionAlumno;
 use App\Models\Comision\Docente as ComisionDocente;
 use App\Models\Asistencia;
 use App\Models\Comision\Examen;
+use App\Models\Academico\DocenteMateria;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -147,12 +148,43 @@ class ComisionController extends Controller
 
     public function carreras(Request $request){
         $id_carrera = $request->route('id_carrera');
+        $id_inscripcion = $request->query('id_inscripcion',0);
+        $anio = $request->query('anio',0);
+
         $registros = Comision::with('sede','carrera','materia.planEstudio')
+            ->when($anio>0,function($q)use($anio){
+                $q->where('anio',$anio);
+            })
+            ->when($id_inscripcion>0,function($q)use($id_inscripcion){
+                $q->whereDoesntHave('alumnos',function($qt)use($id_inscripcion){
+                    $qt->where([
+                        'estado' => 1,
+                        'ins_id' => $id_inscripcion,
+                    ]);
+                });
+            })
             ->where([
                 'estado' => 1,
                 'car_id' => $id_carrera,
-            ])->get();
-        return response()->json($todo,200);
+            ])
+            ->orderBy('anio','desc')
+            ->get();
+        $salida = [];
+        foreach ($registros as $registro) {
+            if($id_inscripcion>0){
+                $registro->inscripcion_ultima = ComisionAlumno::with('comision')
+                ->whereHas('comision',function($q)use($registro){
+                    $q->where('id_materia',$registro->id_materia)
+                    ->where('estado',1);
+                })
+                ->where('id_inscripcion',$id_inscripcion)
+                ->where('estado',1)
+                ->orderBy('created_at','desc')
+                ->first();
+            }
+            $salida[]=$registro;
+        }
+        return response()->json($salida,200);
     }
 
     public function materias(Request $request){
@@ -492,6 +524,185 @@ class ComisionController extends Controller
         return response()->json($todos,200);
     }
 
+    public function materia_masivo_previa(Request $request){
+        $id_sede = $request->route('id_sede');
+
+        $anio = $request->query('anio',0);
+        $anio_previo = $anio - 1;
+
+        $id_departamento = $request->query('id_departamento',0);
+        $id_carrera = $request->query('id_carrera',0);
+
+        $carreras = Carrera::where([
+            'estado' => 1,
+        ])
+        ->when($id_departamento>0,function($q)use($id_departamento){
+            $q->where('id_departamento',$id_departamento);
+        })
+        ->when($id_carrera>0,function($q)use($id_carrera){
+            $q->where('id',$id_carrera);
+        })
+        ->whereNotNull('id_plan_estudio')
+        ->get()
+        ->pluck('id_plan_estudio');
+
+        $existentes = Comision::selectRaw('count(*) as total')
+        ->where('estado',1)
+        ->where('anio',$anio)
+        ->whereHas('materia',function($q)use($carreras){
+            $q->where('estado',1)
+                ->whereIn('id_plan_estudio',$carreras);
+        })
+        ->groupBy('estado')
+        ->first();
+        $previos = Comision::selectRaw('count(*) as total')
+        ->where('estado',1)
+        ->where('anio',$anio_previo)
+        ->whereHas('materia',function($q)use($carreras){
+            $q->where('estado',1)
+                ->whereIn('id_plan_estudio',$carreras);
+        })
+        ->groupBy('estado')
+        ->first();
+
+        $materias = Materia::selectRaw('count(*) as total')
+        ->where('estado',1)
+        ->whereIn('id_plan_estudio',$carreras)
+        ->groupBy('estado')
+        ->first();
+
+        return response()->json([
+            'total_carreras'=>count($carreras),
+            'total_materias'=>$materias->total??0,
+            'total_existentes'=>$existentes->total??0,
+            'total_previos'=>$previos->total??0,
+        ],200);
+    }
+
+    public function materia_masivo_asociar(Request $request){
+        $user = Auth::user();
+        $id_sede = $request->route('id_sede');
+
+        $validator = Validator::make($request->all(),[
+            'id_departamento' => 'required | integer',
+            'id_carrera' => 'required  | integer',
+            'anio' => 'required  | integer',
+            'docentes_previos' => 'nullable  | boolean',
+            'docentes_asignados' => 'nullable  | boolean',
+            'horarios_previos' => 'nullable  | boolean',
+            'asistencia' => 'nullable  | boolean',
+            'clase_inicio' => 'nullable  | boolean',
+            'clase_final' => 'nullable  | boolean',
+        ]);
+        if($validator->fails()){
+          return response()->json(['error'=>$validator->errors()],404);
+        }
+
+        $id_departamento = $request->input('id_departamento');
+        $id_carrera = $request->input('id_carrera');
+        $anio = $request->input('anio');
+        $docentes_previos = $request->input('docentes_previos',false);
+        $docentes_asignados = $request->input('docentes_asignados',false);
+        $horarios_previos = $request->input('horarios_previos',false);
+        $asistencia = $request->input('asistencia',false);
+        $clase_inicio = $request->input('clase_inicio',false);
+        $clase_final = $request->input('clase_final',false);
+
+        $materias = Materia::where('estado',1)
+        ->whereHas('planEstudio',function($q)use($id_departamento,$id_carrera){
+            $q->where('estado',1)
+            ->when($id_carrera>0,function($qt)use($id_carrera){
+                $qt->where('id_carrera',$id_carrera);
+            })
+            ->whereHas('carrera',function($qt)use($id_departamento){
+                $qt->where('estado',1)
+                ->when($id_departamento>0,function($qtr)use($id_departamento){
+                    $qtr->where('id_departamento',$id_departamento);
+                });
+            });
+        })
+        ->get();
+
+        $fecha = Carbon::parse($mesa_examen->mes_fecha_inicio);
+        foreach ($materias as $materia) {
+            $previo = Comision::where('estado',1)
+            ->where('anio',$anio_previo)
+            ->where('id_materia',$materia->id)
+            ->orderBy('created_at','desc')
+            ->first();
+            $existente = Comision::where('estado',1)
+            ->where('anio',$anio)
+            ->where('id_materia',$materia->id)
+            ->orderBy('created_at','desc')
+            ->first();
+            $numero = 1;
+            if($existente){
+                $numero = $existente->numero + 1;
+            }
+
+            $comision = new Comision;
+            $comision->anio = $anio;
+            $comision->numero = $numero;
+            $comision->id_materia = $materia->id;
+            $comision->id_carrera = $materia->planEstudio->id_carrera;
+            $comision->id_usuario = $id_usuario;
+            $comision->responsable_nombre = $responsable_nombre;
+            $comision->responsable_apellido = $responsable_apellido;
+            $comision->id_modalidad = $id_modalidad;
+            $comision->id_sede = $id_sede;
+            $comision->clase_inicio = $clase_inicio;
+            $comision->clase_final = $clase_final;
+            $comision->asistencia = $asistencia;
+            $comision->usu_id_alta = $user->id;
+            $comision->save();
+
+            if($docentes_previos and $previo){
+                foreach ($previo->docentes as $docente) {
+                    if($docente->estado){
+                        $usuario = new ComisionDocente;
+                        $usuario->id_usuario = $docente->id_usuario;
+                        $usuario->id_comision = $comision->id;
+                        $usuario->save();
+                    }
+                }
+            }
+            if($docentes_asignados){
+                $docentes = DocenteMateria::where('estado',1)
+                ->where('id_sede',$id_sede)
+                ->where('id_materia',$id_materia)
+                ->get();
+                foreach ($docentes as $docente) {
+                    if($docente->estado){
+                        $existeDocente = Comision::where('estado',1)
+                        ->where('id_usuario',$docente->id_usuario)
+                        ->where('id_comision',$comision->id)
+                        ->first();
+                        if(!$existeDocente){
+                            $usuario = new ComisionDocente;
+                            $usuario->id_usuario = $docente->id_usuario;
+                            $usuario->id_comision = $comision->id;
+                            $usuario->save();
+                        }
+                    }
+                }
+            }
+
+            if($horarios_previos and $previo){
+                foreach ($previo->horarios as $horario) {
+                    if($horario->estado){
+                        $nuevo = $horario->replicate();
+                        $nuevo->id = null;
+                        $nuevo->id_comision = $comision->id;
+                        $nuevo->created_at = null;
+                        $nuevo->update = null;
+                        $nuevo->save();
+                    }
+                }
+            }
+        }
+        return response()->json($materias,200);
+    }
+    /*
     public function inscripcion(Request $request){
         $id_inscripcion = $request->route('id_inscripcion');
         $todo = ComisionAlumno::with('comision.carrera','comision.materia')
@@ -500,7 +711,7 @@ class ComisionController extends Controller
                 'ins_id' => $id_inscripcion,
             ])->get();
         return response()->json($todo,200);
-    }
+    }*/
 
     /**
      * Remove the specified resource from storage.
@@ -546,13 +757,6 @@ class ComisionController extends Controller
         )->execute();
         
         $filename ='comision-'.$comision->materia->codigo;
-
-        //header('Access-Control-Allow-Origin: *');
-        header('Content-Description: application/pdf');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition:attachment; filename=' . $filename . '.' . $ext);
-        readfile($output . '.' . $ext);
-        unlink($output. '.'  . $ext);
-        flush();
+        return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
     }
 }

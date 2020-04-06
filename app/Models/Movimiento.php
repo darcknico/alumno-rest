@@ -106,4 +106,8 @@ class Movimiento extends Model
     return $this->hasOne('App\Models\TipoComprobante','tco_id','tco_id');
   }
 
+  public function pago(){
+    return $this->hasOne('App\Models\Pago','mov_id','mov_id');
+  }
+
 }

@@ -75,4 +75,7 @@ class Materia extends Model
     return $this->hasMany('App\Models\Mesa\MesaExamenMateria','mat_id','mat_id');
   }
 
+  public function comisiones(){
+    return $this->hasMany('App\Models\Comision','mat_id','mat_id');
+  }
 }

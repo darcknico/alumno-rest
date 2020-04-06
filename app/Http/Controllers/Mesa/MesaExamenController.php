@@ -44,6 +44,14 @@ class MesaExamenController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
+
+        $anio = $request->query('anio',0);
+
+        $registros = $registros
+            ->when($anio>0,function($q)use($anio){
+                $q->whereYear('fecha_inicio','=',$anio);
+            });
+
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('fecha_inicio','desc')
             ->get();
@@ -435,20 +443,35 @@ class MesaExamenController extends Controller
         })
         ->whereNotNull('id_plan_estudio')
         ->get()
-        ->pluck('id_plan_estudio')
-        ->toArray();
+        ->pluck('id_plan_estudio');
+        /*
         $existentes = MesaExamenMateria::where([
             'estado' => 1,
         ])
         ->where('id_mesa_examen',$id_mesa_examen)
         ->get()
-        ->pluck('id_materia')
-        ->toArray();
-
+        ->pluck('id_materia');
+        */
         $materias = Materia::selectRaw('count(*) as total')
         ->where('estado',1)
-        ->whereIn('id_plan_estudio',$carreras)
-        ->whereNotIn('id',$existentes)
+        ->whereHas('planEstudio',function($q)use($id_departamento,$id_carrera){
+            $q->where('estado',1)
+            ->when($id_carrera>0,function($qt)use($id_carrera){
+                $qt->where('id_carrera',$id_carrera);
+            })
+            ->whereHas('carrera',function($qt)use($id_departamento){
+                $qt->where('estado',1)
+                ->when($id_departamento>0,function($qtr)use($id_departamento){
+                    $qtr->where('id_departamento',$id_departamento);
+                });
+            });
+        })
+        ->whereDoesntHave('mesas_examenes',function($q)use($id_mesa_examen){
+            $q->where('estado',1)
+            ->where('id_mesa_examen',$id_mesa_examen);
+        })
+        #->whereIn('id_plan_estudio',$carreras)
+        #->whereNotIn('id',$existentes)
         ->groupBy('estado')
         ->first();
 

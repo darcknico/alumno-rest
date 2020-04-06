@@ -7,6 +7,7 @@ use App\Models\Movimiento;
 use App\Models\Inscripcion;
 use App\Models\Carrera;
 use App\Models\Pago;
+use App\Models\Materia;
 
 use Carbon\Carbon;
 
@@ -49,7 +50,7 @@ class MovimientoExport implements ShouldAutoSize, FromCollection, WithMapping, W
         $fecha_fin = $this->fecha_fin;
         $search = $this->search;
 
-        $registros = Movimiento::with('forma','usuario')
+        $registros = Movimiento::with('forma','usuario','pago.inscripcion.alumno','pago.inscripcion.carrera','pago.detalles.obligacion')
         ->where([
             'estado' => 1,
             'sed_id' => $id_sede
@@ -89,27 +90,79 @@ class MovimientoExport implements ShouldAutoSize, FromCollection, WithMapping, W
  
     public function headings(): array
     {
-        return ['Ingreso o Egreso','Fecha','Forma de Pago','Descripcion','Tipo de Movimiento','Monto','Tipo de Comprobante','Numero'];
+        return [
+            'Tipo',
+            'Fecha',
+            'Forma de Pago',
+            'Descripción',
+            'Detalles',
+            'Tipo de Movimiento',
+            'Ingreso',
+            'Egreso',
+            'Tipo de Comprobante',
+            'Numero',
+            'Carrera',
+            //'Periodo Lectivo',
+        ];
     }
 
     public function map($registro): array
     {
 
         $tipo = "";
+        $ingreso = "";
+        $egreso = "";
+        $carrera = "";
         if($registro->id_tipo_egreso_ingreso == 1){
             $tipo = "Ingreso";
+            $ingreso = $registro->monto;
         } else {
             $tipo = "Egreso";
+            $egreso = $registro->monto;
         }
+        $descripcion = $registro->descripcion;
+        $detalles = '';
+        $tipo_lectivo = "";
+        if($registro->pago){
+            $inscripcion = $registro->pago->inscripcion;
+            $alumno = $inscripcion->alumno;
+            $carrera = $inscripcion->carrera->nombre;
+            $descripcion = $descripcion .' '.$alumno->apellido.', '.$alumno->nombre.' '.$alumno->tipoDocumento->nombre.' '.$alumno->documento;
+            if($registro->pago->detalles){
+                foreach ($registro->pago->detalles as $detalle) {
+                    $detalles = $detalles .' '.$detalle->obligacion->descripcion.',';
+                }
+            }
+            /*
+            $id_inscripcion = $registro->pago->id_inscripcion;
+            $periodo = Materia::where('id_plan_estudio',$inscripcion->id_plan_estudio)
+                ->whereHas('comisiones',function($q)use($id_inscripcion){
+                    $q->whereHas('alumnos',function($qt)use($id_inscripcion){
+                        $qt->where('estado',1)->where('id_inscripcion',$id_inscripcion);
+                    });
+                })
+                ->orderBy('id_tipo_materia_lectivo','desc')
+                ->first();
+            if($periodo){
+                $tipo_lectivo = $periodo->tipoLectivo->nombre;
+            }
+            */
+        }
+
+        
         return [
             $tipo,
             Carbon::parse($registro->fecha)->format('d/m/Y'),
             $registro->forma->nombre,
-            $registro->descripcion,
+            $descripcion,
+            $detalles,
             $registro->tipo->nombre??"",
-            $registro->monto,
+            $ingreso,
+            $egreso,
             $registro->tipo_comprobante->nombre??"",
             $registro->numero,
+            $carrera,
+            //$tipo_lectivo,
         ];
     }
 
@@ -119,7 +172,8 @@ class MovimientoExport implements ShouldAutoSize, FromCollection, WithMapping, W
     public function columnFormats(): array
     {
         return [
-            'F' => "$#,##0.00",
+            'G' => "$#,##0.00",
+            'H' => "$#,##0.00",
         ];
     }
  

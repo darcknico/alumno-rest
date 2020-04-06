@@ -30,7 +30,6 @@ class BecaController extends Controller
     */
     public function index(Request $request)
     {
-        $id_carrera = $request->route('id_carrera');
         $todo = Beca::where([
             'estado' => 1 ,
         ])

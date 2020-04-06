@@ -159,8 +159,8 @@ class MesaExamenMateriaAlumnoController extends Controller
         $id_mesa_examen_materia = $request->input('id_mesa_examen_materia');
         $id_alumno = $request->input('id_alumno');
         $id_inscripcion = $request->input('id_inscripcion');
-        $id_tipo_mesa_docente = $request->input('id_tipo_mesa_docente');
         $adeuda = $request->input('adeuda');
+        $observaciones = $request->input('observaciones');
 
         $materia = MesaExamenMateria::find($id_mesa_examen_materia);
         if(!$materia){
@@ -210,6 +210,7 @@ class MesaExamenMateriaAlumnoController extends Controller
             }
             $todo->usu_id = $user->id;
             $todo->adeuda = $adeuda;
+            $todo->observaciones = $observaciones;
             $todo->save();
         }
         MesaExamenFunction::actualizar_materia($materia);
@@ -229,7 +230,7 @@ class MesaExamenMateriaAlumnoController extends Controller
 
         $validator = Validator::make($request->all(),[
             'asistencia' => 'boolean | nullable',
-            'nota' => 'required | integer',
+            'nota' => 'nullable | integer',
             'nota_nombre' => 'nullable',
             'nota_final' => 'nullable | integer',
             'id_tipo_condicion_alumno' => 'required',
@@ -252,16 +253,21 @@ class MesaExamenMateriaAlumnoController extends Controller
         $alumno = MesaExamenMateriaAlumno::find($id_mesa_examen_materia_alumno);
         $alumno->asistencia = $asistencia;
         $alumno->nota = $nota;
-        $alumno->nota_nombre = $f->format($nota);
+        if(!is_null($nota)){
+            $alumno->nota_nombre = $f->format($nota);
+        } else {
+            $alumno->nota_nombre = null;
+        }
         
         $alumno->nota_final = $nota_final;
         if(!is_null($nota_final)){
             $alumno->nota_final_nombre = $f->format($nota_final);
         } else {
-            $alumno->nota_final_nombre = $nota_final_nombre;
+            $alumno->nota_final_nombre = null;
         }
         $alumno->id_tipo_condicion_alumno = $id_tipo_condicion_alumno;
         $alumno->adeuda = $adeuda;
+        $alumno->observaciones = $observaciones;
         $alumno->save();
 
         $mesa_examen_materia = MesaExamenMateria::find($alumno->id_mesa_examen_materia);

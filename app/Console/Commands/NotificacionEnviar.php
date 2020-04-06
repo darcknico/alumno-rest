@@ -6,8 +6,11 @@ use App\Models\Sede;
 use App\Models\Plantilla;
 use App\Models\Notificacion;
 use App\Models\AlumnoNotificacion;
+use App\Models\AlumnoDispositivo;
 use App\Functions\CorreoFunction;
 use Carbon\Carbon;
+
+use App\Notifications\NotificacionNueva;
 
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Console\Command;
@@ -69,30 +72,41 @@ class NotificacionEnviar extends Command
                   'pla_id' => $notificacion->pla_id,
                   'estado' => 1,
                 ])->get();
-                try {
-                  Mail::send('mails.notificacion',[
-                    'cuerpo' => $plantilla->cuerpo,
-                    'visto' => $visto,
-                  ], function($message)use($alumno,$notificacion,$adjunto){
-                    $message->from($notificacion->responder_email, $notificacion->responder_nombre);
-                    $message->to($alumno->email)->subject($notificacion->asunto);
-                    foreach ($adjunto as $adj) {
-                      $message = $message->attach(
-                        storage_path("app/{$adj->par_dir}"),
-                        [
-                          "as"=>$adj->nombre,
-                        ]
-                      );
+                if($notificacion->puede_email){
+                  try {
+                    Mail::send('mails.notificacion',[
+                      'cuerpo' => $plantilla->cuerpo,
+                      'visto' => $visto,
+                    ], function($message)use($alumno,$notificacion,$adjunto){
+                      $message->from($notificacion->responder_email, $notificacion->responder_nombre);
+                      $message->to($alumno->email)->subject($notificacion->asunto);
+                      foreach ($adjunto as $adj) {
+                        $message = $message->attach(
+                          storage_path("app/{$adj->par_dir}"),
+                          [
+                            "as"=>$adj->nombre,
+                          ]
+                        );
+                      }
+                    });
+
+                    if (\Mail::failures()) {
+                    } else {
+                      $envio->ano_token = $token;
                     }
-                  });
+                  } catch (\Exception $e) {
 
-                  if (\Mail::failures()) {
-                  } else {
-                    $envio->ano_token = $token;
                   }
-                } catch (\Exception $e) {
-
                 }
+
+                if($notificacion->puede_push){
+                  $dispositivos = AlumnoDispositivo::where('estado',1)
+                    ->where('id_alumno',$alumno->id)->get();
+                  foreach ($dispositivos as $dispositivo) {
+                    $dispositivo->notify(new NotificacionNueva($notificacion));
+                  }
+                }
+                
                 $envio->enviado = 1;
                 $envio->save();
             }

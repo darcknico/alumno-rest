@@ -41,7 +41,7 @@ class DiariaController extends Controller{
             foreach ($values as $key => $value) {
               if(strlen($value)>0){
                 $registros = $registros->where(function($query) use  ($value) {
-                  $query->whereRaw("DATE_FORMAT(mov_fecha, '%d/%m/%Y') ",'like','%'.$value.'%');
+                  //$query->whereRaw("DATE_FORMAT(mov_fecha, '%Y') ",'like','%'.$value.'%');
                 });
               }
             }

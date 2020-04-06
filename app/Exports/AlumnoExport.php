@@ -81,7 +81,22 @@ class AlumnoExport implements ShouldAutoSize, FromCollection, WithMapping, WithH
  
     public function headings(): array
     {
-        return ['Documento','Apellido','Nombre','Localidad','Codigo Postal','Telefono','Celular','Email','Fecha Nacimiento','Ciudad Nacimiento','Nacionalidad','Sexo','Observaciones'];
+        return [
+            'Tipo',
+            'Documento',
+            'Apellido',
+            'Nombre',
+            'Localidad',
+            'Codigo Postal',
+            'Telefono',
+            'Celular',
+            'Email',
+            'Fecha Nacimiento',
+            'Ciudad Nacimiento',
+            'Nacionalidad',
+            'Sexo',
+            'Observaciones'
+        ];
     }
 
     public function map($registro): array
@@ -90,7 +105,12 @@ class AlumnoExport implements ShouldAutoSize, FromCollection, WithMapping, WithH
         if($registro->fecha_nacimiento){
             $fecha_nacimiento = Carbon::parse($registro->fecha_nacimiento)->format('d/m/Y');
         }
+        $tipo_documento = "";
+        if($registro->tipoDocumento){
+            $tipo_documento = $registro->tipoDocumento->nombre;
+        }
         return [
+            $tipo_documento,
             $registro->documento,
             $registro->apellido,
             $registro->nombre,

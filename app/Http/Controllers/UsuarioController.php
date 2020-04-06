@@ -275,6 +275,7 @@ class UsuarioController extends Controller
 
     public function store(Request $request)
     {
+      $user = Auth::user();
       $validator = Validator::make($request->all(),[
         'nombre' => 'required',
         'email' => 'required | email',

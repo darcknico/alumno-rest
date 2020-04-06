@@ -41,6 +41,7 @@ class ComisionAlumnoController extends Controller
         $id_materia = $request->query('id_materia',0);
         $id_comision = $request->query('id_comision',0);
         $id_alumno = $request->query('id_alumno',0);
+        $id_inscripcion = $request->query('id_inscripcion',0);
         $anio = $request->query('anio',null);
 
         $registros = $registros
@@ -73,6 +74,9 @@ class ComisionAlumnoController extends Controller
             })
             ->when($id_alumno>0,function($q)use($id_alumno){
                 return $q->where('id_alumno',$id_alumno);
+            })
+            ->when($id_inscripcion>0,function($q)use($id_inscripcion){
+                return $q->where('id_inscripcion',$id_inscripcion);
             });
 
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){

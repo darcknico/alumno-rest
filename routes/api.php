@@ -13,6 +13,18 @@ use Illuminate\Http\Request;
 |
 */
 
+/*
+TIPO USUARIOS
+1 ADMINISTRADOR
+2 DIRECTOR DE SEDE
+3 FINANZAS
+4 ACADEMICA
+5 DIRECTOR SECRETARIA
+6 SECRETARIA
+7 INFORMES
+8 DOCENTES
+*/
+
 Route::post('login', 'UsuarioController@login');
 Route::post('register', 'UsuarioController@register');
 Route::get('email', 'UsuarioController@concidencias');
@@ -46,6 +58,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 		'chat' => 'Ajustes\ChatController',
 		'dispositivos' => 'App\DispositivoController',
 		'asistencias' => 'App\AsistenciaController',
+		'tipos/inscripcion/abandonos' => 'Tipos\TipoInscripcionAbandonoController',
 	]);
 	Route::apiResource('obligaciones','ObligacionController',[
 		'parameters' => [
@@ -170,9 +183,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 					Route::delete('','InscripcionController@destroy');
 
 					Route::put('estado','InscripcionController@estado');
-
+					/*
 					Route::get('comisiones','ComisionController@inscripcion');
-
+					*/
 					Route::prefix('mesas')->group(function(){
 						Route::get('disponibles','Mesa\MesaExamenMateriaController@inscripcion_disponibles');
 						Route::get('materias','Mesa\MesaExamenMateriaController@inscripcion');
@@ -213,13 +226,15 @@ Route::group(['middleware' => 'auth:api'], function(){
 					Route::get('pagos','InscripcionController@pagos');
 					
 					Route::get('rendimientos','InscripcionController@estadisticas_rendimientos');
-
+					Route::post('abandonos','Academico\InscripcionAbandonoController@store');
 				});
 				Route::get('carreras/{id_carrera}','InscripcionController@carreras_alumnos');
 				Route::get('exportar','InscripcionController@exportar');
 
-				Route::get('notas/importar/ejemplo','Mesa\AlumnoMateriaNotaController@importar_ejemplo');
+				Route::get('notas/im}portar/ejemplo','Mesa\AlumnoMateriaNotaController@importar_ejemplo');
 
+				///////////////// ABANDONOS////////////////
+				Route::get('abandonos','Academico\InscripcionAbandonoController@index');
 			});
 
 			Route::prefix('alumnos')->group(function(){
@@ -435,7 +450,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 					Route::get('reporte','ComisionController@reporte');
 				});
 
-				Route::get('carreras/{id_carrera}','ComisionController@index');
+				Route::get('carreras/{id_carrera}','ComisionController@carreras');
 				Route::get('materias/{id_materia}','ComisionController@index');
 
 				Route::prefix('asistencias/alumnos')->group(function(){
@@ -455,6 +470,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 						
 					});
 				});
+				Route::get('masivo','ComisionController@materia_masivo_previa');
+				Route::post('masivo','ComisionController@materia_masivo_asociar');
+
 			});
 
 			Route::prefix('asistencias')->group(function(){
@@ -631,10 +649,12 @@ Route::group(['middleware' => 'auth:api'], function(){
 		});
 	});
 
-	Route::prefix('departamentos')->group(function(){
+	Route::get('departamentos','DepartamentoController@index');
+	Route::group([
+			'prefix'=> 'departamentos',
+			'middleware'=> ['tienePermiso:1'],
+		],function () {
 		Route::post('','DepartamentoController@store');
-		Route::get('','DepartamentoController@index');
-
 		Route::group([
 			'prefix'=> '{id_departamento}',
 			'where'  => ['id_departamento' => '[0-9]+'],
@@ -643,13 +663,13 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::put('','DepartamentoController@update');
 			Route::delete('','DepartamentoController@destroy');
 
+			/*
 			Route::prefix('carreras')->group(function(){
 				Route::post('','CarreraController@store');
 				Route::get('','CarreraController@index');
-
 			});
+			*/
 		});
-
 	});
 
 	Route::prefix('carreras')->group(function(){
@@ -724,10 +744,12 @@ Route::group(['middleware' => 'auth:api'], function(){
 		});
 	});
 
-	Route::prefix('modalidades')->group(function(){
+	Route::get('modalidades','ModalidadController@index');
+	Route::group([
+			'prefix'=> 'modalidades',
+			'middleware'=> ['tienePermiso:1'],
+		],function () {
 		Route::post('','ModalidadController@store');
-		Route::get('','ModalidadController@index');
-
 		Route::group([
 			'prefix'=> '{id_modalidad}',
 			'where'  => ['id_modalidad' => '[0-9]+'],
@@ -752,7 +774,10 @@ Route::group(['middleware' => 'auth:api'], function(){
 		});
 	});
 
-	Route::prefix('usuarios')->group(function () {
+	Route::group([
+			'prefix'=> 'usuarios',
+			'middleware'=> ['tienePermiso:1'],
+		],function () {
 		Route::get('','UsuarioController@index');
 		Route::post('','UsuarioController@store');
 
@@ -822,6 +847,16 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::prefix('estados')->group(function(){
 				Route::get('deuda','AlumnoController@estado_deuda');
 			});
+
+		});
+
+		Route::get('dispositivos','App\AlumnoDispositivoController@index');
+
+		Route::group([
+			'prefix'=> '{id_alumno_dispositivo}',
+			'where'  => ['id_alumno_dispositivo' => '[0-9]+'],
+		],function () {
+			Route::get('notificar','App\AlumnoDispositivoController@notificar');
 
 		});
 	});

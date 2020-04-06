@@ -51,11 +51,13 @@ class MateriaController extends Controller
         $id_tipo_materia_lectivo = $request->query('id_tipo_materia_lectivo',0);
         $registros = $registros
             ->when($id_departamento>0,function($q)use($id_departamento){
-                $carreras = Carrera::where([
-                    'dep_id' => $id_departamento,
-                    'estado' => 1,
-                ])->pluck('car_id')->toArray();
-                return $q->whereIn('car_id',$carreras);
+                $q->whereHas('planEstudio',function($qt)use($id_departamento){
+                    $qt->where('estado',1)
+                        ->whereHas('carrera',function($qtr)use($id_departamento){
+                            $qtr->where('estado',1)
+                                ->where('id_departamento',$id_departamento);
+                        });
+                });
             })
             ->when($id_carrera>0,function($q)use($id_carrera){
                 return $q->whereHas('planEstudio',function($qt)use($id_carrera){
