@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Comision;
 
 use App\Models\Carrera;
 use App\Models\ComisionAlumno;
+
+use App\Events\InscripcionComisionNuevo;
+use App\Events\InscripcionComisionModificado;
+
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -151,7 +155,7 @@ class ComisionAlumnoController extends Controller
         $nota = $request->input('nota',null);
         $id_tipo_condicion_alumno = $request->input('id_tipo_condicion_alumno',null);
         $observaciones = $request->input('observaciones',null);
-
+        /* VALIDACIONES EXTRAS */
         $comision = Comision::find($id_comision);
         if(!$comision){
             return response()->json(['error'=>'La comision no fue encontrada.'],403);
@@ -167,6 +171,8 @@ class ComisionAlumnoController extends Controller
         if($comision->id_carrera != $inscripcion->id_carrera){
             return response()->json(['error'=>'El alumno no pertenece a la misma carrera que la comision.'],403);
         }
+
+        /* REGISTRAR COMISION ALUMNO */
 
         $todo = ComisionAlumno::where([
             'estado' => 1,
@@ -186,13 +192,11 @@ class ComisionAlumnoController extends Controller
             $todo->usu_id = $user->id;
             $todo->save();
         }
-        $alumnos_cantidad = ComisionAlumno::selectRaw('count(*) as total')
-            ->where([
-                'estado' => 1,
-                'com_id' => $id_comision,
-            ])->groupBy('com_id')->first();
-        $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
-        $comision->save();
+
+        /* ACTUALIZAR CONTADORES DE LA COMISION */
+        /* ACTUALIZAR CONTADORES DEL ALUMNO */
+        /* ENVIAR NOTIFICACION DE NUEVA INSCRIPCION */
+        event(new InscripcionComisionNuevo($todo));
 
         return response()->json($todo,200);
     }
@@ -236,6 +240,9 @@ class ComisionAlumnoController extends Controller
         $todo->id_tipo_condicion_alumno = $id_tipo_condicion_alumno;
         $todo->observaciones = $observaciones;
         $todo->save();
+
+        event(new InscripcionComisionModificado($todo));
+
         return response()->json($todo,200);
     }
 
@@ -255,14 +262,8 @@ class ComisionAlumnoController extends Controller
         $todo->deleted_at = Carbon::now();
         $todo->save();
 
-        $comision = Comision::find($todo->id_comision);
-        $alumnos_cantidad = ComisionAlumno::selectRaw('count(*) as total')
-            ->where([
-                'estado' => 1,
-                'com_id' => $id_comision,
-            ])->groupBy('com_id')->first();
-        $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
-        $comision->save();
+        event(new InscripcionComisionModificado($todo));
+
         return response()->json($todo,200);
     }
 }

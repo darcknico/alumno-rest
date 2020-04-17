@@ -63,12 +63,6 @@ class InscripcionController extends Controller
             ->get();
             return response()->json($todo,200);
         }
-        $id_departamento = $request->query('id_departamento',0);
-        $id_carrera = $request->query('id_carrera',0);
-        $id_beca = $request->query('id_beca',0);
-        $id_tipo_inscripcion_estado = $request->query('id_tipo_inscripcion_estado',0);
-        $anio_inicial = $request->query('anio_inicial',0);
-        $anio_final = $request->query('anio_final',0);
 
         $registros = InscripcionFilter::index($request,$registros);
 

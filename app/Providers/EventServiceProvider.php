@@ -18,6 +18,33 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        'App\Events\InscripcionAlumnoNuevo' => [
+            'App\Listeners\ActualizarAlumno',
+            'App\Listeners\EnviarNotificacionNuevoInscripcionAlumno',
+        ],
+        'App\Events\InscripcionComisionNuevo' => [
+            'App\Listeners\ActualizarComision',
+            'App\Listeners\ActualizarPeriodoLectivoInscripcion',
+            'App\Listeners\EnviarNotificacionNuevoInscripcionComision',
+        ],
+        'App\Events\InscripcionComisionModificado' => [
+            'App\Listeners\ActualizarComision',
+            'App\Listeners\ActualizarPeriodoLectivoInscripcion',
+            'App\Listeners\EnviarNotificacionNuevoInscripcionComision',
+        ],
+        'App\Events\InscripcionMesaExamenMateriaNuevo' => [
+            'App\Listeners\ActualizarMesaExamenMateria',
+            'App\Listeners\ActualizarMetricaFinalInscripcion',
+            'App\Listeners\EnviarNotificacionNuevoInscripcionMesaExamenMateria',
+        ],
+        'App\Events\InscripcionMesaExamenMateriaModificado' => [
+            'App\Listeners\ActualizarMesaExamenMateria',
+            'App\Listeners\ActualizarMetricaFinalInscripcion',
+            //'App\Listeners\EnviarNotificacionNuevoInscripcionMesaExamenMateria',
+        ],
+        'App\Events\RegistracionAlumnoMateriaNota' => [
+            'App\Listeners\ActualizarMetricaFinalInscripcion',
+        ],
     ];
 
     /**

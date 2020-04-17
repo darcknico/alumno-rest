@@ -18,10 +18,12 @@ class Inscripcion extends Model
     'beca',
     'tipo_estado',
     'modalidad',
+    'periodo',
   ];
 
   protected $casts = [
       'estado'=>'boolean',
+      'ins_porcentaje_aprobados' => 'double',
   ];
 
   protected $hidden = [
@@ -40,6 +42,12 @@ class Inscripcion extends Model
     'car_id_tecnicatura',
     'ins_observaciones',
     'ins_fecha_egreso',
+    'tml_id',
+    'ins_porcentaje_aprobados',
+    'ins_final_total',
+    'ins_final_total_aprobados',
+    'ins_final_promedio',
+    'ins_final_promedio_aprobados',
   ];
 
   protected $maps = [
@@ -57,7 +65,13 @@ class Inscripcion extends Model
     'beca_porcentaje' => 'bec_porcentaje',
     'id_tecnicatura' => 'car_id_tecnicatura',
     'observaciones' => 'ins_observaciones',
+    'id_periodo_lectivo' => 'tml_id',
     'fecha_egreso' => 'ins_fecha_egreso',
+    'porcentaje_aprobados' => 'ins_porcentaje_aprobados',
+    'final_total' => 'ins_final_total',
+    'final_total_aprobados' => 'ins_final_total_aprobados',
+    'final_promedio' => 'ins_final_promedio',
+    'final_promedio_aprobados' => 'ins_final_promedio_aprobados',
   ];
 
   protected $appends = [
@@ -76,6 +90,12 @@ class Inscripcion extends Model
     'id_tecnicatura',
     'observaciones',
     'fecha_egreso',
+    'id_periodo_lectivo',
+    'porcentaje_aprobados',
+    'final_total',
+    'final_total_aprobados',
+    'final_promedio',
+    'final_promedio_aprobados',
   ];
 
   public function sede(){
@@ -117,6 +137,9 @@ class Inscripcion extends Model
     return $this->hasOne('App\Models\Modalidad','mod_id','mod_id');
   }
 
+  public function periodo(){
+    return $this->hasOne('App\Models\TipoMateriaLectivo','tml_id','tml_id');
+  }
 
   public function planes_pago(){
     return $this->hasMany('App\Models\PlanPago','ins_id','ins_id');

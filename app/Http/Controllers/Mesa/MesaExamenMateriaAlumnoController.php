@@ -16,7 +16,8 @@ use App\Models\Comision;
 use App\Models\ComisionAlumno;
 use App\Models\Asistencia;
 use App\Models\Sede;
-
+use App\Events\InscripcionMesaExamenMateriaNuevo;
+use App\Events\InscripcionMesaExamenMateriaModificado;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +49,7 @@ class MesaExamenMateriaAlumnoController extends Controller
         $id_materia = $request->query('id_materia',0);
         $id_mesa_examen = $request->query('id_mesa_examen',0);
         $id_alumno = $request->query('id_alumno',0);
+        $id_inscripcion = $request->query('id_inscripcion',0);
 
         $registros = MesaExamenMateriaAlumno::with('mesa_examen_materia.materia','alumno')
             ->whereHas('mesa_examen_materia',function($q)use($id_sede){
@@ -63,33 +65,34 @@ class MesaExamenMateriaAlumnoController extends Controller
             'estado' => 1,
         ]);
 
-        $registros = $registros
+        $registros
             ->when($id_departamento>0,function($q)use($id_departamento){
                 $carreras = Carrera::where([
                     'dep_id' => $id_departamento,
                     'estado' => 1,
                 ])->pluck('car_id')->toArray();
-                return $q->whereHas('mesa_examen_materia',function($qt)use($carreras){
+                $q->whereHas('mesa_examen_materia',function($qt)use($carreras){
                     $qt->whereIn('car_id',$carreras);
                 });
             })
             ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->whereHas('mesa_examen_materia',function($qt)use($id_carrera){
+                $q->whereHas('mesa_examen_materia',function($qt)use($id_carrera){
                     $qt->where('car_id',$id_carrera);
                 });
             })
             ->when($id_materia>0,function($q)use($id_materia){
-                return $q->whereHas('mesa_examen_materia',function($qt)use($id_materia){
+                $q->whereHas('mesa_examen_materia',function($qt)use($id_materia){
                     $qt->where('mat_id',$id_carrera);
                 });
             })
             ->when($id_mesa_examen>0,function($q)use($id_mesa_examen){
-                return $q->where('id_mesa_examen',$id_mesa_examen);
+                $q->where('id_mesa_examen',$id_mesa_examen);
             })
             ->when($id_alumno>0,function($q)use($id_alumno){
-                return $q->whereHas('alumno',function($qt)use($id_alumno){
-                    $qt->where('id_alumno',$id_alumno);
-                });
+                $q->where('id_alumno',$id_alumno);
+            })
+            ->when($id_inscripcion>0,function($q)use($id_inscripcion){
+                $q->where('id_inscripcion',$id_inscripcion);
             });
         
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
@@ -161,6 +164,7 @@ class MesaExamenMateriaAlumnoController extends Controller
         $id_inscripcion = $request->input('id_inscripcion');
         $adeuda = $request->input('adeuda');
         $observaciones = $request->input('observaciones');
+        /* VALIDACIONES EXTRAS */
 
         $materia = MesaExamenMateria::find($id_mesa_examen_materia);
         if(!$materia){
@@ -187,6 +191,8 @@ class MesaExamenMateriaAlumnoController extends Controller
             'alu_id' => $id_alumno,
             'mma_id' => $id_mesa_examen_materia,
         ])->first();
+        /* REGISTRAR INSCRIPCION */
+
         if($todo){
             return response()->json(['error'=>'El alumno ya fue inscripto a la mesa de examen.'],403);
         } else {
@@ -213,7 +219,10 @@ class MesaExamenMateriaAlumnoController extends Controller
             $todo->observaciones = $observaciones;
             $todo->save();
         }
-        MesaExamenFunction::actualizar_materia($materia);
+        /* ACTUALIZAR MATERIA */
+        /* ACTUALIZAR ALUMNO */
+        /* ENVIAR NOTIFICACION ALUMNO */
+        event(new InscripcionMesaExamenMateriaNuevo($todo));
         return response()->json($todo,200);
     }
 
@@ -270,25 +279,24 @@ class MesaExamenMateriaAlumnoController extends Controller
         $alumno->observaciones = $observaciones;
         $alumno->save();
 
-        $mesa_examen_materia = MesaExamenMateria::find($alumno->id_mesa_examen_materia);
-        MesaExamenFunction::actualizar_materia($mesa_examen_materia);
+        event(new InscripcionMesaExamenMateriaModificado($alumno));
         return response()->json($alumno,200);
     }
 
-/*
     public function destroy(Request $request){
         $user = Auth::user();
         $id_mesa_examen_materia_alumno = $request->route('id_mesa_examen_materia_alumno');
 
         $alumno = MesaExamenMateriaAlumno::with('alumno','condicion')->find($id_mesa_examen_materia_alumno);
         $alumno->estado = 0;
-        $alumno->usu_id_baja = $asistencia;
+        $alumno->usu_id_baja = $user->id;
         $alumno->deleted_at = Carbon::now();
         $alumno->save();
+        event(new InscripcionMesaExamenMateriaModificado($alumno));
 
         return response()->json($alumno,200);
     }
-*/
+
     public function reporte_constancia(Request $request){
         $id_mesa_examen_materia_alumno = $request->route('id_mesa_examen_materia_alumno');
         $alumno = MesaExamenMateriaAlumno::find($id_mesa_examen_materia_alumno);

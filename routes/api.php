@@ -604,7 +604,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 						],function () {
 							Route::get('','Mesa\MesaExamenMateriaAlumnoController@show');
 							Route::put('','Mesa\MesaExamenMateriaAlumnoController@update');
-							Route::delete('','Mesa\MesaExamenMateriaAlumnoController@update');
+							Route::delete('','Mesa\MesaExamenMateriaAlumnoController@destroy');
 
 							Route::get('reportes/constancia','Mesa\MesaExamenMateriaAlumnoController@reporte_constancia');
 							Route::get('reportes/asistencia','Mesa\MesaExamenMateriaAlumnoController@reporte_constancia_asistencia');

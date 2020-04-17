@@ -19,6 +19,7 @@ class InscripcionFilter{
        */
   	public static function index(Request $request,Builder $query){
           $search = $request->query('search','');
+          $id_alumno = $request->query('id_alumno',0);
           $id_departamento = $request->query('id_departamento',0);
           $id_carrera = $request->query('id_carrera',0);
           $id_beca = $request->query('id_beca',0);
@@ -27,9 +28,13 @@ class InscripcionFilter{
           $anio_final = $request->query('anio_final',0);
           $fecha_inicial = $request->query('fecha_inicial',"");
           $fecha_final = $request->query('fecha_final',"");
+          $id_periodo_lectivo = $request->query('id_periodo_lectivo',0);
+          $porcentaje_aprobados_inicial = $request->query('porcentaje_aprobados_inicial',0);
+          $porcentaje_aprobados_final = $request->query('porcentaje_aprobados_final',0);
 
           return InscripcionFilter::fill([
               'search' => $search,
+              'id_alumno' => $id_alumno,
               'id_departamento' => $id_departamento,
               'id_carrera' => $id_carrera,
               'id_beca' => $id_beca,
@@ -38,6 +43,9 @@ class InscripcionFilter{
               'anio_final' => $anio_final,
               'fecha_inicial' => $fecha_inicial,
               'fecha_final' => $fecha_final,
+              'id_periodo_lectivo' => $id_periodo_lectivo,
+              'porcentaje_aprobados_inicial' => $porcentaje_aprobados_inicial,
+              'porcentaje_aprobados_final' => $porcentaje_aprobados_final,
             ],
             $query
           );
@@ -45,6 +53,7 @@ class InscripcionFilter{
 
     public static function fill($filters,Builder $query){
         $search = $filters['search']??"";
+        $id_alumno = $filters['id_alumno']??0;
         $id_departamento = $filters['id_departamento']??0;
         $id_carrera = $filters['id_carrera']??0;
         $id_beca = $filters['id_beca']??0;
@@ -53,8 +62,14 @@ class InscripcionFilter{
         $anio_final = $filters['anio_final']??0;
         $fecha_inicial = $filters['fecha_inicial']??"";
         $fecha_final = $filters['fecha_final']??"";
+        $id_periodo_lectivo = $filters['id_periodo_lectivo']??"";
+        $porcentaje_aprobados_inicial = $filters['porcentaje_aprobados_inicial']??"";
+        $porcentaje_aprobados_final = $filters['porcentaje_aprobados_final']??"";
 
         $query = $query
+            ->when($id_alumno>0,function($q)use($id_carrera){
+                return $q->where('id_alumno',$id_alumno);
+            })
             ->when($id_departamento>0,function($q)use($id_departamento){
                 $carreras = Carrera::where([
                     'dep_id' => $id_departamento,
@@ -82,6 +97,15 @@ class InscripcionFilter{
             })
             ->when(strlen($fecha_final)>0,function($q)use($fecha_final){
                 return $q->whereDate('created_at','<=',$fecha_final);
+            })
+            ->when($id_periodo_lectivo>0,function($q)use($id_periodo_lectivo){
+                return $q->where('id_periodo_lectivo',$id_periodo_lectivo);
+            })
+            ->when($porcentaje_aprobados_inicial>0,function($q)use($porcentaje_aprobados_inicial){
+                return $q->where('porcentaje_aprobados','>=',$porcentaje_aprobados_inicial);
+            })
+            ->when($porcentaje_aprobados_final>0,function($q)use($porcentaje_aprobados_final){
+                return $q->where('porcentaje_aprobados','<=',$porcentaje_aprobados_final);
             });
         $values = explode(" ", $search);
         if(count($values)>0){

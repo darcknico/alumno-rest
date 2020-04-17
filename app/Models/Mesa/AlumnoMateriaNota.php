@@ -55,7 +55,6 @@ class AlumnoMateriaNota extends Model
       'id',
       'id_alumno',
       'id_inscripcion',
-      'id_inscripcion',
       'id_materia',
       'asistencia',
       'nota',

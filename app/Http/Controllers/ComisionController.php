@@ -52,11 +52,6 @@ class ComisionController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('created_at','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
 
         $id_departamento = $request->query('id_departamento',0);
         $id_carrera = $request->query('id_carrera',0);
@@ -64,6 +59,7 @@ class ComisionController extends Controller
         $anio = $request->query('anio',null);
         $cerrado = $request->query('cerrado',null);
         $id_usuario = $request->query('id_usuario',0);
+        $id_inscripcion = $request->query('id_inscripcion',0);
 
         $registros = $registros
             ->when($id_departamento>0,function($q)use($id_departamento){
@@ -84,6 +80,12 @@ class ComisionController extends Controller
             })
             ->when(!empty($cerrado),function($q)use($cerrado){
                 return $q->where('cerrado',$cerrado);
+            })
+            ->when($id_inscripcion>0,function($q)use($id_inscripcion){
+                $q->whereHas('alumnos',function($qt)use($id_inscripcion){
+                    $qt->where('estado',1)
+                        ->where('id_inscripcion',$id_inscripcion);
+                });
             })
             ->when($user->id_tipo_usuario == 8,function($q)use($user){
                 $q->whereHas('docentes',function($qt)use($user){
@@ -120,6 +122,12 @@ class ComisionController extends Controller
                 }
             }
         }
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $todo = $registros->orderBy('created_at','desc')
+            ->get();
+            return response()->json($todo,200);
+        }
+        
         if(strlen($sort)>0){
             $registros = $registros->orderBy($sort,$order);
         } else {

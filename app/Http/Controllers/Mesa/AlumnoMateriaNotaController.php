@@ -18,6 +18,7 @@ use App\Models\ComisionAlumno;
 use App\Models\Asistencia;
 use App\Models\Sede;
 
+use App\Events\RegistracionAlumnoMateriaNota;
 use App\Exports\AlumnoMateriaNotaExampleExport;
 use App\Imports\AlumnoMateriaNotaImport;
 use App\Http\Controllers\Controller;
@@ -86,6 +87,7 @@ class AlumnoMateriaNotaController extends Controller
         $alumno->usu_id = $user->id;
         $alumno->save();
 
+        event(new RegistracionAlumnoMateriaNota($alumno));
         return response()->json($alumno,200);
     }
 
@@ -125,6 +127,7 @@ class AlumnoMateriaNotaController extends Controller
         $alumno->observaciones = $observaciones;
         $alumno->save();
 
+        event(new RegistracionAlumnoMateriaNota($alumno));
         return response()->json($alumno,200);
     }
 
@@ -137,6 +140,7 @@ class AlumnoMateriaNotaController extends Controller
         $alumno->estado = 0;
         $alumno->save();
 
+        event(new RegistracionAlumnoMateriaNota($alumno));
         return response()->json($alumno,200);
     }
 

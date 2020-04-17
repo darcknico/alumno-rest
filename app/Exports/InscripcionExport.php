@@ -47,6 +47,7 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
             'Apellido',
             'Nombre',
             'Email',
+            'Fecha Nacimiento',
             'Departamento',
             'Carrera',
             'Plan de Estudio',
@@ -55,6 +56,8 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
             'Estado',
             'Observaciones',
             'Alta',
+            'Año Lectivo',
+            'Porcentaje Aprobado',
         ];
     }
 
@@ -69,12 +72,17 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
         if($alumno->tipoDocumento){
             $tipo_documento = $alumno->tipoDocumento->nombre;
         }
+        $fecha_nacimiento = "";
+        if($alumno->fecha_nacimiento){
+            $fecha_nacimiento = Carbon::parse($alumno->fecha_nacimiento)->format('d/m/Y');
+        }
         return [
             $tipo_documento,
             $alumno->documento,
             $alumno->apellido,
             $alumno->nombre,
             $alumno->email,
+            $fecha_nacimiento,
             $registro->carrera->departamento->nombre,
             $registro->carrera->nombre,
             $registro->plan_estudio->nombre,
@@ -83,6 +91,8 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
             $registro->tipo_estado->nombre,
             $registro->observaciones,
             $registro->created_at,
+            $registro->id_periodo_lectivo,
+            $registro->porcentaje_aprobados,
         ];
     }
  
