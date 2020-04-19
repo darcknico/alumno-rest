@@ -11,9 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'HomeController@index');
 
 Route::get('/img/{path}', 'NotificacionController@images')->where('path', '.*');
 Route::get('/plantillas/imagenes/{path}', 'PlantillaController@images')->where('path', '.*')->middleware(['cors']);

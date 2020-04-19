@@ -67,7 +67,7 @@ class InscripcionFilter{
         $porcentaje_aprobados_final = $filters['porcentaje_aprobados_final']??"";
 
         $query = $query
-            ->when($id_alumno>0,function($q)use($id_carrera){
+            ->when($id_alumno>0,function($q)use($id_alumno){
                 return $q->where('id_alumno',$id_alumno);
             })
             ->when($id_departamento>0,function($q)use($id_departamento){

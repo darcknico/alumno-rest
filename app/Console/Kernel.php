@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
         'App\Console\Commands\DiariaAbrir',
         'App\Console\Commands\DiariaCerrar',
         'App\Console\Commands\DiariaRearmar',
+        'App\Console\Commands\InscripcionActualizar',
         'App\Console\Commands\NotificacionEnviar',
         'App\Console\Commands\PlanPagoInteres',
         'App\Console\Commands\PlanPagoRearmar',

@@ -496,4 +496,9 @@ class UsuarioController extends Controller
       ],403);
     }
 
+    public function pusher(Request $request){
+      $pusher =  new \Pusher\Pusher(env('PUSHER_APP_KEY'),env('PUSHER_APP_SECRET'), env('PUSHER_APP_ID'));
+      $socket = json_decode($pusher->socket_auth($request->get('channel_name'),$request->get('socket_id')));
+      return response()->json($socket); 
+    }
 }

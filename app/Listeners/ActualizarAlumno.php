@@ -30,7 +30,7 @@ class ActualizarAlumno
     {
         $alumno = Alumno::find($event->id_alumno);
         $inscripcion = Inscripcion::where('estado',1)
-        ->where('id_inscripcion',$event->id_inscripcion)
+        ->where('id_alumno',$event->id_alumno)
         ->first();
         if($inscripcion){
             $alumno->id_tipo_alumno_estado = 2;

@@ -41,6 +41,15 @@ class InscripcionComisionModificado
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('sedes.'.$this->id_sede.'.comisiones');
+        return [
+            new PrivateChannel('sedes.'.$this->id_sede),
+            new PrivateChannel('sedes.'.$this->id_sede.'.comisiones'),
+        ];
     }
+
+    public function broadcastAs()
+    {
+        return 'inscripcion.comision.modificado';
+    }
+
 }

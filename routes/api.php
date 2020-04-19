@@ -25,14 +25,16 @@ TIPO USUARIOS
 8 DOCENTES
 */
 
+Route::post('broadcasting/auth','UsuarioController@pusher');
+
 Route::post('login', 'UsuarioController@login');
 Route::post('register', 'UsuarioController@register');
 Route::get('email', 'UsuarioController@concidencias');
 /*
 Route::get('diarias_abrir', 'DiariaController@abrir');
 Route::get('diarias_cerrar', 'DiariaController@cerrar');
-*/
 Route::post('rearmar','PlanPagoController@rearmar_todo');
+*/
 
 Route::group(['middleware' => 'auth:api'], function(){
 	Route::post('logout', 'UsuarioController@logout');

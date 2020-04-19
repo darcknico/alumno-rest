@@ -18,7 +18,8 @@ use App\Models\ComisionAlumno;
 use App\Models\Asistencia;
 use App\Models\Sede;
 use App\Models\Extra\ReporteJob;
-
+use App\Events\InscripcionMesaExamenMateriaNuevo;
+use App\Events\InscripcionMesaExamenMateriaModificado;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -287,7 +288,8 @@ class MesaExamenMateriaController extends Controller
                 $todo->usu_id = $user->id;
                 $todo->save();
             }
-            MesaExamenFunction::actualizar_materia($mesa_examen_materia);
+            event(new InscripcionMesaExamenMateriaNuevo($todo));
+
             return response()->json($todo,200);
         }
         return response()->json([
@@ -316,7 +318,8 @@ class MesaExamenMateriaController extends Controller
                 $todo->deleted_at = Carbon::now();
                 $todo->save();
             }
-            MesaExamenFunction::actualizar_materia($mesa_examen_materia);
+            event(new InscripcionMesaExamenMateriaModificado($todo));
+
             return response()->json($todo,200);
         }
         return response()->json([

@@ -56,11 +56,7 @@ class CarreraController extends Controller
         } else {
             $registros = $registros->where('dep_id',$id_departamento);
         }
-        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
-            $todo = $registros->orderBy('nombre','desc')
-            ->get();
-            return response()->json($todo,200);
-        }
+        
         $id_departamento = $request->query('id_departamento',0);
         $registros = $registros
             ->when($id_departamento>0,function($q)use($id_departamento){
@@ -78,6 +74,11 @@ class CarreraController extends Controller
                 });
               }
             }
+        }
+        if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
+            $todo = $registros->orderBy('nombre','desc')
+            ->get();
+            return response()->json($todo,200);
         }
         if(strlen($sort)>0){
         $registros = $registros->orderBy($sort,$order);

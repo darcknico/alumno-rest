@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Models\Alumno;
 use App\Models\Comision;
 use App\Models\ComisionAlumno;
+use App\Jobs\AlumnoInscripcionMailEnviado;
 use App\Mail\ComisionAlumnoInscripcionNuevo;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +34,9 @@ class EnviarNotificacionNuevoInscripcionComision implements ShouldQueue
         $alumno = Alumno::find($event->id_alumno);
         if($alumno->email){
             $comision = ComisionAlumno::find($event->id_comision_alumno);
-            Mail::to($alumno)->send(new ComisionAlumnoInscripcionNuevo($comision));
+            Mail::to($alumno)
+                ->send(new ComisionAlumnoInscripcionNuevo($comision))
+                ->queue(new AlumnoInscripcionMailEnviado($alumno));
         }
         return true;
     }

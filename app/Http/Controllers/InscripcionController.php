@@ -58,13 +58,14 @@ class InscripcionController extends Controller
             'sed_id' => $id_sede,
             'estado' => 1,
             ]);
+        $registros = InscripcionFilter::index($request,$registros);
+        
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('created_at','desc')
             ->get();
             return response()->json($todo,200);
         }
 
-        $registros = InscripcionFilter::index($request,$registros);
 
         if(strlen($sort)>0){
         $registros = $registros->orderBy($sort,$order);

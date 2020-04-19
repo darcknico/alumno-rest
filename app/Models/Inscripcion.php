@@ -19,6 +19,7 @@ class Inscripcion extends Model
     'tipo_estado',
     'modalidad',
     'periodo',
+    'sede:id,nombre',
   ];
 
   protected $casts = [

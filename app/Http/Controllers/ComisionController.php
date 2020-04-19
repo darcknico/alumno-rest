@@ -14,7 +14,8 @@ use App\Models\Comision\Docente as ComisionDocente;
 use App\Models\Asistencia;
 use App\Models\Comision\Examen;
 use App\Models\Academico\DocenteMateria;
-
+use App\Events\InscripcionComisionNuevo;
+use App\Events\InscripcionComisionModificado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -321,13 +322,7 @@ class ComisionController extends Controller
                 $todo->usu_id = $user->id;
                 $todo->save();
             }
-            $alumnos_cantidad = ComisionAlumno::selectRaw('count(*) as total')
-                ->where([
-                    'estado' => 1,
-                    'com_id' => $id_comision,
-                ])->groupBy('com_id')->first();
-            $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
-            $comision->save();
+            event(new InscripcionComisionNuevo($todo));
             return response()->json($todo,200);
         }
         return response()->json([
@@ -354,13 +349,8 @@ class ComisionController extends Controller
                 $todo->deleted_at = Carbon::now();
                 $todo->save();
             }
-            $alumnos_cantidad = ComisionAlumno::selectRaw('count(*) as total')
-                ->where([
-                    'estado' => 1,
-                    'com_id' => $id_comision,
-                ])->groupBy('com_id')->first();
-            $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
-            $comision->save();
+            event(new InscripcionComisionModificado($todo));
+
             return response()->json($todo,200);
         }
         return response()->json([

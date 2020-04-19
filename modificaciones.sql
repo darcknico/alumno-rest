@@ -356,6 +356,7 @@ ALTER TABLE `tbl_notificaciones` ADD `not_puede_email` BOOLEAN NOT NULL DEFAULT 
 composer require alymosul/laravel-exponent-push-notifications
 */
 ### 2020-04-15
+/*
 ALTER TABLE `tbl_inscripciones` 
 	ADD `tml_id` INT NOT NULL DEFAULT '1' AFTER `ins_fecha_egreso`,
 	ADD `ins_porcentaje_aprobados` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `tml_id`,
@@ -365,3 +366,5 @@ ALTER TABLE `tbl_inscripciones`
 ALTER TABLE `tbl_inscripciones` 
 	ADD `ins_final_promedio` TINYINT NOT NULL DEFAULT '0' AFTER `ins_final_total_aprobados`, 
 	ADD `ins_final_promedio_aprobados` TINYINT NOT NULL DEFAULT '0' AFTER `ins_final_promedio`;
+composer require pusher/pusher-php-server "~4.0"
+*/

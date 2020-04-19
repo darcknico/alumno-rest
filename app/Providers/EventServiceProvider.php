@@ -30,7 +30,6 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\InscripcionComisionModificado' => [
             'App\Listeners\ActualizarComision',
             'App\Listeners\ActualizarPeriodoLectivoInscripcion',
-            'App\Listeners\EnviarNotificacionNuevoInscripcionComision',
         ],
         'App\Events\InscripcionMesaExamenMateriaNuevo' => [
             'App\Listeners\ActualizarMesaExamenMateria',

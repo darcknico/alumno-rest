@@ -12,7 +12,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class InscripcionAlumnoNuevo
+class InscripcionAlumnoNuevo implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -21,6 +21,7 @@ class InscripcionAlumnoNuevo
     public $id_alumno;
     public $id_plan_pago;
     public $id_carrera;
+    public $inscripcion;
     /**
      * Create a new event instance.
      *
@@ -33,6 +34,7 @@ class InscripcionAlumnoNuevo
         $this->id_alumno = $inscripcion->id_alumno;
         $this->id_plan_pago = $inscripcion->id_plan_pago;
         $this->id_carrera = $inscripcion->id_carrera;
+        $this->inscripcion = Inscripcion::with('alumno','carrera')->find($inscripcion->id);
     }
 
     /**
@@ -42,6 +44,14 @@ class InscripcionAlumnoNuevo
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('sedes.'.$this->id_sede.'.inscripciones');
+        return [
+            new PrivateChannel('sedes.'.$this->id_sede),
+            new PrivateChannel('sedes.'.$this->id_sede.'.inscripciones'),
+        ];
+    }
+
+    public function broadcastAs()
+    {
+        return 'inscripcion.alumno';
     }
 }
