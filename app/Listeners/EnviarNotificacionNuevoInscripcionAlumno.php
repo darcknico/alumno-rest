@@ -7,13 +7,14 @@ use App\Models\Alumno;
 use App\Models\PlanEstudio;
 use App\Models\Materia;
 use App\Models\AlumnoNotificacion;
+use App\Models\Carrera;
 use App\Functions\CorreoFunction;
 
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
 
-class EnviarNotificacionNuevoInscripcionAlumno
+class EnviarNotificacionNuevoInscripcionAlumno implements ShouldQueue
 {
     /**
      * Create the event listener.

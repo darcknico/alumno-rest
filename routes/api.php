@@ -48,10 +48,39 @@ Route::group(['middleware' => 'auth:api'], function(){
 		Route::get('sedes/{id_sede}','UsuarioController@sede_seleccionar')->where('id_sede', '[0-9]+');
 	});
 
+	Route::prefix('docentes')->group(function () {
+		Route::get('exportar','Academico\DocenteController@exportar');
+		Route::get('materias/exportar','Academico\DocenteMateriaController@exportar');
+
+		Route::group([
+			'prefix'=> '{id_usuario}',
+			'where'  => ['id_usuario' => '[0-9]+'],
+		],function () {
+			Route::prefix('contratos')->group(function () {
+				Route::post('{id_tipo_contrato}','Academico\DocenteController@contrato_seleccionar')->where('id_tipo_contrato','[0-9]+');
+				Route::delete('{id_tipo_contrato}','Academico\DocenteController@contrato_desasociar')->where('id_tipo_contrato','[0-9]+');
+			});
+		});
+		Route::prefix('estados')->group(function () {
+			Route::group([
+				'prefix'=> '{id_docente_estado}',
+				'where'  => ['id_docente_estado' => '[0-9]+'],
+			],function () {
+				Route::get('archivos','Academico\DocenteEstadoController@archivo');
+			});
+		});
+	});
+
 	Route::apiResource('docentes/materias','Academico\DocenteMateriaController',[
 		'as' => 'docenteMateria',
 		'parameters' => [
 			'materias' => 'docenteMateria',
+		],
+	]);
+	Route::apiResource('docentes/estados','Academico\DocenteEstadoController',[
+		'as' => 'docenteEstado',
+		'parameters' => [
+			'estados' => 'docenteEstado',
 		],
 	]);
 
@@ -67,17 +96,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 			'obligaciones' => 'obligacion',
 		],
 	]);
-	Route::prefix('docentes')->group(function () {
-		Route::group([
-			'prefix'=> '{id_usuario}',
-			'where'  => ['id_usuario' => '[0-9]+'],
-		],function () {
-			Route::prefix('contratos')->group(function () {
-				Route::post('{id_tipo_contrato}','Academico\DocenteController@contrato_seleccionar')->where('id_tipo_contrato','[0-9]+');
-				Route::delete('{id_tipo_contrato}','Academico\DocenteController@contrato_desasociar')->where('id_tipo_contrato','[0-9]+');
-			});
-		});
-	});
+	
 
 	Route::prefix('sedes')->group(function () {
 		Route::post('','SedeController@store');
@@ -871,6 +890,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 		Route::get('contratos','TipoController@contratos');
 		Route::get('docentes/mesas','TipoController@mesa_docente');
 		Route::get('docentes/cargos','TipoController@docente_cargo');
+		Route::get('docentes/estados','TipoController@docente_estado');
 	});
 
 

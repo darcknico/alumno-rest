@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Academico;
 
 use App\Models\Materia;
 use App\Models\Academico\DocenteMateria;
+use App\Filters\DocenteMateriaFilter;
+use App\Exports\DocenteAsignacionExport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Carbon\Carbon;
 
 class DocenteMateriaController extends Controller
 {
@@ -27,34 +30,8 @@ class DocenteMateriaController extends Controller
         $registros = DocenteMateria::with('docente','sede')
             ->where('estado',1);
 
-        $id_sede = $request->query('id_sede',0);
-        $id_usuario = $request->query('id_usuario',0);
-        $id_materia = $request->query('id_materia',0);
-        $id_carrera = $request->query('id_carrera',0);
-        $id_departamento = $request->query('id_departamento',0);
-        $id_tipo_docente_cargo = $request->query('id_tipo_docente_cargo',0);
+        $registros = DocenteMateriaFilter::index($request,$registros);
 
-        $registros = $registros
-            ->when($id_sede>0,function($q)use($id_sede){
-                return $q->where('id_sede',$id_sede);
-            })
-            ->when($id_usuario>0,function($q)use($id_usuario){
-                return $q->where('id_usuario',$id_usuario);
-            })
-            ->when($id_materia>0,function($q)use($id_materia){
-                return $q->where('id_materia',$id_materia);
-            })
-            ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->where('id_carrera',$id_carrera);
-            })
-            ->when($id_departamento>0,function($q)use($id_departamento){
-                return $q->whereHas('carrera',function($qt)use($id_departamento){
-                    $qt->where('id_departamento',$id_departamento);
-                });
-            })
-            ->when($id_tipo_docente_cargo>0,function($q)use($id_tipo_docente_cargo){
-                return $q->where('id_tipo_docente_cargo',$id_tipo_docente_cargo);
-            });
 
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('created_at','desc')
@@ -62,24 +39,6 @@ class DocenteMateriaController extends Controller
             return response()->json($todo,200);
         }
         
-        $values = explode(" ", $search);
-        if(count($values)>0){
-            foreach ($values as $key => $value) {
-              if(strlen($value)>0){
-                $registros = $registros->where(function($query) use  ($value) {
-                  $query->whereHas('usuario',function($q)use($value){
-                    $q->where('apellido','like','%'.$value.'%')
-                        ->orWhere('nombre','like','%'.$value.'%')
-                        ->orWhere('documento','like','%'.$value.'%');
-                  })
-                  ->orWhereHas('materia',function($q)use($value){
-                    $q->where('codigo','like','%'.$value.'%')
-                        ->orWhere('nombre','like','%'.$value.'%');
-                  });
-                });
-              }
-            }
-        }
         if(strlen($sort)>0){
         $registros = $registros->orderBy($sort,$order);
         } else {
@@ -211,5 +170,14 @@ class DocenteMateriaController extends Controller
         $todo->estado = 0;
         $todo->save();
         return $todo;
+    }
+
+    public function exportar(Request $request){
+
+        $fecha = Carbon::now()->format('d.m.Y');
+
+        return (new DocenteAsignacionExport(
+            $request->all()
+        ))->download('asignaciones'.$fecha.'.xlsx');
     }
 }

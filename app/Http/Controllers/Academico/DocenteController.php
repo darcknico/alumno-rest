@@ -8,11 +8,14 @@ use App\Models\UsuarioSede;
 use App\Models\Academico\Docente;
 use App\Models\Academico\DocenteContrato;
 use App\Models\Tipos\TipoContrato;
+use App\Filters\DocenteFilter;
+use App\Exports\DocenteExport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Carbon\Carbon;
 
 class DocenteController extends Controller
 {
@@ -33,72 +36,32 @@ class DocenteController extends Controller
             $q->where('id_tipo_usuario',8);
         });
 
-        $estado = $request->query('estado',true);
-        $id_sede = $request->query('id_sede',0);
-        $id_tipo_contrato = $request->query('id_tipo_contrato',0);
-        $id_carrera = $request->query('id_carrera',0);
-
-        $registros = $registros
-            ->when($id_sede>0,function($q)use($id_sede){
-                $usuarios = UsuarioSede::where([
-                    'sed_id' => $id_sede,
-                    'estado' => 1,
-                ])->pluck('usu_id')->toArray();
-                return $q->whereIn('id_usuario',$usuarios);
-            })
-            ->when( !is_null($estado) and is_bool($estado),function($q)use($estado){
-                return $q->whereHas('usuario',function($qt)use($estado){
-                    $qt->where('estado',($estado?1:0));
-                });
-            })
-            ->when($id_tipo_contrato>0,function($q)use($id_tipo_contrato){
-                $q->whereHas('contratos',function($qt)use($id_tipo_contrato){
-                    return $q->where('id_tipo_contrato',$id_tipo_contrato);
-                });
-            })
-            ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->whereHas('carreras',function($qt)use($id_carrera){
-                    $qt->where('estado',1)->where('id_carrera',$id_carrera);
-                });
-            });
+        $registros = DocenteFilter::index($request,$registros);
 
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('cuit','desc')
             ->get();
             return response()->json($todo,200);
         }
-        
-        $values = explode(" ", $search);
-        if(count($values)>0){
-            foreach ($values as $key => $value) {
-              if(strlen($value)>0){
-                $registros = $registros->where(function($query) use  ($value) {
-                  $query->whereHas('usuario',function($q)use($value){
-                    $q->where('apellido','like','%'.$value.'%')
-                        ->orWhere('nombre','like','%'.$value.'%')
-                        ->orWhere('documento','like','%'.$value.'%');
-                    })
-                    ->orWhere('cuit','like','%'.$value.'%')
-                    ->orWhere('titulo','like','%'.$value.'%');
-                });
-              }
-            }
-        }
-        if(strlen($sort)>0){
-        $registros = $registros->orderBy($sort,$order);
-        } else {
-        $registros = $registros->orderBy('cuit','desc');
-        }
         $q = clone($registros->getQuery());
-        $total_count = count($q->get());
-        if($length>0){
-        $registros = $registros->limit($length);
-        if($start>1){
-            $registros = $registros->offset($start)->get();
-        } else {
-            $registros = $registros->get();
-        }
+        $total_count = $q->count();
 
+        $registros->select('tbl_docentes.*','tbl_usuarios.usu_apellido as apellido','tbl_usuarios.usu_nombre as nombre')
+        ->rightJoin('tbl_usuarios','tbl_usuarios.usu_id','=','tbl_docentes.usu_id');
+
+        if(strlen($sort)>0){
+          $registros = $registros->orderBy($sort,$order);
+        } else {
+          $registros = $registros->orderBy('cuit','desc');
+        }
+        
+        if($length>0){
+          $registros = $registros->limit($length);
+          if($start>1){
+              $registros = $registros->offset($start)->get();
+          } else {
+              $registros = $registros->get();
+          }
         } else {
             $registros = $registros->get();
         }
@@ -330,5 +293,14 @@ class DocenteController extends Controller
       return response()->json([
           'error'=>'No se han encontrado al Docente o tipo de contrato',
       ],403);
+    }
+
+    public function exportar(Request $request){
+
+        $fecha = Carbon::now()->format('d.m.Y');
+
+        return (new DocenteExport(
+            $request->all()
+        ))->download('docentes'.$fecha.'.xlsx');
     }
 }

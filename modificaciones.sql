@@ -368,3 +368,11 @@ ALTER TABLE `tbl_inscripciones`
 	ADD `ins_final_promedio_aprobados` TINYINT NOT NULL DEFAULT '0' AFTER `ins_final_promedio`;
 composer require pusher/pusher-php-server "~4.0"
 */
+
+### 2020-04-22
+ALTER TABLE `tbl_docente_materia` ADD `dma_id` INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (`dma_id`);
+
+php artisan migrate --path=/database/migrations/2020_04_22_111834_create_tbl_tipo_docente_estado_table.php
+php artisan migrate --path=/database/migrations/2020_04_22_111936_create_tbl_docente_estado_table.php
+
+php artisan db:seed --class=TipoDocenteEstadoSeeder

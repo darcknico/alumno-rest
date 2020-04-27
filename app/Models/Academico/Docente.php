@@ -50,6 +50,10 @@ class Docente extends Model
 		return $this->hasOne('App\User','usu_id','usu_id');
 	}
 
+	public function sedes(){
+		return $this->hasMany('App\Models\UsuarioSede','usu_id','usu_id');
+	}
+
 	public function contratos(){
 		return $this->hasMany('App\Models\Academico\DocenteContrato','usu_id','usu_id')->where('estado',1);
 	}

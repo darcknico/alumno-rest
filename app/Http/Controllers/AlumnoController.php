@@ -832,7 +832,7 @@ class AlumnoController extends Controller
     public function archivo(Request $request){
         $id_alumno_archivo = $request->route('id_alumno_archivo');
         $todo = AlumnoArchivo::find($id_alumno_archivo);
-        return response()->download(storage_path("app/{$todo->aar_dir}"));
+        return response()->download(storage_path("app/{$todo->aar_dir}"),$todo->aar_nombre);
     }
 
     public function inscripcion_store(Request $request){

@@ -76,14 +76,15 @@ class InscripcionFunction{
         ->whereHas('alumnos',function($q)use($inscripcion){
             $q->where('estado',1)
             ->where('id_inscripcion',$inscripcion->id)
-            ->where('nota','>',5);
+            ->whereNotNull('nota_final')
+            ->where('nota_final','>=',4);
         })
         ->distinct('id_materia')
         ->get();
 
         $viejo = AlumnoMateriaNota::where('estado',1)
         ->where('id_inscripcion',$inscripcion->id)
-        ->where('nota','>',5)
+        ->where('nota','>=',4)
         ->whereNotIn('id_materia',$aprobados->pluck('id_materia'))
         ->distinct('id_materia')
         ->count();
@@ -94,6 +95,7 @@ class InscripcionFunction{
 
     public static function obtenerTPFinal(Inscripcion $inscripcion){
         $result1 = MesaExamenMateriaAlumno::selectRaw('ins_id, count(ins_id) as total, avg(mam_nota_final) as promedio')
+            ->whereNotNull('nota_final')
             ->where('estado',1)
             ->where('id_inscripcion',$inscripcion->id)
             ->groupBy('ins_id')
@@ -124,15 +126,16 @@ class InscripcionFunction{
     }
     public static function obtenerTPFinalAprobados(Inscripcion $inscripcion){
         $result = MesaExamenMateriaAlumno::selectRaw('ins_id, count(ins_id) as total, avg(mam_nota_final) as promedio')
+            ->whereNotNull('nota_final')
             ->where('estado',1)
             ->where('id_inscripcion',$inscripcion->id)
-            ->where('nota','>',5)
+            ->where('nota','>=',4)
             ->groupBy('ins_id')
             ->first();
         $result2 = AlumnoMateriaNota::selectRaw('ins_id, count(ins_id) as total, avg(amn_nota) as promedio')
             ->where('estado',1)
             ->where('id_inscripcion',$inscripcion->id)
-            ->where('nota','>',5)
+            ->where('nota','>=',4)
             ->groupBy('ins_id')
             ->first();
         $total1 = $result1->total??0;

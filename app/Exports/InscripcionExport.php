@@ -58,6 +58,8 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
             'Alta',
             'Año Lectivo',
             'Porcentaje Aprobado',
+            'Telefono',
+            'Celular',
         ];
     }
 
@@ -93,6 +95,8 @@ class InscripcionExport implements ShouldAutoSize, FromCollection, WithMapping, 
             $registro->created_at,
             $registro->id_periodo_lectivo,
             $registro->porcentaje_aprobados,
+            $alumno->telefono,
+            $alumno->celular,
         ];
     }
  
