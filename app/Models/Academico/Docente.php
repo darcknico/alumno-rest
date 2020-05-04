@@ -20,34 +20,44 @@ class Docente extends Model
     protected $with = [
     	'usuario.sedes',
     	'contratos',
+    	'tipo_estado',
     ];
 
 	protected $hidden = [
 		'usu_id',
 		'doc_titulo',
 		'tco_id',
+		'tde_id',
 		'doc_cuit',
 		'doc_observaciones',
 	];
 
 	protected $maps = [
+		'id' => 'usu_id',
 		'id_usuario' => 'usu_id',
 		'titulo' => 'doc_titulo',
 		'id_tipo_contrato' => 'tco_id',
+		'id_tipo_docente_estado' => 'tde_id',
 		'cuit' => 'doc_cuit',
 		'observaciones' => 'doc_observaciones',
 	];
 
 	protected $appends = [
+		'id',
 		'id_usuario',
 		'titulo',
 		'id_tipo_contrato',
+		'id_tipo_docente_estado',
 		'cuit',
 		'observaciones',
 	];
 
 	public function usuario(){
 		return $this->hasOne('App\User','usu_id','usu_id');
+	}
+
+	public function tipo_estado(){
+		return $this->hasOne('App\Models\Tipos\TipoDocenteEstado','tde_id','tde_id');
 	}
 
 	public function sedes(){

@@ -28,13 +28,13 @@ class TipoMateriaLectivo extends Model
   protected $maps = [
       'id' => 'tml_id',
       'nombre' => 'tml_nombre',
-      'tnombre_corto' => 'tml_nombre_corto',
+      'nombre_corto' => 'tml_nombre_corto',
   ];
 
   protected $appends = [
     'id',
     'nombre',
-    'tnombre_corto',
+    'nombre_corto',
   ];
 
 }

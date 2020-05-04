@@ -44,6 +44,10 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\RegistracionAlumnoMateriaNota' => [
             'App\Listeners\ActualizarMetricaFinalInscripcion',
         ],
+
+        'App\Events\DocenteModificado' => [
+            'App\Listeners\ActualizarDocente',
+        ],
     ];
 
     /**

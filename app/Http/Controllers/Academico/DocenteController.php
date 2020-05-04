@@ -12,6 +12,7 @@ use App\Filters\DocenteFilter;
 use App\Exports\DocenteExport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Events\DocenteModificado;
 
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -100,6 +101,7 @@ class DocenteController extends Controller
         $direccion_piso = $request->input('direccion_piso');
         $documento = $request->input('documento');
         $id_tipo_documento = $request->input('id_tipo_documento');
+        $id_tipo_docente_estado = $request->input('id_tipo_docente_estado');
 
         $titulo = $request->input('titulo');
         $cuit = $request->input('cuit');
@@ -146,7 +148,10 @@ class DocenteController extends Controller
             $docente->titulo = $titulo;
             $docente->cuit = $cuit;
             $docente->observaciones = $observaciones;
+            $docente->id_tipo_docente_estado = $id_tipo_docente_estado;
             $docente->save();
+
+            event(new DocenteModificado($docente));
         } catch(\Illuminate\Database\QueryException $e){
             $errorCode = $e->errorInfo[1];
             if($errorCode == '1062'){
@@ -197,6 +202,7 @@ class DocenteController extends Controller
         $direccion_piso = $request->input('direccion_piso');
         $documento = $request->input('documento');
         $id_tipo_documento = $request->input('id_tipo_documento');
+        $id_tipo_docente_estado = $request->input('id_tipo_docente_estado');
 
         $titulo = $request->input('titulo');
         $cuit = $request->input('cuit');
@@ -219,7 +225,9 @@ class DocenteController extends Controller
             $docente->titulo = $titulo;
             $docente->cuit = $cuit;
             $docente->observaciones = $observaciones;
+            $docente->id_tipo_docente_estado = $id_tipo_docente_estado;
             $docente->save();
+            event(new DocenteModificado($docente));
         } catch(\Illuminate\Database\QueryException $e){
             $errorCode = $e->errorInfo[1];
             if($errorCode == '1062'){

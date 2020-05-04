@@ -1,7 +1,7 @@
 {
     "name": "laravel/laravel",
     "description": "The Laravel Framework.",
-    "version":"1.6.0",
+    "version":"1.6.1",
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "type": "project",
@@ -10,6 +10,7 @@
         "alymosul/laravel-exponent-push-notifications": "^2.1",
         "axn/laravel-glide": "^1.7",
         "barryvdh/laravel-cors": "^0.11.2",
+        "binarytorch/larecipe": "2.1.3",
         "chumper/zipper": "1.0.x",
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",

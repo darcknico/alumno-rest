@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DocenteEstadoRequest;
 use Illuminate\Support\Facades\Storage;
+use App\Events\DocenteModificado;
 
 class DocenteEstadoController extends Controller
 {
@@ -99,6 +100,7 @@ class DocenteEstadoController extends Controller
             $docenteEstado->des_dir = $filename;
         }
         $docenteEstado->save();
+        event(new DocenteModificado($docenteEstado->docente));
         return response()->json($docenteEstado);
     }
 
@@ -126,6 +128,7 @@ class DocenteEstadoController extends Controller
         $docenteEstado->fecha_final = $request->fecha_final;
         $docenteEstado->observaciones = $request->observaciones;
         $docenteEstado->save();
+        event(new DocenteModificado($docenteEstado->docente));
         return response()->json($docenteEstado);
     }
 
@@ -140,6 +143,7 @@ class DocenteEstadoController extends Controller
         Storage::delete($docenteEstado->des_dir);
         $docenteEstado->delete();
 
+        event(new DocenteModificado($docenteEstado->docente));
         return response()->json($docenteEstado);
     }
 

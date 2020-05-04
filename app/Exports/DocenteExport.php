@@ -56,6 +56,7 @@ class DocenteExport implements ShouldAutoSize, FromCollection, WithMapping, With
             'Numero',
             'Depto',
             'Piso',
+            'Sede',
 
             'Observaciones',
         ];
@@ -77,17 +78,25 @@ class DocenteExport implements ShouldAutoSize, FromCollection, WithMapping, With
             $fecha_nacimiento = Carbon::parse($usuario->fecha_nacimiento)->format('d/m/Y');
         }
         $contratos = "";
-    	foreach ($registro->contratos as $contrato) {
-    		$contratos = $contratos . " " . $contrato->tipo->nombre;
-    	}
+        if($registro->contratos){
+            foreach ($registro->contratos as $contrato) {
+                $contratos = $contratos . " " . $contrato->tipo->nombre;
+            }
+        }
+    	
+        $sedes = "";
+        if($registro->sedes){
+            foreach ($registro->sedes as $sede) {
+                $sedes = $sedes . " " .$sede->sede->nombre;
+            }
+        }
+        
         return [
             $registro->cuit,
             $usuario->apellido,
             $usuario->nombre,
             $registro->titulo,
             $contratos,
-
-            $usuario->documento,
             
             $usuario->email,
             $fecha_nacimiento,
@@ -99,6 +108,7 @@ class DocenteExport implements ShouldAutoSize, FromCollection, WithMapping, With
             $usuario->direccion_numero,
             $usuario->direccion_dpto,
             $usuario->direccion_piso,
+            $sedes,
 
             $registro->observaciones,
         ];

@@ -1,0 +1,10 @@
+- ## Primeros pasos
+    - [Comenzando](/{{route}}/{{version}}/overview)
+    - [El establecimiento](/{{route}}/{{version}}/establecimiento)
+    - [La academia](/{{route}}/{{version}}/academico)
+- ## Gestion Academica
+	- [Comisiones](/{{route}}/{{version}}/comisiones)
+	- [Mesas de examenes](/{{route}}/{{version}}/mesas)
+- ## Contabilidad
+	- [Movimientos](/{{route}}/{{version}}/movimientos)
+	- [Caja](/{{route}}/{{version}}/cajas)

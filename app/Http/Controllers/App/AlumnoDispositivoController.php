@@ -22,7 +22,7 @@ class AlumnoDispositivoController extends Controller
         $order = $request->query('order','');
         $start = $request->query('start',0);
         $length = $request->query('length',0);
-        $id_usuario = $request->query('id_usuario',0);
+
         
         $registros = AlumnoDispositivo::with('alumno')->where([
             'estado' => 1,
@@ -77,7 +77,7 @@ class AlumnoDispositivoController extends Controller
     public function notificar(Request $request){
         $id_usuario = Auth::id();
         $id_alumno_dispositivo = $request->input('id_alumno_dispositivo');
-        $id_sede = $request->input('id_sede');
+        
         $titulo = $request->input('titulo');
         $cuerpo = $request->input('cuerpo');
 

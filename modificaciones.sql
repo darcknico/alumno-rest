@@ -370,9 +370,19 @@ composer require pusher/pusher-php-server "~4.0"
 */
 
 ### 2020-04-22
+/*
 ALTER TABLE `tbl_docente_materia` ADD `dma_id` INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY (`dma_id`);
-
 php artisan migrate --path=/database/migrations/2020_04_22_111834_create_tbl_tipo_docente_estado_table.php
 php artisan migrate --path=/database/migrations/2020_04_22_111936_create_tbl_docente_estado_table.php
-
+composer dump-autoload
 php artisan db:seed --class=TipoDocenteEstadoSeeder
+*/
+
+### 2020-04-27
+/*
+ALTER TABLE `tbl_docentes` ADD `tde_id` INT NOT NULL DEFAULT '2' AFTER `tco_id`;
+*/
+
+### 2020-05-02
+composer require binarytorch/larecipe:2.1.3
+php artisan larecipe:install

@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
         'App\Console\Commands\DiariaAbrir',
         'App\Console\Commands\DiariaCerrar',
         'App\Console\Commands\DiariaRearmar',
+        'App\Console\Commands\DocenteEstado',
         'App\Console\Commands\InscripcionActualizar',
         'App\Console\Commands\NotificacionEnviar',
         'App\Console\Commands\PlanPagoInteres',
@@ -73,6 +74,8 @@ class Kernel extends ConsoleKernel
                 return false;
             }
         });
+
+        $schedule->command('docente:estado')->daily()->at('23:00');
 
         //ABRIR DIARIA
         //$schedule->command('diaria:abrir')->daily()->at('02:00');
