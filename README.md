@@ -33,3 +33,9 @@ Luego estos valores seran modificados cada vez que ocurra uno de los siguientes 
 - Eliminacion en notas viejo
 - Modificacion en la nota de un alumno en la mesa de examen (Masivo/Simple)
 - Eliminacion de la inscripcion de un alumno en la mesa de examen
+
+### 2020-05-07 1.6.2
+
+Modificado
+- Api de nuevo pago y movimiento, agregado numero de transaccion para formas de pago con Mercado Pago y Transaccion Bancaria
+- Vista previa de pagos, "detallePreparar()" para aceptar opcion ESPECIAL COVID-19

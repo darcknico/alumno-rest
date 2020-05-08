@@ -458,6 +458,7 @@ class PlanPagoController extends Controller
     }
     $bonificar_intereses = $request->input('bonificar_intereses',false);
     $bonificar_cuotas = $request->input('bonificar_cuotas',true);
+    $especial_covid = $request->input('especial_covid',true);
     $monto = round($request->input('monto'),2);
     $descripcion = $request->input('descripcion','');
     $numero_oficial = $request->input('numero_oficial');
@@ -469,10 +470,16 @@ class PlanPagoController extends Controller
     }
     $saldo = $monto;
     $fecha = new Carbon($request->input('fecha'));
-    if($bonificar_intereses){
-      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,$bonificar_cuotas);
+    if($bonificar_intereses or $especial_covid){
+      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,[
+        'bonificar_cuotas' => $bonificar_cuotas,
+        'especial_covid' => $especial_covid,
+      ]);
     } else {
-      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,$bonificar_cuotas);
+      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,[
+        'bonificar_cuotas' => $bonificar_cuotas,
+        'especial_covid' => $especial_covid,
+      ]);
     }
     $plan_pago = PlanPago::find($id_plan_pago);
 
@@ -516,6 +523,8 @@ class PlanPagoController extends Controller
       $obligacion = ObligacionFunction::actualizar($obligacion);
 
       if($obligacion->id_tipo_obligacion == 1 and $saldo >= 0){
+        $pagado = ObligacionFunction::pagado($obligacion);
+        $monto = $obligacion->monto - $pagado;
         if($detalle['bonificado']){
           $sede = Sede::find($id_sede);
           $descripcion = "Bonificacion adelanto - ".$obligacion->descripcion;
@@ -553,8 +562,87 @@ class PlanPagoController extends Controller
           $parcial_bonificado->pag_id = $pago_bonificado->pag_id;
           $parcial_bonificado->id_usuario = $user->id;
           $parcial_bonificado->save();
-          $obligacion = Obligacion::find($obligacion->id);
           $obligacion = ObligacionFunction::actualizar($obligacion);
+        } else if($especial_covid and $pagado>=3000 and $monto>0){
+          $sede = Sede::find($id_sede);
+          $descripcion = "Bonificacion especial COVID-19 - ".$obligacion->descripcion;
+          $obligacion_bonificado = new Obligacion;
+          $obligacion_bonificado->monto = $monto;
+          $obligacion_bonificado->descripcion = $descripcion;
+          $obligacion_bonificado->saldo = 0;
+          $obligacion_bonificado->fecha = $fecha->toDateString();
+          $obligacion_bonificado->fecha_vencimiento = $fecha->toDateString();
+          $obligacion_bonificado->ppa_id = $id_plan_pago;
+          $obligacion_bonificado->tob_id = 4;
+          $obligacion_bonificado->id_usuario = $user->id;
+          $obligacion_bonificado->save();
+
+          $numero = $sede->pago_numero + 1;
+          $pago_bonificado = new Pago;
+          $pago_bonificado->fecha = $fecha->toDateString();
+          $pago_bonificado->monto = $monto;
+          $pago_bonificado->descripcion = $descripcion;
+          $pago_bonificado->id_usuario = $user->id;
+          $pago_bonificado->ppa_id = $id_plan_pago;
+          $pago_bonificado->obl_id = $obligacion_bonificado->obl_id;
+          $pago_bonificado->id_sede = $id_sede;
+          $pago_bonificado->id_movimiento = 0;
+          $pago_bonificado->id_inscripcion = $plan_pago->id_inscripcion;
+          $pago_bonificado->id_tipo_pago = 2;
+          $pago_bonificado->numero = $numero;
+          $pago_bonificado->save();
+          $sede->pago_numero = $numero;
+          $sede->save();
+
+          $parcial_bonificado = new ObligacionPago;
+          $parcial_bonificado->opa_monto = $monto;
+          $parcial_bonificado->obl_id = $obligacion->id;
+          $parcial_bonificado->pag_id = $pago_bonificado->pag_id;
+          $parcial_bonificado->id_usuario = $user->id;
+          $parcial_bonificado->save();
+          $obligacion = ObligacionFunction::actualizar($obligacion);
+
+          $interes = Obligacion::where('obl_id_obligacion',$obligacion->id)->first();
+          $pagado = ObligacionFunction::pagado($interes);
+          $monto = $interes->monto - $pagado;
+          if($interes and $monto>0){
+            $descripcion = "Bonificacion especial COVID-19 - ".$interes->descripcion;
+            $obligacion_bonificado = new Obligacion;
+            $obligacion_bonificado->monto = $monto;
+            $obligacion_bonificado->descripcion = $descripcion;
+            $obligacion_bonificado->saldo = 0;
+            $obligacion_bonificado->fecha = $fecha->toDateString();
+            $obligacion_bonificado->fecha_vencimiento = $fecha->toDateString();
+            $obligacion_bonificado->ppa_id = $id_plan_pago;
+            $obligacion_bonificado->tob_id = 4;
+            $obligacion_bonificado->id_usuario = $user->id;
+            $obligacion_bonificado->save();
+
+            $numero = $sede->pago_numero + 1;
+            $pago_bonificado = new Pago;
+            $pago_bonificado->fecha = $fecha->toDateString();
+            $pago_bonificado->monto = $monto;
+            $pago_bonificado->descripcion = $descripcion;
+            $pago_bonificado->id_usuario = $user->id;
+            $pago_bonificado->ppa_id = $id_plan_pago;
+            $pago_bonificado->obl_id = $obligacion_bonificado->obl_id;
+            $pago_bonificado->id_sede = $id_sede;
+            $pago_bonificado->id_movimiento = 0;
+            $pago_bonificado->id_inscripcion = $plan_pago->id_inscripcion;
+            $pago_bonificado->id_tipo_pago = 2;
+            $pago_bonificado->numero = $numero;
+            $pago_bonificado->save();
+            $sede->pago_numero = $numero;
+            $sede->save();
+
+            $parcial_bonificado = new ObligacionPago;
+            $parcial_bonificado->opa_monto = $monto;
+            $parcial_bonificado->obl_id = $interes->id;
+            $parcial_bonificado->pag_id = $pago_bonificado->pag_id;
+            $parcial_bonificado->id_usuario = $user->id;
+            $parcial_bonificado->save();
+            $interes = ObligacionFunction::actualizar($interes);
+          }
         }
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
@@ -576,13 +664,20 @@ class PlanPagoController extends Controller
     }
     $bonificar_intereses = $request->input('bonificar_intereses',false);
     $bonificar_cuotas = $request->input('bonificar_cuotas',true);
+    $especial_covid = $request->input('especial_covid',true);
     $monto = round($request->input('monto'),2);
     $fecha = Carbon::parse($request->input('fecha'));
     $saldo = $monto;
-    if($bonificar_intereses){
-      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,$bonificar_cuotas);
+    if($bonificar_intereses or $especial_covid){
+      $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,[
+        'bonificar_cuotas' => $bonificar_cuotas,
+        'especial_covid' => $especial_covid,
+      ]);
     } else {
-      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,$bonificar_cuotas);
+      $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,[
+        'bonificar_cuotas' => $bonificar_cuotas,
+        'especial_covid' => $especial_covid,
+      ]);
     }
 
     return response()->json([
@@ -610,7 +705,7 @@ class PlanPagoController extends Controller
     $descripcion = $request->input('descripcion','');
     $saldo = $monto;
     $fecha = new Carbon($request->input('fecha'));
-    $detalles = $this->detallePreparar($id_plan_pago,$id_tipo_pago,$fecha,$saldo,true);
+    $detalles = $this->detallePreparar($id_plan_pago,$id_tipo_pago,$fecha,$saldo);
 
     $plan_pago = PlanPago::find($id_plan_pago);
 
@@ -683,7 +778,19 @@ class PlanPagoController extends Controller
     ],200);
   }
 
-  public static function detallePreparar($id_plan_pago,$id_tipo_pago,$fecha,&$monto,$bonificar_cuotas = true){
+  public static function detallePreparar(
+    $id_plan_pago,
+    $id_tipo_pago,
+    $fecha,
+    &$monto,
+    $opciones = [
+      'bonificar_cuotas' => true,
+      'especial_covid' => true,
+    ]
+  ){
+    $anio = 2020;
+    $bonificar_cuotas = $opciones['bonificar_cuotas']??true;
+    $especial_covid = $opciones['especial_covid']??false;
     $plan_pago = PlanPago::find($id_plan_pago);
     $plan_pago_precio = CuentaCorrienteFunction::ultimo_precio_plan($plan_pago->id_sede);
     switch ($id_tipo_pago) {
@@ -710,24 +817,39 @@ class PlanPagoController extends Controller
     ->orderByRaw('obl_fecha_vencimiento asc,tob_id asc')
     ->get();
     foreach ($obligaciones as $obl) {
+      $fecha_vencimiento = Carbon::parse($obl->fecha_vencimiento);
       $obligacion = Obligacion::where('obl_id',$obl->obl_id)->first();
-      $monto_actual = round($obligacion->monto,2);
-      $saldo_actual = round($obligacion->saldo,2);
-      $fecha_vencimiento = Carbon::parse($obligacion->fecha_vencimiento);
-      $bonificado = false;
-      if(
-        $bonificar_cuotas and
-        $fecha<=$fecha_vencimiento->subDays(5) and 
-        ($id_tipo_pago == 1 or $id_tipo_pago == 2) and 
-        $obligacion->tob_id == 1  and 
-        ($monto - $saldo_actual + $plan_pago_precio->bonificacion_monto)>=0 
-      ){
-        $saldo_actual = $saldo_actual - $plan_pago_precio->bonificacion_monto;
-        if($saldo_actual<0){
-          $saldo_actual = 0;
+      if($fecha_vencimiento->year === $anio and $especial_covid){
+        $monto_actual = round($obligacion->monto,2);
+        $saldo_actual = round($obligacion->saldo,2);
+        if($monto_actual>3000){
+          $monto_actual = 3000;
         }
-        $bonificado = true;
+        if($saldo_actual>3000){
+          $saldo_actual = 3000;
+        }
+      } else {
+        $monto_actual = round($obligacion->monto,2);
+        $saldo_actual = round($obligacion->saldo,2);
       }
+      
+      $bonificado = false;
+      if(!$especial_covid){
+        if(
+          $bonificar_cuotas and
+          $fecha<=$fecha_vencimiento->subDays(5) and 
+          ($id_tipo_pago == 1 or $id_tipo_pago == 2) and 
+          $obligacion->tob_id == 1  and 
+          ($monto - $saldo_actual + $plan_pago_precio->bonificacion_monto)>=0 
+        ){
+          $saldo_actual = $saldo_actual - $plan_pago_precio->bonificacion_monto;
+          if($saldo_actual<0){
+            $saldo_actual = 0;
+          }
+          $bonificado = true;
+        }
+      }
+      
       $saldo = round($saldo_actual - $monto,2);
       if($saldo >= 0){
         if($saldo > 0 and $id_tipo_pago == 3){

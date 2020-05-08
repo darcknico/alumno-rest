@@ -3,8 +3,13 @@
     - [El establecimiento](/{{route}}/{{version}}/establecimiento)
     - [La academia](/{{route}}/{{version}}/academico)
 - ## Gestion Academica
+	- [Inscribir Alumno](/{{route}}/{{version}}/inscripciones)
 	- [Comisiones](/{{route}}/{{version}}/comisiones)
 	- [Mesas de examenes](/{{route}}/{{version}}/mesas)
 - ## Contabilidad
+	- [Cobranzas](/{{route}}/{{version}}/pagos)
+	- [Cuenta corriente](/{{route}}/{{version}}/planes_pago)
 	- [Movimientos](/{{route}}/{{version}}/movimientos)
 	- [Caja](/{{route}}/{{version}}/cajas)
+- ## Recursos Humanos
+	- [Docentes](/{{route}}/{{version}}/docentes)

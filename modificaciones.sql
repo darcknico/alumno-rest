@@ -386,3 +386,8 @@ ALTER TABLE `tbl_docentes` ADD `tde_id` INT NOT NULL DEFAULT '2' AFTER `tco_id`;
 ### 2020-05-02
 composer require binarytorch/larecipe:2.1.3
 php artisan larecipe:install
+
+### 2020-05-07
+
+ALTER TABLE `tbl_movimientos` ADD `mov_numero_transaccion` VARCHAR(255) NULL AFTER `mov_numero`;
+INSERT INTO `tbl_forma_pago` (`fpa_id`, `fpa_nombre`, `estado`) VALUES (NULL, 'Tranferencia bancaria', '1');

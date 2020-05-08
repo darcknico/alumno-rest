@@ -109,17 +109,8 @@ class PlanPagoFilter{
           })
           ->when($id_tipo_materia_lectivo>0,function($s)use($id_tipo_materia_lectivo){
             $s->whereHas('inscripcion',function($q)use($id_tipo_materia_lectivo){
-                $q->where([
-                    'estado' => 1,
-                ])->whereHas('comisiones',function($qt)use($id_tipo_materia_lectivo){
-                    $qt->where('estado',1)
-                        ->whereHas('comision',function($qtr)use($id_tipo_materia_lectivo){
-                            $qtr->where('estado',1)
-                                ->whereHas('materia',function($qtrs)use($id_tipo_materia_lectivo){
-                                    $qtrs->where('estado',1)->where('id_tipo_materia_lectivo',$id_tipo_materia_lectivo);
-                                });
-                        });
-                });
+                $q->where('estado',1)
+                  ->where('id_periodo_lectivo',$id_tipo_materia_lectivo);
             });
           })
           ->when( !is_null($id_tipo_inscripcion_estado) ,function($q)use($id_tipo_inscripcion_estado){

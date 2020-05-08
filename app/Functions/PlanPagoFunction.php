@@ -78,7 +78,15 @@ class PlanPagoFunction{
 	    return $plan;
 	}
 
-	public static function preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad = 10,$dias_vencimiento = 9,$fecha = null){
+	public static function preparar_obligaciones(
+		$anio,
+		$matricula_monto,
+		$cuota_monto,
+		$beca_porcentaje,
+		$cuota_cantidad = 10,
+		$dias_vencimiento = 9,
+		$fecha = null
+	){
 		if(is_null($fecha)){
         	$fecha = Carbon::createFromDate($anio,2, 1);
 		} else {

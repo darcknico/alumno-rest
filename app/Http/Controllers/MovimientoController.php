@@ -134,6 +134,7 @@ class MovimientoController extends Controller{
         $descripcion = $request->input('descripcion');
         $id_forma_pago = $request->input('id_forma_pago',1);
         $id_tipo_movimiento = $request->input('id_tipo_movimiento');
+        $numero_transaccion = $request->input('numero_transaccion');
 
         $todo = new Movimiento;
         $todo->monto = $monto;
@@ -143,6 +144,7 @@ class MovimientoController extends Controller{
         $todo->cheque_origen = $cheque_origen;
         $todo->cheque_vencimiento = empty($cheque_vencimiento)?null:Carbon::parse($cheque_vencimiento);
         $todo->descripcion = $descripcion;
+        $todo->numero_transaccion = $numero_transaccion;
         $todo->id_forma_pago = $id_forma_pago;
         $todo->id_tipo_movimiento = $id_tipo_movimiento;
         $todo->id_sede = $id_sede;
@@ -178,6 +180,7 @@ class MovimientoController extends Controller{
         $id_tipo_movimiento = $request->input('id_tipo_movimiento');
         $numero = $request->input('numero');
         $id_tipo_comprobante = $request->input('id_tipo_comprobante');
+        $numero_transaccion = $request->input('numero_transaccion');
 
         $todo = new Movimiento;
         $todo->monto = $monto;
@@ -190,6 +193,7 @@ class MovimientoController extends Controller{
         $todo->id_forma_pago = $id_forma_pago;
         $todo->id_tipo_movimiento = $id_tipo_movimiento;
         $todo->numero = $numero;
+        $todo->numero_transaccion = $numero_transaccion;
         $todo->id_tipo_comprobante = $id_tipo_comprobante;
         $todo->id_sede = $id_sede;
         $todo->id_usuario = $user->id;
