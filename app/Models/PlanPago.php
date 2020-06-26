@@ -162,7 +162,7 @@ class PlanPago extends Model
   }
 
   public function getSaldoHoyAttribute(){
-    $obligacion = Obligacion::selectRaw('ppa_id,(sum( IF(tob_id = 1 OR tob_id = 2,obl_monto,0)) - sum( IF(tob_id = 3,obl_monto,0))) as total')
+    $obligacion = Obligacion::selectRaw('ppa_id,(sum( IF(tob_id = 1 OR tob_id = 2,obl_monto,0)) - sum( IF(tob_id = 3 OR tob_id = 4,obl_monto,0))) as total')
     ->where([
       'ppa_id' => $this['ppa_id'],
       'estado' => 1,

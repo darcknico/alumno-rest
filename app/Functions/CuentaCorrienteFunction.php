@@ -374,6 +374,9 @@ class CuentaCorrienteFunction{
 				$pagos = 0;
 			}
 			$saldo = $intereses - $pagos;
+			if($saldo<0){
+				$saldo = 0;
+			}
 			$obligacion->obl_monto = $intereses;
 			$obligacion->obl_saldo = $saldo;
 			$obligacion->save();

@@ -35,7 +35,7 @@ class DiariaExport implements WithMultipleSheets
         $diaria = new DiariaFormaExport($this->diaria);
         //$diaria->custom();
         $sheets[] = $diaria;
-        $diaria = new DiariaFormaExport($this->diaria,[2,3,4,5]);
+        $diaria = new DiariaFormaExport($this->diaria,[2,3,4,5,6,7]);
         //$diaria->custom();
         $sheets[] = $diaria;
         return $sheets;

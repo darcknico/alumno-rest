@@ -34,7 +34,7 @@ class PlanPagoController extends Controller
     $id_sede = $request->route('id_sede');
     $sort = $request->query('sort','');
     $order = $request->query('order','');
-    $page = $request->query('page',0);
+    $start = $request->query('start',0);
     $length = $request->query('length',0);
     $registros = PlanPago::with([
       'inscripcion.alumno',
@@ -46,7 +46,7 @@ class PlanPagoController extends Controller
 
     $registros = PlanPagoFilter::index($request,$registros);
 
-    if(strlen($sort)==0 and strlen($order)==0 and $page==0 ){
+    if(strlen($sort)==0 and strlen($order)==0 and $start==0 ){
       $todo = $registros->orderBy('created_at','desc')
         ->get();
       return response()->json($todo,200);
@@ -61,10 +61,10 @@ class PlanPagoController extends Controller
     $total_count = $q->groupBy('sed_id')->count();
     if($length>0){
       $registros = $registros->limit($length);
-      if($page>1){
-          $registros = $registros->offset(($page-1)*$length)->get();
+      if($start>1){
+        $registros = $registros->offset($start)->get();
       } else {
-          $registros = $registros->get();
+        $registros = $registros->get();
       }
     } else {
         $registros = $registros->get();
@@ -603,8 +603,11 @@ class PlanPagoController extends Controller
           $obligacion = ObligacionFunction::actualizar($obligacion);
 
           $interes = Obligacion::where('obl_id_obligacion',$obligacion->id)->first();
-          $pagado = ObligacionFunction::pagado($interes);
-          $monto = $interes->monto - $pagado;
+          $monto = 0;
+          if($interes){
+            $pagado = ObligacionFunction::pagado($interes);
+            $monto = $interes->monto - $pagado;
+          }
           if($interes and $monto>0){
             $descripcion = "Bonificacion especial COVID-19 - ".$interes->descripcion;
             $obligacion_bonificado = new Obligacion;

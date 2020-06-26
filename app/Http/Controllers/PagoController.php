@@ -34,7 +34,7 @@ class PagoController extends Controller
 		$search = $request->query('search','');
 		$sort = $request->query('sort','');
 		$order = $request->query('order','');
-		$page = $request->query('page',0);
+    	$start = $request->query('start',0);
 		$length = $request->query('length',0);
 		$registros = Pago::with([
 			'tipo',
@@ -45,7 +45,7 @@ class PagoController extends Controller
 			'sed_id' => $id_sede,
 			'estado' => 1,
 		]);
-		if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $page==0 ){
+		if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
 			$todo = $registros->orderBy('created_at','desc')
 			->get();
 			return response()->json($todo,200);
@@ -127,8 +127,8 @@ class PagoController extends Controller
 		$total_count = $q->groupBy('sed_id')->count();
 		if($length>0){
 			$registros = $registros->limit($length);
-			if($page>1){
-				$registros = $registros->offset(($page-1)*$length)->get();
+			if($start>1){
+				$registros = $registros->offset($start)->get();
 			} else {
 				$registros = $registros->get();
 			}

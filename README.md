@@ -9,6 +9,20 @@ keytool -genkey -v -keystore alumno.keystore -alias alumno -keyalg RSA -keysize 
 
 <widget id="ar.com.proyectosinformaticos.alumno" version="0.0.5" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
+### 2020-06-26
+Modificado
+- Calculo del saldo a hoy
+
+Errores
+- Paginacion en listado de pagos y cuentas corrientes
+- Generacion de intereses con saldo negativo
+
+### 2020-05-07 1.6.2
+
+Modificado
+- Api de nuevo pago y movimiento, agregado numero de transaccion para formas de pago con Mercado Pago y Transaccion Bancaria
+- Vista previa de pagos, "detallePreparar()" para aceptar opcion ESPECIAL COVID-19
+
 
 ### 2020-04-15
 Para este caso agregare los campos necesarios para guardar el estado del alumno en la base de datos.
@@ -34,8 +48,3 @@ Luego estos valores seran modificados cada vez que ocurra uno de los siguientes 
 - Modificacion en la nota de un alumno en la mesa de examen (Masivo/Simple)
 - Eliminacion de la inscripcion de un alumno en la mesa de examen
 
-### 2020-05-07 1.6.2
-
-Modificado
-- Api de nuevo pago y movimiento, agregado numero de transaccion para formas de pago con Mercado Pago y Transaccion Bancaria
-- Vista previa de pagos, "detallePreparar()" para aceptar opcion ESPECIAL COVID-19
