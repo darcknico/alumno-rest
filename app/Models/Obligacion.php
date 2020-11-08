@@ -14,6 +14,10 @@ class Obligacion extends Model
   protected $table ='tbl_obligaciones';
   protected $primaryKey = 'obl_id';
 
+  protected $with = [
+    'mercadopago',
+  ];
+
   protected $casts = [
       'estado'=>'boolean',
   ];
@@ -87,4 +91,20 @@ class Obligacion extends Model
   public function intereses(){
     return $this->hasMany('App\Models\ObligacionInteres','obl_id','obl_id');
   }
+
+  public function mercadopago(){
+    return $this->hasOne('App\Models\PaymentMercadoPago','obl_id','obl_id');
+  }
+
+  public function inscripcion(){
+    return $this->hasOneThrough(
+      'App\Models\Inscripcion',
+      'App\Models\PlanPago',
+      'ppa_id', // Foreign key on cars table...
+      'ins_id', // Foreign key on owners table...
+      'ppa_id', // Local key on mechanics table...
+      'ins_id' // Local key on cars table...
+    );
+  }
+
 }

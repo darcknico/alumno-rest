@@ -60,7 +60,8 @@ La modalidad es la forma en que un plan de estudio tiene disponible su incripcio
 En la inscripcion de un alumno se le debe asignar o no una beca, asi este sera usado en la generación del plan de pagos
 Su formulario se compone de los siguientes campos:
 - Nombre: maximo de 191 caracteres, obligatorio
-- Porcentaje del descuento: decimal, obligatorio
+- Descuento a Cuota del descuento: decimal, obligatorio, valor entre 0 y 100
+- Descuento a Matricula: decimal, obligatorio, valor entre 0 y 100
 - Descripcion: maximo de 191 caracteres
 
 ![image](/imagenes/documentacion/formulario_beca.png)

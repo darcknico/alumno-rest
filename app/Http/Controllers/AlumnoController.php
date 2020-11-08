@@ -281,6 +281,7 @@ class AlumnoController extends Controller
                     GROUP BY obl.ppa_id, ppa.ins_id
                 ) AS obligaciones ON ins.ins_id = obligaciones.ins_id
                 WHERE
+                ins.tie_id in (1,2) AND
                 alu.estado = 1
                 GROUP BY alu.estado;
                 ", [
@@ -868,12 +869,14 @@ class AlumnoController extends Controller
         $id_modalidad = $request->input('id_modalidad');
         $beca_nombre = $request->input('beca_nombre');
         $beca_porcentaje = $request->input('beca_porcentaje');
+        $beca_porcentaje_matricula = $request->input('beca_porcentaje_matricula');
         $cuota_cantidad = $request->input('cuota_cantidad',10);
         $dias_vencimiento = $request->input('dias_vencimiento',9);
         $fecha = $request->input('fecha',null);
 
         $beca = Beca::find($id_beca);
-        
+        $plan_pago_precio = CuentaCorrienteFunction::ultimo_precio_plan($id_sede);
+
         $todo = new Inscripcion;
         $todo->id_alumno = $id_alumno;
         $todo->id_carrera = $id_carrera;
@@ -886,12 +889,21 @@ class AlumnoController extends Controller
             $todo->id_beca = $id_beca;
             $todo->beca_nombre = $beca_nombre;
             $todo->beca_porcentaje = $beca_porcentaje;
+            //$todo->beca_porcentaje_matricula = $beca_porcentaje_matricula;
         }
         $todo->save();
 
         $plan_pago = new PlanPago;
         $plan_pago->id_sede = $id_sede;
         $plan_pago->id_inscripcion = $todo->id;
+        if($beca){
+            $plan_pago->id_beca = $id_beca;
+        }
+        if($plan_pago_precio){
+            $plan_pago->id_plan_pago_precio = $plan_pago_precio->id;
+            $plan_pago->matricula_original_monto = $plan_pago_precio->matricula_monto;
+            $plan_pago->cuota_original_monto = $plan_pago_precio->cuota_monto;
+        }
         $plan_pago->matricula_monto = $matricula_monto;
         $plan_pago->matricula_saldo = $matricula_monto;
         $plan_pago->cuota_monto = $cuota_monto;
@@ -902,7 +914,16 @@ class AlumnoController extends Controller
         $plan_pago->anio = $anio;
         $plan_pago->id_usuario = $user->id;
         $plan_pago->save();
-        $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha);
+        $detalle = PlanPagoFunction::preparar_obligaciones(
+            $anio,
+            $matricula_monto,
+            $cuota_monto,
+            $beca_porcentaje,
+            $beca_porcentaje_matricula,
+            $cuota_cantidad,
+            $dias_vencimiento,
+            $fecha
+        );
         foreach ($detalle['obligaciones'] as $obligacion) {
             $cuota = new Obligacion;
             $cuota->id_plan_pago = $plan_pago->id;
@@ -1095,7 +1116,13 @@ class AlumnoController extends Controller
                         $plan_pago->anio = 2018;
                         $plan_pago->id_usuario = $user->id;
                         $plan_pago->save();
-                        $detalle = PlanPagoFunction::preparar_obligaciones(2018,$matricula_monto,$cuota_monto,$beca->porcentaje);
+                        $detalle = PlanPagoFunction::preparar_obligaciones(
+                            2018,
+                            $matricula_monto,
+                            $cuota_monto,
+                            $beca->porcentaje,
+                            $beca->porcentaje_matricula
+                        );
                         $obligaciones = [];
                         foreach ($detalle['obligaciones'] as $obligacion) {
                             $cuota = new Obligacion;

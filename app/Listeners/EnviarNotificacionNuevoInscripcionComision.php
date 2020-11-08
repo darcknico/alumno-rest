@@ -35,8 +35,8 @@ class EnviarNotificacionNuevoInscripcionComision implements ShouldQueue
         if($alumno->email){
             $comision = ComisionAlumno::find($event->id_comision_alumno);
             Mail::to($alumno)
-                ->send(new ComisionAlumnoInscripcionNuevo($comision))
-                ->queue(new AlumnoInscripcionMailEnviado($alumno));
+                ->send(new ComisionAlumnoInscripcionNuevo($comision));
+                //->queue(new AlumnoInscripcionMailEnviado($alumno));
         }
         return true;
     }

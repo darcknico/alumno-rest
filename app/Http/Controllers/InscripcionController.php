@@ -18,6 +18,7 @@ use App\Models\Comision\ExamenAlumno;
 use App\Models\AsistenciaAlumno;
 use App\Models\TipoInscripcionEstado;
 use App\Models\Academico\InscripcionAbandono;
+use App\Models\Academico\InscripcionEstado;
 
 use App\Functions\DiariaFunction;
 use App\Filters\InscripcionFilter;
@@ -378,18 +379,24 @@ class InscripcionController extends Controller
         $validator = Validator::make($request->all(),[
             'id_tipo_inscripcion_estado' => 'required',
             'fecha_egreso' => 'nullable | date',
+            'fecha' => 'nullable | date',
+            'observaciones' => 'nullable | string',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],403);
         }
         $id_tipo_inscripcion_estado = $request->input('id_tipo_inscripcion_estado');
         $fecha_egreso = $request->input('fecha_egreso');
+        $fecha = $request->input('fecha');
+        $observaciones = $request->input('observaciones');
+
         $estado = TipoInscripcionEstado::find($id_tipo_inscripcion_estado);
         if(!$estado){
           return response()->json(['error'=>'El estado no existe.'],403);
         }
 
         $inscripcion = Inscripcion::find($id_inscripcion);
+        $anterior_id_tipo_inscripcion_estado = $inscripcion->id_tipo_inscripcion_estado;
         $inscripcion->id_tipo_inscripcion_estado = $id_tipo_inscripcion_estado;
         if($id_tipo_inscripcion_estado == 2){
             $inscripcion->fecha_egreso = $fecha_egreso;
@@ -404,6 +411,13 @@ class InscripcionController extends Controller
             'estado' => 0,
             ]);
         }
+        $estado = new InscripcionEstado;
+        $estado->anterior_id_tipo_inscripcion_estado = $anterior_id_tipo_inscripcion_estado;
+        $estado->id_tipo_inscripcion_estado = $id_tipo_inscripcion_estado;
+        $estado->id_inscripcion = $id_inscripcion;
+        $estado->fecha = $fecha??$fecha_egreso??Carbon::now();
+        $estado->observaciones = $observaciones;
+        $estado->save();
         return response()->json($inscripcion,200);
     }
 

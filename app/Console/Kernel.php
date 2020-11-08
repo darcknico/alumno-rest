@@ -77,6 +77,8 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('docente:estado')->daily()->at('23:00');
 
+        $schedule->command('mercadopago:payment')->daily()->at('12:00');
+
         //ABRIR DIARIA
         //$schedule->command('diaria:abrir')->daily()->at('02:00');
 

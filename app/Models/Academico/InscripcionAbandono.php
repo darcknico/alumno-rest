@@ -50,7 +50,7 @@ class InscripcionAbandono extends Model
 	}
 
 	public function tipo(){
-		return $this->hasOne('App\Models\Tipo\TipoInscripcionAbandono','tia_id','tia_id');
+		return $this->hasOne('App\Models\Tipos\TipoInscripcionAbandono','tia_id','tia_id');
 	}
 
 	public function usuario(){

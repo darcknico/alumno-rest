@@ -281,6 +281,7 @@ class PagoController extends Controller
     	->join('tbl_carreras','tbl_departamentos.dep_id','tbl_carreras.dep_id')
     	->join('tbl_inscripciones','tbl_carreras.car_id','tbl_inscripciones.car_id')
     	->join('tbl_planes_pago','tbl_inscripciones.ins_id','tbl_planes_pago.ins_id')
+        //->whereIn('tbl_inscripciones.tie_id',[1,2])
     	->where([
     		'tbl_departamentos.sed_id' => $id_sede,
     		'tbl_departamentos.estado' => 1,

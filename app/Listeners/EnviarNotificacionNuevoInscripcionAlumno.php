@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Models\Sede;
 use App\Models\Alumno;
+use App\Models\Inscripcion;
 use App\Models\PlanEstudio;
 use App\Models\Materia;
 use App\Models\AlumnoNotificacion;
@@ -36,6 +37,7 @@ class EnviarNotificacionNuevoInscripcionAlumno implements ShouldQueue
     {
         $alumno = Alumno::with('tipoDocumento','provincia')->find($event->id_alumno);
         if($alumno->email){
+            $inscripcion = Inscripcion::find($event->id_inscripcion);
             $sede = Sede::find($event->id_sede);
             $carrera = Carrera::find($event->id_carrera);
             $plan_estudio = PlanEstudio::find($event->id_plan_estudio);
@@ -53,7 +55,7 @@ class EnviarNotificacionNuevoInscripcionAlumno implements ShouldQueue
                     'plan_estudio' => $plan_estudio,
                     'materias' => $materias,
                     'sede' => $sede,
-                ], function($message) use ($user,$carrera,$alumno){
+                ], function($message) use ($carrera,$alumno){
                     $message->from('informes@ariasdesaavedra.edu.ar', 'informes');
                     $message->replyTo("no-replay@prueba.com","No Responder");
                     $message->to($alumno->email)->subject("Inscripcion a Carrera ".$carrera->nombre);
@@ -67,7 +69,7 @@ class EnviarNotificacionNuevoInscripcionAlumno implements ShouldQueue
                 }
             $notificacion = new AlumnoNotificacion;
             $notificacion->alu_id = $id_alumno;
-            $notificacion->usu_id = $user->id;
+            $notificacion->usu_id = $inscripcion->id_usuario;
             $notificacion->ano_enviado = $enviado;
             $notificacion->ano_token = $token;
             $notificacion->ano_email = $alumno->email;

@@ -29,8 +29,8 @@ class InscripcionMesaExamenMateriaNuevo
      */
     public function __construct(MesaExamenMateriaAlumno $item)
     {
-        $this->id_sede = $item->mesa_examen->mesa->id_sede;
-        $this->id_mesa_examen = $item->mesa_examen->id_mesa_examen;
+        $this->id_sede = $item->mesa_examen_materia->mesa_examen->id_sede;
+        $this->id_mesa_examen = $item->mesa_examen_materia->id_mesa_examen;
         $this->id_mesa_examen_materia = $item->id_mesa_examen_materia;
         $this->id_mesa_examen_materia_alumno = $item->id;
         $this->id_inscripcion = $item->id_inscripcion;

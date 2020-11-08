@@ -12,6 +12,7 @@ use App\Models\Movimiento;
 use App\Models\Obligacion;
 use App\Models\ObligacionPago;
 use App\Models\ObligacionInteres;
+use App\Models\Beca;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,7 @@ class PlanPagoController extends Controller
     $registros = PlanPago::with([
       'inscripcion.alumno',
       'inscripcion.carrera',
+      'inscripcion.plan_estudio:pes_id,pes_anio',
     ])->where([
       'sed_id' => $id_sede,
       'estado' => 1,
@@ -100,11 +102,14 @@ class PlanPagoController extends Controller
     $id_beca = $request->input('id_beca');
     $beca_nombre = $request->input('beca_nombre');
     $beca_porcentaje = $request->input('beca_porcentaje');
+    $beca_porcentaje_matricula = $request->input('beca_porcentaje_matricula');
 
     $cuota_cantidad = $request->input('cuota_cantidad',10);
     $fecha = $request->input('fecha',null);
     $dias_vencimiento = $request->input('dias_vencimiento',9);
 
+    $plan_pago_precio = CuentaCorrienteFunction::ultimo_precio_plan($id_sede);
+    $beca = Beca::find($id_beca);
 
     $plan_pago = PlanPago::where([
       'estado' => 1,
@@ -129,8 +134,25 @@ class PlanPagoController extends Controller
     $plan_pago->fecha = $fecha;
     $plan_pago->dias_vencimiento = $dias_vencimiento;
     $plan_pago->id_usuario = $user->id;
+    if($beca){
+      $plan_pago->id_beca = $id_beca;
+    }
+    if($plan_pago_precio){
+      $plan_pago->id_plan_pago_precio = $plan_pago_precio->id;
+      $plan_pago->matricula_original_monto = $plan_pago_precio->matricula_monto;
+      $plan_pago->cuota_original_monto = $plan_pago_precio->cuota_monto;
+    }
     $plan_pago->save();
-    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha);
+    $detalle = PlanPagoFunction::preparar_obligaciones(
+      $anio,
+      $matricula_monto,
+      $cuota_monto,
+      $beca_porcentaje,
+      $beca_porcentaje_matricula,
+      $cuota_cantidad,
+      $dias_vencimiento,
+      $fecha
+    );
     $obligaciones = [];
     foreach ($detalle['obligaciones'] as $obligacion) {
       $cuota = new Obligacion;
@@ -156,6 +178,7 @@ class PlanPagoController extends Controller
         'matricula_monto' => 'required',
         'cuota_monto' => 'required',
         'beca_porcentaje' => 'required',
+        'beca_porcentaje_matricula' => 'nullable',
         'cuota_cantidad' => 'nullable | integer',
         'fecha' => 'nullable | date',
         'dias_vencimiento' => 'nullable | integer',
@@ -168,12 +191,22 @@ class PlanPagoController extends Controller
     $matricula_monto = $request->input('matricula_monto');
     $cuota_monto = $request->input('cuota_monto');
     $beca_porcentaje = $request->input('beca_porcentaje');
+    $beca_porcentaje_matricula = $request->input('beca_porcentaje_matricula');
 
     $cuota_cantidad = $request->input('cuota_cantidad',10);
     $fecha = $request->input('fecha',null);
     $dias_vencimiento = $request->input('dias_vencimiento',9);
 
-    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha);
+    $detalle = PlanPagoFunction::preparar_obligaciones(
+      $anio,
+      $matricula_monto,
+      $cuota_monto,
+      $beca_porcentaje,
+      $beca_porcentaje_matricula,
+      $cuota_cantidad,
+      $dias_vencimiento,
+      $fecha
+    );
     return response()->json($detalle,200);
   }
 
@@ -200,6 +233,7 @@ class PlanPagoController extends Controller
     $cuota_monto = $request->input('cuota_monto');
     $interes_monto = $request->input('interes_monto');
     $beca_porcentaje = $request->input('beca_porcentaje');
+    $beca_porcentaje_matricula = $request->input('beca_porcentaje_matricula');
 
     $cuota_cantidad = $request->input('cuota_cantidad',10);
     $fecha = $request->input('fecha',null);
@@ -229,7 +263,16 @@ class PlanPagoController extends Controller
     $plan_pago->dias_vencimiento = $dias_vencimiento;
     $plan_pago->save();
 
-    $detalle = PlanPagoFunction::preparar_obligaciones($anio,$matricula_monto,$cuota_monto,$beca_porcentaje,$cuota_cantidad,$dias_vencimiento,$fecha)['obligaciones'];
+    $detalle = PlanPagoFunction::preparar_obligaciones(
+      $anio,
+      $matricula_monto,
+      $cuota_monto,
+      $beca_porcentaje,
+      $beca_porcentaje_matricula,
+      $cuota_cantidad,
+      $dias_vencimiento,
+      $fecha
+    )['obligaciones'];
     $matricula = Obligacion::where('ppa_id',$id_plan_pago)
       ->where('estado',1)
       ->where('id_tipo_obligacion',10)
@@ -459,6 +502,7 @@ class PlanPagoController extends Controller
     $bonificar_intereses = $request->input('bonificar_intereses',false);
     $bonificar_cuotas = $request->input('bonificar_cuotas',true);
     $especial_covid = $request->input('especial_covid',true);
+    $especial_ahora_estudiantes = $request->input('especial_ahora_estudiantes',false);
     $monto = round($request->input('monto'),2);
     $descripcion = $request->input('descripcion','');
     $numero_oficial = $request->input('numero_oficial');
@@ -470,15 +514,17 @@ class PlanPagoController extends Controller
     }
     $saldo = $monto;
     $fecha = new Carbon($request->input('fecha'));
-    if($bonificar_intereses or $especial_covid){
+    if($bonificar_intereses or $especial_covid or $especial_ahora_estudiantes){
       $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
+        'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
       ]);
     } else {
       $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
+        'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
       ]);
     }
     $plan_pago = PlanPago::find($id_plan_pago);
@@ -646,6 +692,56 @@ class PlanPagoController extends Controller
             $parcial_bonificado->save();
             $interes = ObligacionFunction::actualizar($interes);
           }
+        } else if($especial_ahora_estudiantes and $obligacion->saldo == 0){
+          $sede = Sede::find($id_sede);
+          $descripcion = "Bonificacion especial ahora estudiantes - ".$obligacion->descripcion;
+          $interes = Obligacion::where('obl_id_obligacion',$obligacion->id)->first();
+          $monto = 0;
+          if($interes){
+            $pagado = ObligacionFunction::pagado($interes);
+            $monto = $interes->monto - $pagado;
+          }
+          /**
+          BONIFICA TODO EL INTERES GENERADO
+          */
+          if($interes and $monto>0){
+            $descripcion = "Bonificacion especial ahora estudiantes - ".$interes->descripcion;
+            $obligacion_bonificado = new Obligacion;
+            $obligacion_bonificado->monto = $monto;
+            $obligacion_bonificado->descripcion = $descripcion;
+            $obligacion_bonificado->saldo = 0;
+            $obligacion_bonificado->fecha = $fecha->toDateString();
+            $obligacion_bonificado->fecha_vencimiento = $fecha->toDateString();
+            $obligacion_bonificado->ppa_id = $id_plan_pago;
+            $obligacion_bonificado->tob_id = 4;
+            $obligacion_bonificado->id_usuario = $user->id;
+            $obligacion_bonificado->save();
+
+            $numero = $sede->pago_numero + 1;
+            $pago_bonificado = new Pago;
+            $pago_bonificado->fecha = $fecha->toDateString();
+            $pago_bonificado->monto = $monto;
+            $pago_bonificado->descripcion = $descripcion;
+            $pago_bonificado->id_usuario = $user->id;
+            $pago_bonificado->ppa_id = $id_plan_pago;
+            $pago_bonificado->obl_id = $obligacion_bonificado->obl_id;
+            $pago_bonificado->id_sede = $id_sede;
+            $pago_bonificado->id_movimiento = 0;
+            $pago_bonificado->id_inscripcion = $plan_pago->id_inscripcion;
+            $pago_bonificado->id_tipo_pago = 2;
+            $pago_bonificado->numero = $numero;
+            $pago_bonificado->save();
+            $sede->pago_numero = $numero;
+            $sede->save();
+
+            $parcial_bonificado = new ObligacionPago;
+            $parcial_bonificado->opa_monto = $monto;
+            $parcial_bonificado->obl_id = $interes->id;
+            $parcial_bonificado->pag_id = $pago_bonificado->pag_id;
+            $parcial_bonificado->id_usuario = $user->id;
+            $parcial_bonificado->save();
+            $interes = ObligacionFunction::actualizar($interes);
+          }
         }
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
@@ -668,18 +764,21 @@ class PlanPagoController extends Controller
     $bonificar_intereses = $request->input('bonificar_intereses',false);
     $bonificar_cuotas = $request->input('bonificar_cuotas',true);
     $especial_covid = $request->input('especial_covid',true);
+    $especial_ahora_estudiantes = $request->input('especial_ahora_estudiantes',true);
     $monto = round($request->input('monto'),2);
     $fecha = Carbon::parse($request->input('fecha'));
     $saldo = $monto;
-    if($bonificar_intereses or $especial_covid){
+    if($bonificar_intereses or $especial_covid or $especial_ahora_estudiantes){
       $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
+        'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
       ]);
     } else {
       $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
+        'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
       ]);
     }
 
@@ -789,11 +888,13 @@ class PlanPagoController extends Controller
     $opciones = [
       'bonificar_cuotas' => true,
       'especial_covid' => true,
+      'especial_ahora_estudiantes' => false,
     ]
   ){
     $anio = 2020;
     $bonificar_cuotas = $opciones['bonificar_cuotas']??true;
     $especial_covid = $opciones['especial_covid']??false;
+    $especial_ahora_estudiantes = $opciones['especial_ahora_estudiantes']??false;
     $plan_pago = PlanPago::find($id_plan_pago);
     $plan_pago_precio = CuentaCorrienteFunction::ultimo_precio_plan($plan_pago->id_sede);
     switch ($id_tipo_pago) {
@@ -819,9 +920,13 @@ class PlanPagoController extends Controller
     ->where('obl_saldo','>',0)
     ->orderByRaw('obl_fecha_vencimiento asc,tob_id asc')
     ->get();
+    $pago_especial = false;
     foreach ($obligaciones as $obl) {
       $fecha_vencimiento = Carbon::parse($obl->fecha_vencimiento);
       $obligacion = Obligacion::where('obl_id',$obl->obl_id)->first();
+      /**
+      DESCUENTO ESPECIAL DE COVID, cuotas rebajado a 3000 si la cuota es mayor
+      */
       if($fecha_vencimiento->year === $anio and $especial_covid){
         $monto_actual = round($obligacion->monto,2);
         $saldo_actual = round($obligacion->saldo,2);
@@ -837,7 +942,10 @@ class PlanPagoController extends Controller
       }
       
       $bonificado = false;
-      if(!$especial_covid){
+      /**
+      Bonificacion por pago adelantado a 5 dias de su vencimiento
+      */
+      if(!$especial_covid and !$especial_ahora_estudiantes){
         if(
           $bonificar_cuotas and
           $fecha<=$fecha_vencimiento->subDays(5) and 
@@ -961,6 +1069,7 @@ class PlanPagoController extends Controller
     $monto = $request->input('monto');
     $descripcion = $request->input('descripcion','');
     $id_movimiento = $request->input('id_movimiento',0);
+    $numero_oficial = $request->input('numero_oficial');
 
     $plan_pago = PlanPago::find($id_plan_pago);
     if($plan_pago->matricula_saldo<$monto){
@@ -992,6 +1101,7 @@ class PlanPagoController extends Controller
     $pago->id_sede = $id_sede;
     $pago->id_movimiento = $id_movimiento;
     $pago->id_inscripcion = $plan_pago->id_inscripcion;
+    $pago->numero_oficial = $numero_oficial;
     $pago->id_tipo_pago = 10;
     $pago->numero = $numero;
     $pago->save();

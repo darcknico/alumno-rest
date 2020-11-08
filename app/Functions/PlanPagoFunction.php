@@ -83,6 +83,7 @@ class PlanPagoFunction{
 		$matricula_monto,
 		$cuota_monto,
 		$beca_porcentaje,
+		$beca_porcentaje_matricula,
 		$cuota_cantidad = 10,
 		$dias_vencimiento = 9,
 		$fecha = null
@@ -92,6 +93,9 @@ class PlanPagoFunction{
 		} else {
 			$fecha = Carbon::parse($fecha);
 		}
+		if($beca_porcentaje_matricula>0){
+            $matricula_monto = $matricula_monto - $matricula_monto*($beca_porcentaje_matricula/100);
+        }
         $obligaciones = [];
         $matricula = [
             'descripcion' => 'Matricula Inscripcion',

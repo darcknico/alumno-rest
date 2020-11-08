@@ -44,6 +44,7 @@ class PlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, WithHead
         $registros = PlanPago::with([
           'inscripcion.alumno',
           'inscripcion.carrera',
+          'inscripcion.plan_estudio',
           'inscripcion.beca',
           'inscripcion.tipo_estado',
         ])->where([
@@ -64,7 +65,23 @@ class PlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, WithHead
  
     public function headings(): array
     {
-        return ['N°','Fecha','Alumno','Carrera','Año','Total Cuota','Pagado','Saldo Total','Saldo Hoy','Beca','Estado'];
+        return [
+            'N°',
+            'Fecha',
+            'Alumno',
+            'Carrera',
+            'Plan de estudio',
+            'Año',
+            'Matricula',
+            'Matricula Pagado',
+            'Total Cuota',
+            'Pagado',
+            'Bonificación',
+            'Saldo Total',
+            'Saldo Hoy',
+            'Beca',
+            'Estado',
+        ];
     }
 
     public function map($registro): array
@@ -89,9 +106,13 @@ class PlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, WithHead
             Carbon::parse($registro['created_at'])->format('d/m/Y'),
             $alumno,
             $inscripcion['carrera']['nombre'],
+            $inscripcion['plan_estudio']['anio'],
             $registro['anio'],
+            $registro['matricula_monto'],
+            $registro['matricula_pagado'],
             $registro['cuota_total'],
             $registro['pagado'],
+            $registro['bonificado'],
             $registro['saldo_total'],
             $saldo_hoy,
             $beca,
@@ -105,10 +126,13 @@ class PlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, WithHead
     public function columnFormats(): array
     {
         return [
-            'F' => "$#,##0.00",
             'G' => "$#,##0.00",
             'H' => "$#,##0.00",
             'I' => "$#,##0.00",
+            'J' => "$#,##0.00",
+            'K' => "$#,##0.00",
+            'L' => "$#,##0.00",
+            'M' => "$#,##0.00",
         ];
     }
     
@@ -126,15 +150,18 @@ class PlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, WithHead
                 ),
             );
             $inicio = 1;
-            $sheet->getStyle('A'.$inicio.':K'.$inicio.'')->applyFromArray($styleArray);
+            $sheet->getStyle('A'.$inicio.':O'.$inicio.'')->applyFromArray($styleArray);
             $ultima = $sheet->getHighestRow();
-            $sheet->getStyle('A2:K'.$ultima++)->applyFromArray($styleArray);
+            $sheet->getStyle('A2:O'.$ultima++)->applyFromArray($styleArray);
             $sheet->SetCellValue("C".$ultima, 'TOTAL');
-            $sheet->SetCellValue("F".$ultima, '=SUM(F'.$inicio.':F'.$ultima.')');
             $sheet->SetCellValue("G".$ultima, '=SUM(G'.$inicio.':G'.$ultima.')');
             $sheet->SetCellValue("H".$ultima, '=SUM(H'.$inicio.':H'.$ultima.')');
             $sheet->SetCellValue("I".$ultima, '=SUM(I'.$inicio.':I'.$ultima.')');
-            $sheet->getStyle('F'.$ultima.':I'.$ultima)
+            $sheet->SetCellValue("J".$ultima, '=SUM(J'.$inicio.':J'.$ultima.')');
+            $sheet->SetCellValue("K".$ultima, '=SUM(K'.$inicio.':K'.$ultima.')');
+            $sheet->SetCellValue("L".$ultima, '=SUM(L'.$inicio.':L'.$ultima.')');
+            $sheet->SetCellValue("M".$ultima, '=SUM(M'.$inicio.':M'.$ultima.')');
+            $sheet->getStyle('C'.$ultima.':M'.$ultima)
                 ->getNumberFormat()
                 ->setFormatCode(NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
             $ultima = $ultima + 2;

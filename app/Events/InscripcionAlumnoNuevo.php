@@ -19,7 +19,7 @@ class InscripcionAlumnoNuevo implements ShouldBroadcast
     public $id_sede;
     public $id_inscripcion;
     public $id_alumno;
-    public $id_plan_pago;
+    public $id_plan_estudio;
     public $id_carrera;
     public $inscripcion;
     /**
@@ -32,7 +32,7 @@ class InscripcionAlumnoNuevo implements ShouldBroadcast
         $this->id_sede = $inscripcion->id_sede;
         $this->id_inscripcion = $inscripcion->id;
         $this->id_alumno = $inscripcion->id_alumno;
-        $this->id_plan_pago = $inscripcion->id_plan_pago;
+        $this->id_plan_estudio = $inscripcion->id_plan_estudio;
         $this->id_carrera = $inscripcion->id_carrera;
         $this->inscripcion = Inscripcion::with('alumno','carrera')->find($inscripcion->id);
     }

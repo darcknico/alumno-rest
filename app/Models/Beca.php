@@ -25,6 +25,8 @@ class Beca extends Model
 
   protected $casts = [
       'estado'=>'boolean',
+      'bec_porcentaje'=>'float',
+      'bec_porcentaje_matricula'=>'float',
   ];
 
   protected $hidden = [
@@ -32,6 +34,7 @@ class Beca extends Model
     'bec_nombre',
     'bec_descripcion',
     'bec_porcentaje',
+    'bec_porcentaje_matricula',
     'usu_id',
   ];
 
@@ -40,6 +43,7 @@ class Beca extends Model
       'nombre' => 'bec_nombre',
       'descripcion' => 'bec_descripcion',
       'porcentaje' => 'bec_porcentaje',
+      'porcentaje_matricula' => 'bec_porcentaje_matricula',
       'id_usuario' => 'usu_id',
   ];
 
@@ -55,6 +59,7 @@ class Beca extends Model
       'nombre',
       'descripcion',
       'porcentaje',
+      'porcentaje_matricula',
       'id_usuario',
   ];
 

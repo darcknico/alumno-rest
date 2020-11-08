@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\User;
 use App\Models\Beca;
+use App\Exports\BecaExport;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BecaController extends Controller
 {
@@ -84,11 +87,13 @@ class BecaController extends Controller
         $nombre = $request->input('nombre');
         $descripcion = $request->input('descripcion');
         $porcentaje = $request->input('porcentaje');
+        $porcentaje_matricula = $request->input('porcentaje_matricula');
 
         $todo = new Beca;
         $todo->nombre = $nombre;
         $todo->descripcion = $descripcion;
         $todo->porcentaje = $porcentaje;
+        $todo->porcentaje_matricula = $porcentaje_matricula;
         $todo->usu_id = $user->id;
         $todo->save();
         
@@ -172,12 +177,14 @@ class BecaController extends Controller
         $nombre = $request->input('nombre');
         $descripcion = $request->input('descripcion');
         $porcentaje = $request->input('porcentaje');
+        $porcentaje_matricula = $request->input('porcentaje_matricula');
 
         $todo = Beca::find($id_beca);
         if($todo){
             $todo->nombre = $nombre;
             $todo->descripcion = $descripcion;
             $todo->porcentaje = $porcentaje;
+            $todo->porcentaje_matricula = $porcentaje_matricula;
             $todo->save();
         } 
         return response()->json($todo,200);
@@ -212,5 +219,10 @@ class BecaController extends Controller
             $todo->save();
         }
         return response()->json($todo,200);
+    }
+
+    public function exportar(Request $request){
+        $fecha = Carbon::now();
+        return Excel::download(new BecaExport(), 'becas'.$fecha->format('Y').'.xlsx');
     }
 }

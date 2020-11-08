@@ -19,6 +19,8 @@ class PlanPagoPrecio extends Model
 
   protected $casts = [
       'estado'=>'boolean',
+      'ppp_cuota_monto'=>'float',
+      'ppp_matricula_monto'=>'float',
   ];
 
   protected $hidden = [

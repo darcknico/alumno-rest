@@ -385,12 +385,15 @@ class CuentaCorrienteFunction{
 		return false;
 	}
 
-	public static function ultimo_precio_plan($id_sede){
-		$ultimo = PlanPagoPrecio::where([
-			'estado' => 1,
-			'sed_id' => $id_sede,
-		])->orderBy('created_at','desc')->first();
-
+	public static function ultimo_precio_plan($id_sede = null){
+		$ultimo = null;
+		if($id_sede){
+			$ultimo = PlanPagoPrecio::where([
+				'estado' => 1,
+				'sed_id' => $id_sede,
+			])->orderBy('created_at','desc')->first();
+		}
+		
 		if(!$ultimo){
 			$ultimo = PlanPagoPrecio::where([
 				'estado' => 1,

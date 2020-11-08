@@ -123,7 +123,7 @@ class MovimientoExport implements ShouldAutoSize, FromCollection, WithMapping, W
         $descripcion = $registro->descripcion;
         $detalles = '';
         $tipo_lectivo = "";
-        if($registro->pago){
+        if($registro->pago and $registro->pago->inscripcion){
             $inscripcion = $registro->pago->inscripcion;
             $alumno = $inscripcion->alumno;
             $carrera = $inscripcion->carrera->nombre;

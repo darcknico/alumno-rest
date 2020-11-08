@@ -14,7 +14,7 @@ class TienePermiso
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next,$tipos)
+    public function handle($request, Closure $next,...$tipos)
     {
         if(is_array($tipos)){
             if(in_array(Auth::user()->id_tipo_usuario, $tipos)){

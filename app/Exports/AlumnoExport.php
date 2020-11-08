@@ -95,7 +95,7 @@ class AlumnoExport implements ShouldAutoSize, FromCollection, WithMapping, WithH
             'Ciudad Nacimiento',
             'Nacionalidad',
             'Sexo',
-            'Observaciones'
+            'Observaciones',
         ];
     }
 

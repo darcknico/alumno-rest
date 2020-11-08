@@ -25,6 +25,12 @@ TIPO USUARIOS
 8 DOCENTES
 */
 
+Route::post('mercadopago/webhook','MercadoPagoController@webhook')->name('mercadopago.webhook');
+Route::match(['get', 'post'], 'mercadopago/ipn','MercadoPagoController@ipn')->name('mercadopago.ipn');
+
+Route::post('preferencias/mercadopago','MercadoPagoController@preferencia')->name('preferencias.mercadopago');
+Route::post('preferencias/mercadopago/verificar','MercadoPagoController@verificar');
+
 Route::post('broadcasting/auth','UsuarioController@pusher');
 
 Route::post('login', 'UsuarioController@login');
@@ -69,6 +75,11 @@ Route::group(['middleware' => 'auth:api'], function(){
 				Route::get('archivos','Academico\DocenteEstadoController@archivo');
 			});
 		});
+	});
+
+	Route::prefix('obligaciones')->group(function () {
+		Route::post('{id_obligacion}/mercadopago','ObligacionController@mercadopago')->where('id_obligacion','[0-9]+');
+		Route::delete('{id_obligacion}/mercadopago','ObligacionController@mercadopagoEliminar')->where('id_obligacion','[0-9]+');
 	});
 
 	Route::apiResource('docentes/materias','Academico\DocenteMateriaController',[
@@ -118,73 +129,10 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::post('seleccionar', 'Ajustes\UsuarioSedeController@seleccionar');
 			Route::get('reportes/terminados','Extra\ReporteJobController@terminados');
 
-			Route::apiResources([
-				'tramites' => 'TramiteController',
-				'alumnos' => 'AlumnoController',
-    			'imagenes' => 'PlantillaImagenController',
-				'aulas' => 'Academico\AulaController',
-			]);
-			Route::apiResource('comisiones/alumnos','Comision\ComisionAlumnoController',[
-				'as' => 'comisionAlumno',
-				'parameters' => [
-					'alumnos' => 'comisionAlumno',
-				],
-			]);
-			Route::apiResource('comisiones/docentes','Comision\ComisionDocenteController',[
-				'as' => 'comisionDocente',
-				'parameters' => [
-					'docentes' => 'comisionDocente',
-				],
-			]);
-			Route::apiResource('comisiones/horarios','Comision\HorarioController',[
-				'as' => 'comisionHorario',
-				'parameters' => [
-					'horarios' => 'comisionHorario',
-				],
-			]);
-			Route::apiResource('comisiones/examenes/alumnos','Comision\ExamenAlumnoController',[
-				'as' => 'examenAlumno',
-				'parameters' => [
-					'alumnos' => 'examenAlumno',
-				],
-				'except' => [
-					'store' ,
-					'destroy' ,
-				]
-			]);
-			Route::apiResource('comisiones/asistencias/alumnos','Comision\AsistenciaAlumnoController',[
-				'as' => 'asistenciaAlumno',
-				'parameters' => [
-					'alumnos' => 'asistenciaAlumno',
-				],
-				'except' => [
-					'store' ,
-					'destroy' ,
-				]
-			]);
-
-			Route::apiResource('novedades/sistemas','Novedad\SistemaController',[
-				'as' => 'novedadSistema',
-				'parameters' => [
-					'sistema' => 'novedadSistema',
-				],
-			]);
-
 			Route::prefix('novedades/sistemas')->group(function(){
 				Route::post('{id_novedad_sistema}/mostrar','Novedad\SistemaController@mostrar')->where('id_novedad_sistema','[0-9]+');
 				Route::get('{id_novedad_sistema}/usuarios','Novedad\SistemaController@usuarios')->where('id_novedad_sistema','[0-9]+');
 			});
-
-			Route::apiResource('reportes','Extra\ReporteJobController',[
-				'as' => 'reporteJob',
-				'parameters' => [
-					'reportes' => 'reporteJob',
-				],
-				'except' => [
-					'store' ,
-					'update' ,
-				]
-			]);
 
 			Route::get('','SedeController@show');
 			Route::put('','SedeController@update');
@@ -259,6 +207,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 			});
 
 			Route::prefix('alumnos')->group(function(){
+				Route::post('importar/previa','AlumnoController@importar_previa');
+				Route::post('importar','AlumnoController@importar');
+				Route::get('exportar','AlumnoController@exportar');
 
 				Route::group([
 					'prefix'=> '{id_alumno}',
@@ -270,9 +221,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 					Route::post('inscripciones','AlumnoController@inscripcion_store');
 				});
 
-				Route::post('importar/previa','AlumnoController@importar_previa');
-				Route::post('importar','AlumnoController@importar');
-				Route::get('exportar','AlumnoController@exportar');
+				
 			});
 
 			Route::prefix('planes_pago')->group(function(){
@@ -667,6 +616,69 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::prefix('auditorias')->group(function(){
 				Route::get('alumnos', 'Extra\AuditoriaController@alumnos');
 			});
+
+			Route::apiResources([
+				'tramites' => 'TramiteController',
+				'alumnos' => 'AlumnoController',
+    			'imagenes' => 'PlantillaImagenController',
+				'aulas' => 'Academico\AulaController',
+			]);
+			Route::apiResource('comisiones/alumnos','Comision\ComisionAlumnoController',[
+				'as' => 'comisionAlumno',
+				'parameters' => [
+					'alumnos' => 'comisionAlumno',
+				],
+			]);
+			Route::apiResource('comisiones/docentes','Comision\ComisionDocenteController',[
+				'as' => 'comisionDocente',
+				'parameters' => [
+					'docentes' => 'comisionDocente',
+				],
+			]);
+			Route::apiResource('comisiones/horarios','Comision\HorarioController',[
+				'as' => 'comisionHorario',
+				'parameters' => [
+					'horarios' => 'comisionHorario',
+				],
+			]);
+			Route::apiResource('comisiones/examenes/alumnos','Comision\ExamenAlumnoController',[
+				'as' => 'examenAlumno',
+				'parameters' => [
+					'alumnos' => 'examenAlumno',
+				],
+				'except' => [
+					'store' ,
+					'destroy' ,
+				]
+			]);
+			Route::apiResource('comisiones/asistencias/alumnos','Comision\AsistenciaAlumnoController',[
+				'as' => 'asistenciaAlumno',
+				'parameters' => [
+					'alumnos' => 'asistenciaAlumno',
+				],
+				'except' => [
+					'store' ,
+					'destroy' ,
+				]
+			]);
+
+			Route::apiResource('novedades/sistemas','Novedad\SistemaController',[
+				'as' => 'novedadSistema',
+				'parameters' => [
+					'sistema' => 'novedadSistema',
+				],
+			]);
+
+			Route::apiResource('reportes','Extra\ReporteJobController',[
+				'as' => 'reporteJob',
+				'parameters' => [
+					'reportes' => 'reporteJob',
+				],
+				'except' => [
+					'store' ,
+					'update' ,
+				]
+			]);
 		});
 	});
 
@@ -793,18 +805,22 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::put('','BecaController@update');
 			Route::delete('','BecaController@destroy');
 		});
+
+		Route::get('exportar','BecaController@exportar');
+
 	});
 
 	Route::group([
 			'prefix'=> 'usuarios',
-			'middleware'=> ['tienePermiso:1'],
+			'middleware'=> ['tienePermiso:1,2'],
 		],function () {
 		Route::get('','UsuarioController@index');
-		Route::post('','UsuarioController@store');
+		Route::post('','UsuarioController@store')->middleware('tienePermiso:1');
 
 		Route::group([
 			'prefix'=> '{id_usuario}',
 			'where'  => ['id_usuario' => '[0-9]+'],
+			'middleware'=> ['tienePermiso:1'],
 		],function () {
 
 			Route::apiResources([
@@ -899,6 +915,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 	});
 
 	Route::prefix('inscripciones')->group(function () {
+		Route::get('estados','Academico\InscripcionEstadoController@index');
+
 		Route::get('estado/tipos','InscripcionController@tipos_estado');
 	});
 

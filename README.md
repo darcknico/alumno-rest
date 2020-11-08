@@ -9,6 +9,28 @@ keytool -genkey -v -keystore alumno.keystore -alias alumno -keyalg RSA -keysize 
 
 <widget id="ar.com.proyectosinformaticos.alumno" version="0.0.5" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
+### 2020-11-08 1.6.4
+Modificado
+- Plan de pago, modificado opciones especiales, agregado "Ahora estudiantes".
+
+### 2020-08-25
+
+Agregado
+- Tabla de inscripcion por estado
+- Ruta para recuperar el historial de estados de una inscripcion
+
+### 2020-07-25
+Agregado
+- Multiples atributos para becas, plan de pago, inscripcion
+- Agregado exportacion a excel de las becas
+
+Modificado
+- API de becas
+- API de inscripcion
+- API de plan de pagos
+- Modificado exportacion de planes de pago
+- Modificado preparaObligaciones de la funciones de los planes de pago
+
 ### 2020-06-26
 Modificado
 - Calculo del saldo a hoy

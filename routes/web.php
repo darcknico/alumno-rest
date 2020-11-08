@@ -16,6 +16,10 @@ Route::get('/', 'HomeController@index');
 Route::get('/img/{path}', 'NotificacionController@images')->where('path', '.*');
 Route::get('/plantillas/imagenes/{path}', 'PlantillaController@images')->where('path', '.*')->middleware(['cors']);
 
+Route::get('/app/payment/success','Web\MercadoPagoController@success')->name('mercadopago.success');
+Route::get('/app/payment/pending','Web\MercadoPagoController@pending')->name('mercadopago.pending');
+Route::get('/app/payment/failure','Web\MercadoPagoController@failure')->name('mercadopago.failure');
+
 /*
 Route::get('/artisan', function () {
 	//dd(public_path('something'));

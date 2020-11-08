@@ -28,7 +28,7 @@ class MovimientoController extends Controller{
         $order = $request->query('order','');
         $page = $request->query('page',0);
         $length = $request->query('length',0);
-        $registros = Movimiento::with('forma','usuario')
+        $registros = Movimiento::with('forma','usuario','pago')
         ->where([
         	'estado' => 1,
         	'sed_id' => $id_sede
@@ -71,8 +71,11 @@ class MovimientoController extends Controller{
             foreach ($values as $key => $value) {
               if(strlen($value)>0){
                 $registros = $registros->where(function($query) use  ($value) {
-                  $query->whereRaw("DATE_FORMAT(mov_fecha, '%d/%m/%Y') like '%".$value."%'")
-                    ->orWhere('descripcion','like','%'.$value.'%');
+                  $query
+                    ->where('descripcion','like','%'.$value.'%')
+                    ->orWhereHas('pago',function($q)use($value){
+                        $q->where('numero_oficial','like',$value.'%');
+                    });
                 });
               }
             }

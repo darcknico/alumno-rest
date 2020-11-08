@@ -57,6 +57,7 @@ class HomeController extends Controller
                 FROM tbl_inscripciones ins
                 RIGHT JOIN tbl_carreras car ON car.car_id = ins.car_id
                 WHERE ins.estado = true
+                AND ins.tie_id in (1,2)
                 AND ins.sed_id = ?
                 AND car.estado = true
                 AND ins.ins_anio = ?

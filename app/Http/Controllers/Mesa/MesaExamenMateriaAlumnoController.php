@@ -328,7 +328,11 @@ class MesaExamenMateriaAlumnoController extends Controller
         $alumno = MesaExamenMateriaAlumno::find($id_mesa_examen_materia_alumno);
         $id_inscripcion = $alumno->id_inscripcion;
         $id_materia = $alumno->mesa_examen_materia->id_materia;
-        $fecha = Carbon::parse($alumno->mesa_examen_materia->fecha)->toDateString();
+        if($alumno->mesa_examen_materia->fecha_cierre){
+            $fecha = Carbon::parse($alumno->mesa_examen_materia->fecha_cierre)->toDateString();
+        } else {
+            $fecha = Carbon::parse($alumno->mesa_examen_materia->fecha)->toDateString();
+        }
         $tipo = "mesa";
 
 

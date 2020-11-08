@@ -131,6 +131,7 @@ class SedeController extends Controller
         $celular = $request->input('celular');
         $email = $request->input('email');
         $punto_venta = $request->input('punto_venta');
+        $mercadopago = $request->input('mercadopago');
 
         $todo = new Sede;
         $todo->sed_nombre = $nombre;
@@ -145,6 +146,7 @@ class SedeController extends Controller
         $todo->sed_celular = $celular;
         $todo->sed_email = $email;
         $todo->punto_venta = $punto_venta;
+        $todo->mercadopago = $mercadopago;
         $todo->usu_id = $user->id;
         $todo->save();
 
@@ -236,6 +238,7 @@ class SedeController extends Controller
         $celular = $request->input('celular');
         $email = $request->input('email');
         $punto_venta = $request->input('punto_venta');
+        $mercadopago = $request->input('mercadopago');
 
         $sede = Sede::where('sed_id',$id_sede)->first();
         if($sede){
@@ -250,6 +253,7 @@ class SedeController extends Controller
             $sede->sed_telefono = $telefono;
             $sede->sed_celular = $celular;
             $sede->sed_email = $email;
+            $sede->mercadopago = $mercadopago;
             $sede->punto_venta = $punto_venta;
             $sede->save();
         } 

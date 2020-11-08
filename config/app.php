@@ -163,7 +163,7 @@ return [
         OwenIt\Auditing\AuditingServiceProvider::class,
         Chumper\Zipper\ZipperServiceProvider::class,
         Webup\LaravelSendinBlue\SendinBlueServiceProvider::class,
-        NotificationChannels\OneSignal\OneSignalServiceProvider::class,
+        //NotificationChannels\OneSignal\OneSignalServiceProvider::class,
     ],
 
     /*

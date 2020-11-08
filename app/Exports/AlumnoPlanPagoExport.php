@@ -55,22 +55,11 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, Wi
             'ppa_anio' => $anio,
             'sed_id' => $id_sede,
             'estado' => 1,
-        ])->whereHas('inscripcion',function($q)use($id_carrera,$id_tipo_materia_lectivo,$anio){
+        ])->whereHas('inscripcion',function($q)use($id_carrera,$id_tipo_materia_lectivo){
             $q->where([
                 'car_id' => $id_carrera,
                 'estado' => 1,
-            ])->whereHas('comisiones',function($qt)use($id_tipo_materia_lectivo,$anio){
-                $qt->where('estado',1)
-                    ->whereHas('comision',function($qtr)use($id_tipo_materia_lectivo,$anio){
-                        $qtr->where([
-                                'estado' => 1,
-                                'com_anio' => $anio,
-                            ])
-                            ->whereHas('materia',function($qtrs)use($id_tipo_materia_lectivo){
-                                $qtrs->where('estado',1)->where('id_tipo_materia_lectivo',$id_tipo_materia_lectivo);
-                            });
-                    });
-            });
+            ])->where('id_periodo_lectivo',$id_tipo_materia_lectivo);
         })
         ->when( !is_null($id_tipo_inscripcion_estado) ,function($q)use($id_tipo_inscripcion_estado){
             if(is_numeric($id_tipo_inscripcion_estado) and $id_tipo_inscripcion_estado>0){
@@ -137,7 +126,7 @@ class AlumnoPlanPagoExport implements ShouldAutoSize, FromArray, WithMapping, Wi
     public function map($registro): array
     {
         $inscripcion = $registro['inscripcion'];
-        $alumno = $inscripcion['alumno']['apellido'] .", ".$inscripcion['alumno']['apellido'];
+        $alumno = $inscripcion['alumno']['apellido'] .", ".$inscripcion['alumno']['nombre'];
         $beca = $inscripcion['beca']['nombre'];
         $estado = $inscripcion['tipo_estado']['nombre'];
 

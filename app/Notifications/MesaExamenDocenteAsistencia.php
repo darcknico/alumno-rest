@@ -45,15 +45,8 @@ class MesaExamenDocenteAsistencia extends Notification
     public function toMail($notifiable)
     {
         return OneSignalMessage::create()
-            ->subject("Your {$notifiable->service} account was approved!")
-            ->body("Click here to see details.")
-            ->url('http://onesignal.com')
-            ->webButton(
-                OneSignalWebButton::create('link-1')
-                    ->text('Click here')
-                    ->icon('https://upload.wikimedia.org/wikipedia/commons/4/4f/Laravel_logo.png')
-                    ->url('http://laravel.com')
-            );
+            ->subject("Notificacion por mesa de examen")
+            ->body("Ingresa a la APP para mas información.");
     }
 
     /**

@@ -45,6 +45,7 @@ class Sede extends Model
     'sed_mesa_numero',
     'usu_id',
     'sed_room_id',
+    'sed_mercadopago',
   ];
 
   protected $maps = [
@@ -65,6 +66,7 @@ class Sede extends Model
       'id_localidad' => 'loc_id',
       'id_usuario' => 'usu_id',
       'room_id' => 'sed_room_id',
+      'mercadopago' => 'sed_mercadopago',
   ];
 
   /**
@@ -104,6 +106,7 @@ class Sede extends Model
       'id_localidad',
       'id_usuario',
       'room_id',
+      'mercadopago',
   ];
 
   public function departamentos(){

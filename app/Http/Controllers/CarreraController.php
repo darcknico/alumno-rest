@@ -133,6 +133,7 @@ class CarreraController extends Controller
             'tbl_carreras.estado' => 1, 
             'tbl_inscripciones.estado' => 1, 
         ])
+        //->whereIn('tbl_inscripciones.tie_id',[1,2])
         ->groupBy(\DB::raw('id,nombre'))
         ->orderByRaw('count(tbl_inscripciones.ins_id) desc')
         ->get();

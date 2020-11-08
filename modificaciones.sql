@@ -391,3 +391,90 @@ php artisan larecipe:install
 
 ALTER TABLE `tbl_movimientos` ADD `mov_numero_transaccion` VARCHAR(255) NULL AFTER `mov_numero`;
 INSERT INTO `tbl_forma_pago` (`fpa_id`, `fpa_nombre`, `estado`) VALUES (NULL, 'Tranferencia bancaria', '1');
+
+### 2020-07-25
+
+ALTER TABLE `tbl_becas` ADD `bec_porcentaje_matricula` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `bec_porcentaje`;
+ALTER TABLE `tbl_planes_pago` ADD `bec_id` INT NULL AFTER `sed_id`, ADD `ppa_matricula_original_monto` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `bec_id`, ADD `ppa_cuota_original_monto` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `ppa_matricula_original_monto`;
+ALTER TABLE `tbl_planes_pago` ADD `ppp_id` INT NULL AFTER `bec_id`;
+
+### 2020-08-08
+
+
+CREATE TABLE `mp_payments` ( 
+  `id` INT NOT NULL AUTO_INCREMENT ,
+  `obl_id` INT NOT NULL , 
+  `ins_id` INT NOT NULL , 
+  `preference_id` VARCHAR(191) NULL , 
+  `preference_url` VARCHAR(191) NULL , 
+  `email` VARCHAR(191) NULL , 
+  `monto` DECIMAL(10,2) NULL , 
+  `payment_id` VARCHAR(191) NULL , 
+  `payment_status` VARCHAR(191) NULL , 
+  `estado` BOOLEAN NOT NULL DEFAULT TRUE , 
+  `created_at` TIMESTAMP NULL , 
+  `updated_at` TIMESTAMP NULL , 
+  `observaciones` TEXT NULL , 
+  `fecha_pagado` DATETIME NULL , PRIMARY KEY (`id`)
+  ) ENGINE = InnoDB;
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+CREATE TABLE `mp_ipn` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `mp_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `topic` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `mp_weebhooks` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `mp_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `live_mode` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `date_created` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `application_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `version` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `api_version` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `action` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `data_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `route` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `route_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE `mp_ipn`
+  ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `mp_weebhooks`
+  ADD PRIMARY KEY (`id`);
+
+
+ALTER TABLE `mp_ipn`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `mp_weebhooks`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+COMMIT;
+
+### 2020-08-16
+php artisan migrate --path=database/migrations/2020_08_16_231554_create_inscripcion_estado_table.php
+
+### 2020-09-03
+
+composer require "mercadopago/dx-php:2.0.0"
+
+### 2020-09-08
+
+ALTER TABLE `mp_payments` CHANGE `obl_id` `obl_id` INT(11) NULL;
+
+### 2020-10-20
+
+ALTER TABLE `tbl_sedes` ADD `sed_mercadopago` BOOLEAN NOT NULL DEFAULT FALSE AFTER `sed_room_id`;

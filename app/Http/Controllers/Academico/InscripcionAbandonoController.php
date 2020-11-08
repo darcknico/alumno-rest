@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Academico;
 
 use App\Models\Inscripcion;
 use App\Models\Academico\InscripcionAbandono;
+use App\Models\Academico\InscripcionEstado;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -113,8 +114,11 @@ class InscripcionAbandonoController extends Controller
         }
 
         $abandonos = $request->input('tipo_abandonos');
+        $fecha = $request->input('fecha');
+        $observaciones = $request->input('observaciones');
 
         $inscripcion = Inscripcion::find($id_inscripcion);
+        $anterior_id_tipo_inscripcion_estado = $inscripcion->id_tipo_inscripcion_estado;
         if(!$inscripcion){
             return response()->json(['error'=>'La inscripcion no fue encontrada.'],403);
         }
@@ -123,15 +127,28 @@ class InscripcionAbandonoController extends Controller
           ->update([
             'estado' => 0,
           ]);
+        $tipos = [];
         foreach ($abandonos as $abandono) {
           $todo = new InscripcionAbandono;
           $todo->id_inscripcion = $id_inscripcion;
           $todo->id_tipo_inscripcion_abandono = $abandono;
           $todo->save();
-            
+          $tipos[] = $todo->tipo->nombre;
+        }
+        if(count($tipos)>0){
+          $observaciones = $observaciones . ' TIPOS: ' . implode(',', $tipos);
         }
         $inscripcion->id_tipo_inscripcion_estado = 3;
         $inscripcion->save();
+
+        $estado = new InscripcionEstado;
+        $estado->anterior_id_tipo_inscripcion_estado = $anterior_id_tipo_inscripcion_estado;
+        $estado->id_tipo_inscripcion_estado = 3;
+        $estado->id_inscripcion = $id_inscripcion;
+        $estado->fecha = $fecha??Carbon::now();
+        $estado->observaciones = $observaciones;
+        $estado->save();
+
         return response()->json($inscripcion,200);
     }
 
