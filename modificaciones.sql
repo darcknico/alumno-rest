@@ -478,3 +478,7 @@ ALTER TABLE `mp_payments` CHANGE `obl_id` `obl_id` INT(11) NULL;
 ### 2020-10-20
 
 ALTER TABLE `tbl_sedes` ADD `sed_mercadopago` BOOLEAN NOT NULL DEFAULT FALSE AFTER `sed_room_id`;
+
+### 2021-06-05
+
+ALTER TABLE `tbl_comisiones` ADD `com_aula_virtual_id` VARCHAR(255) NULL AFTER `sed_id`;

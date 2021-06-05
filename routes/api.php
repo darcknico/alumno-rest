@@ -328,20 +328,20 @@ Route::group(['middleware' => 'auth:api'], function(){
 				Route::get('','DiariaController@index');
 				Route::post('','DiariaController@store');
 
-				Route::get('ultimos','DiariaController@ultimos');
-
 				Route::group([
 					'prefix'=> '{id_diaria}',
 					'where'  => ['id_diaria' => '[0-9]+'],
 					],function () {
-						Route::get('','DiariaController@show');
-						Route::delete('','DiariaController@destroy');
-						Route::put('','DiariaController@update');
-						
-						Route::get('siguiente','DiariaController@siguiente');
-						Route::get('anterior','DiariaController@anterior');
-						Route::get('exportar','DiariaController@exportar');
-					});
+					Route::get('','DiariaController@show');
+					Route::delete('','DiariaController@destroy');
+					Route::put('','DiariaController@update');
+					
+					Route::get('siguiente','DiariaController@siguiente');
+					Route::get('anterior','DiariaController@anterior');
+					Route::get('exportar','DiariaController@exportar');
+				});
+
+				Route::get('ultimos','DiariaController@ultimos');
 			});
 
 			Route::prefix('movimientos')->group(function(){
@@ -387,6 +387,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 			Route::prefix('comisiones')->group(function(){
 				Route::get('','ComisionController@index');
 				Route::post('','ComisionController@store');
+
+				Route::get('exportar','ComisionController@exportar');
+
 				Route::group([
 					'prefix'=> '{id_comision}',
 					'where'  => ['id_comision' => '[0-9]+'],

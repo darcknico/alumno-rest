@@ -501,8 +501,9 @@ class PlanPagoController extends Controller
     }
     $bonificar_intereses = $request->input('bonificar_intereses',false);
     $bonificar_cuotas = $request->input('bonificar_cuotas',true);
-    $especial_covid = $request->input('especial_covid',true);
+    $especial_covid = $request->input('especial_covid',false);
     $especial_ahora_estudiantes = $request->input('especial_ahora_estudiantes',false);
+    $especial_nov_dic_2020 = $request->input('especial_nov_dic_2020',false);
     $monto = round($request->input('monto'),2);
     $descripcion = $request->input('descripcion','');
     $numero_oficial = $request->input('numero_oficial');
@@ -514,17 +515,19 @@ class PlanPagoController extends Controller
     }
     $saldo = $monto;
     $fecha = new Carbon($request->input('fecha'));
-    if($bonificar_intereses or $especial_covid or $especial_ahora_estudiantes){
+    if($bonificar_intereses or $especial_covid or $especial_ahora_estudiantes or $especial_nov_dic_2020){
       $detalles = $this->detallePreparar($id_plan_pago,2,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
         'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
+        'especial_nov_dic_2020' => $especial_nov_dic_2020,
       ]);
     } else {
       $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
         'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
+        'especial_nov_dic_2020' => $especial_nov_dic_2020,
       ]);
     }
     $plan_pago = PlanPago::find($id_plan_pago);
@@ -609,7 +612,7 @@ class PlanPagoController extends Controller
           $parcial_bonificado->id_usuario = $user->id;
           $parcial_bonificado->save();
           $obligacion = ObligacionFunction::actualizar($obligacion);
-        } else if($especial_covid and $pagado>=3000 and $monto>0){
+        } else if($especial_covid and $pagado>=3000 and $monto>0 and $obligacion->saldo == 500){
           $sede = Sede::find($id_sede);
           $descripcion = "Bonificacion especial COVID-19 - ".$obligacion->descripcion;
           $obligacion_bonificado = new Obligacion;
@@ -693,6 +696,7 @@ class PlanPagoController extends Controller
             $interes = ObligacionFunction::actualizar($interes);
           }
         } else if($especial_ahora_estudiantes and $obligacion->saldo == 0){
+          /*
           $sede = Sede::find($id_sede);
           $descripcion = "Bonificacion especial ahora estudiantes - ".$obligacion->descripcion;
           $interes = Obligacion::where('obl_id_obligacion',$obligacion->id)->first();
@@ -701,9 +705,11 @@ class PlanPagoController extends Controller
             $pagado = ObligacionFunction::pagado($interes);
             $monto = $interes->monto - $pagado;
           }
+          */
           /**
           BONIFICA TODO EL INTERES GENERADO
           */
+          /*
           if($interes and $monto>0){
             $descripcion = "Bonificacion especial ahora estudiantes - ".$interes->descripcion;
             $obligacion_bonificado = new Obligacion;
@@ -742,6 +748,45 @@ class PlanPagoController extends Controller
             $parcial_bonificado->save();
             $interes = ObligacionFunction::actualizar($interes);
           }
+          */
+        } elseif($especial_nov_dic_2020 and $monto>0 and $obligacion->saldo == 500){
+          $sede = Sede::find($id_sede);
+          $descripcion = "Bonificacion especial Nov/Dic2020 - ".$obligacion->descripcion;
+          $obligacion_bonificado = new Obligacion;
+          $obligacion_bonificado->monto = $monto;
+          $obligacion_bonificado->descripcion = $descripcion;
+          $obligacion_bonificado->saldo = 0;
+          $obligacion_bonificado->fecha = $fecha->toDateString();
+          $obligacion_bonificado->fecha_vencimiento = $fecha->toDateString();
+          $obligacion_bonificado->ppa_id = $id_plan_pago;
+          $obligacion_bonificado->tob_id = 4;
+          $obligacion_bonificado->id_usuario = $user->id;
+          $obligacion_bonificado->save();
+
+          $numero = $sede->pago_numero + 1;
+          $pago_bonificado = new Pago;
+          $pago_bonificado->fecha = $fecha->toDateString();
+          $pago_bonificado->monto = $monto;
+          $pago_bonificado->descripcion = $descripcion;
+          $pago_bonificado->id_usuario = $user->id;
+          $pago_bonificado->ppa_id = $id_plan_pago;
+          $pago_bonificado->obl_id = $obligacion_bonificado->obl_id;
+          $pago_bonificado->id_sede = $id_sede;
+          $pago_bonificado->id_movimiento = 0;
+          $pago_bonificado->id_inscripcion = $plan_pago->id_inscripcion;
+          $pago_bonificado->id_tipo_pago = 2;
+          $pago_bonificado->numero = $numero;
+          $pago_bonificado->save();
+          $sede->pago_numero = $numero;
+          $sede->save();
+
+          $parcial_bonificado = new ObligacionPago;
+          $parcial_bonificado->opa_monto = $monto;
+          $parcial_bonificado->obl_id = $obligacion->id;
+          $parcial_bonificado->pag_id = $pago_bonificado->pag_id;
+          $parcial_bonificado->id_usuario = $user->id;
+          $parcial_bonificado->save();
+          $obligacion = ObligacionFunction::actualizar($obligacion);
         }
         CuentaCorrienteFunction::interes_calcular($obligacion->obl_id);
       }
@@ -763,8 +808,9 @@ class PlanPagoController extends Controller
     }
     $bonificar_intereses = $request->input('bonificar_intereses',false);
     $bonificar_cuotas = $request->input('bonificar_cuotas',true);
-    $especial_covid = $request->input('especial_covid',true);
+    $especial_covid = $request->input('especial_covid',false);
     $especial_ahora_estudiantes = $request->input('especial_ahora_estudiantes',true);
+    $especial_nov_dic_2020 = $request->input('especial_nov_dic_2020',false);
     $monto = round($request->input('monto'),2);
     $fecha = Carbon::parse($request->input('fecha'));
     $saldo = $monto;
@@ -773,12 +819,14 @@ class PlanPagoController extends Controller
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
         'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
+        'especial_nov_dic_2020' => $especial_nov_dic_2020,
       ]);
     } else {
       $detalles = $this->detallePreparar($id_plan_pago,1,$fecha,$saldo,[
         'bonificar_cuotas' => $bonificar_cuotas,
         'especial_covid' => $especial_covid,
         'especial_ahora_estudiantes' => $especial_ahora_estudiantes,
+        'especial_nov_dic_2020' => $especial_nov_dic_2020,
       ]);
     }
 
@@ -887,14 +935,16 @@ class PlanPagoController extends Controller
     &$monto,
     $opciones = [
       'bonificar_cuotas' => true,
-      'especial_covid' => true,
+      'especial_covid' => false,
       'especial_ahora_estudiantes' => false,
+      'especial_nov_dic_2020' => false,
     ]
   ){
     $anio = 2020;
     $bonificar_cuotas = $opciones['bonificar_cuotas']??true;
     $especial_covid = $opciones['especial_covid']??false;
     $especial_ahora_estudiantes = $opciones['especial_ahora_estudiantes']??false;
+    $especial_nov_dic_2020 = $opciones['especial_nov_dic_2020']??false;
     $plan_pago = PlanPago::find($id_plan_pago);
     $plan_pago_precio = CuentaCorrienteFunction::ultimo_precio_plan($plan_pago->id_sede);
     switch ($id_tipo_pago) {
@@ -936,6 +986,15 @@ class PlanPagoController extends Controller
         if($saldo_actual>3000){
           $saldo_actual = 3000;
         }
+      } elseif ($fecha_vencimiento->year === $anio and $especial_nov_dic_2020 and ($fecha_vencimiento->month == 11 or $fecha_vencimiento->month == 12)) {
+        $monto_actual = round($obligacion->monto,2);
+        $saldo_actual = round($obligacion->saldo,2);
+        if($monto_actual>3000){
+          $monto_actual = 3000;
+        }
+        if($saldo_actual>3000){
+          $saldo_actual = 3000;
+        }
       } else {
         $monto_actual = round($obligacion->monto,2);
         $saldo_actual = round($obligacion->saldo,2);
@@ -944,8 +1003,9 @@ class PlanPagoController extends Controller
       $bonificado = false;
       /**
       Bonificacion por pago adelantado a 5 dias de su vencimiento
+      if(!$especial_covid and !$especial_ahora_estudiantes and !$especial_nov_dic_2020){
       */
-      if(!$especial_covid and !$especial_ahora_estudiantes){
+      if(!$especial_covid and !$especial_nov_dic_2020){
         if(
           $bonificar_cuotas and
           $fecha<=$fecha_vencimiento->subDays(5) and 

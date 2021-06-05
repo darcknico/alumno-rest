@@ -16,6 +16,10 @@ use App\Models\Comision\Examen;
 use App\Models\Academico\DocenteMateria;
 use App\Events\InscripcionComisionNuevo;
 use App\Events\InscripcionComisionModificado;
+use App\Events\ComisionNuevo;
+use App\Events\ComisionModificado;
+use App\Filters\ComisionFilter;
+use App\Exports\ComisionExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -54,75 +58,8 @@ class ComisionController extends Controller
         $start = $request->query('start',0);
         $length = $request->query('length',0);
 
-        $id_departamento = $request->query('id_departamento',0);
-        $id_carrera = $request->query('id_carrera',0);
-        $id_materia = $request->query('id_materia',0);
-        $anio = $request->query('anio',null);
-        $cerrado = $request->query('cerrado',null);
-        $id_usuario = $request->query('id_usuario',0);
-        $id_inscripcion = $request->query('id_inscripcion',0);
+        $registros = ComisionFilter::index($request,$registros);
 
-        $registros = $registros
-            ->when($id_departamento>0,function($q)use($id_departamento){
-                $carreras = Carrera::where([
-                    'dep_id' => $id_departamento,
-                    'estado' => 1,
-                ])->pluck('car_id')->toArray();
-                return $q->whereIn('car_id',$carreras);
-            })
-            ->when($id_carrera>0,function($q)use($id_carrera){
-                return $q->where('car_id',$id_carrera);
-            })
-            ->when($id_materia>0,function($q)use($id_materia){
-                return $q->where('mat_id',$id_materia);
-            })
-            ->when(!empty($anio),function($q)use($anio){
-                return $q->where('anio',$anio);
-            })
-            ->when(!empty($cerrado),function($q)use($cerrado){
-                return $q->where('cerrado',$cerrado);
-            })
-            ->when($id_inscripcion>0,function($q)use($id_inscripcion){
-                $q->whereHas('alumnos',function($qt)use($id_inscripcion){
-                    $qt->where('estado',1)
-                        ->where('id_inscripcion',$id_inscripcion);
-                });
-            })
-            ->when($user->id_tipo_usuario == 8,function($q)use($user){
-                $q->whereHas('docentes',function($qt)use($user){
-                    $qt->where('id_usuario',$user->id)->where('estado',1);
-                });
-            })
-            ->when($id_usuario>0,function($q)use($id_usuario){
-                $q->whereHas('docentes',function($qt)use($id_usuario){
-                    $qt->where('id_usuario',$id_usuario)->where('estado',1);
-                });
-            });
-        $values = explode(" ", $search);
-        if(count($values)>0){
-            foreach ($values as $key => $value) {
-                if(strlen($value)>0){
-                    $registros = $registros->where(function($query) use  ($value) {
-                        $query->where('anio', $value)
-                            ->orWhere('numero','like','%'.$value.'%')
-                            ->orWhereIn('car_id',function($q)use($value){
-                                return $q->select('car_id')->from('tbl_carreras')->where([
-                                    'estado' => 1,
-                                ])->where(function($qt) use ($value) {
-                                    $qt->where('car_nombre','like','%'.$value.'%')->orWhere('car_nombre_corto','like','%'.$value.'%');
-                                });
-                            })
-                            ->orWhereIn('mat_id',function($q)use($value){
-                                return $q->select('mat_id')->from('tbl_materias')->where([
-                                    'estado' => 1,
-                                ])->where(function($qt) use ($value) {
-                                    $qt->where('mat_nombre','like','%'.$value.'%')->orWhere('mat_codigo','like','%'.$value.'%');
-                                });
-                            });
-                    });
-                }
-            }
-        }
         if(strlen($search)==0 and strlen($sort)==0 and strlen($order)==0 and $start==0 ){
             $todo = $registros->orderBy('created_at','desc')
             ->get();
@@ -225,6 +162,7 @@ class ComisionController extends Controller
             'clase_inicio' => 'date | nullable',
             'clase_final' => 'date | nullable',
             'asistencia' => 'boolean | nullable',
+            'id_aula_virtual' => 'nullable | string | max:255',
         ]);
         if($validator->fails()){
           return response()->json(['error'=>$validator->errors()],404);
@@ -240,6 +178,7 @@ class ComisionController extends Controller
         $clase_final = $request->input('clase_final');
         $asistencia = $request->input('asistencia',false);
         $docentes = $request->input('docentes',[]);
+        $id_aula_virtual = $request->input('id_aula_virtual');
         if(is_null($docentes)){
             $docentes = [];
         }
@@ -262,6 +201,7 @@ class ComisionController extends Controller
         $todo->clase_final = $clase_final;
         $todo->asistencia = $asistencia;
         $todo->usu_id_alta = $user->id;
+        $todo->id_aula_virtual = $id_aula_virtual;
         $todo->save();
 
         foreach ($docentes as $docente) {
@@ -270,6 +210,8 @@ class ComisionController extends Controller
             $usuario->id_comision = $todo->id;
             $usuario->save();
         }
+
+        event(new ComisionNuevo($todo));
 
         return response()->json($todo,200);
     }
@@ -423,6 +365,7 @@ class ComisionController extends Controller
         $clase_final = $request->input('clase_final');
         $asistencia = $request->input('asistencia',false);
         $docentes = $request->input('docentes');
+        $id_aula_virtual = $request->input('id_aula_virtual');
 
         $todo = Comision::find($id_comision);
         $todo->anio = $anio;
@@ -435,6 +378,7 @@ class ComisionController extends Controller
         $todo->clase_inicio = $clase_inicio;
         $todo->clase_final = $clase_final;
         $todo->asistencia = $asistencia;
+        $todo->id_aula_virtual = $id_aula_virtual;
         $todo->save();
 
         $docentes_old = ComisionDocente::where('id_comision',$id_comision)->where('estado',1)->get()->toArray();
@@ -455,6 +399,9 @@ class ComisionController extends Controller
                 $usuario->save();
             }
         }
+
+        event(new ComisionModificado($todo));
+
         return response()->json($todo,200);
     }
 
@@ -756,5 +703,12 @@ class ComisionController extends Controller
         
         $filename ='comision-'.$comision->materia->codigo;
         return response()->download($output . '.' . $ext, $filename,['Content-Type: application/pdf'])->deleteFileAfterSend();
+    }
+
+    public function exportar(Request $request){
+
+        $fecha = Carbon::now()->format('d.m.Y');
+
+        return (new ComisionExport(ComisionFilter::extract($request)))->download('comisiones-'.$fecha.'.xlsx');
     }
 }

@@ -49,7 +49,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         
-        $schedule->command('backup:run')->daily()->at('02:00');
+        $schedule->command('backup:run')->fridays()->at('02:00');
 
         $schedule->command('notificacion:enviar')->everyMinute();
 

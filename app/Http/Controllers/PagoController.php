@@ -225,7 +225,9 @@ class PagoController extends Controller
 		} catch(Exception $e){
 			return response()->json($e->getMessagge(),401);
 		}
-    	PlanPagoFunction::actualizar($plan_pago);
+		if($plan_pago){
+    		PlanPagoFunction::actualizar($plan_pago);
+		}
 		return response()->json($pago_original,200);
 	}
 

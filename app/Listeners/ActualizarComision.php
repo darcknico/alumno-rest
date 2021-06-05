@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Models\Comision;
 use App\Models\ComisionAlumno;
+use App\Functions\ComisionFunction;
 
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,13 +30,7 @@ class ActualizarComision
     public function handle($event)
     {
         $comision = Comision::find($event->id_comision);
-        $alumnos_cantidad = ComisionAlumno::selectRaw('count(*) as total')
-            ->where([
-                'estado' => 1,
-                'com_id' => $event->id_comision,
-            ])->groupBy('com_id')->first();
-        $comision->alumnos_cantidad = $alumnos_cantidad->total??0;
-        $comision->save();
+        ComisionFunction::actualizar($comision);
 
         return true;
     }

@@ -68,7 +68,7 @@ class EnviarNotificacionNuevoInscripcionAlumno implements ShouldQueue
                     $enviado = true;
                 }
             $notificacion = new AlumnoNotificacion;
-            $notificacion->alu_id = $id_alumno;
+            $notificacion->alu_id = $event->id_alumno;
             $notificacion->usu_id = $inscripcion->id_usuario;
             $notificacion->ano_enviado = $enviado;
             $notificacion->ano_token = $token;

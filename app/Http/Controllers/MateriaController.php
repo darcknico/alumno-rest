@@ -307,7 +307,7 @@ class MateriaController extends Controller
         if($todo){
             $plan = PlanEstudio::find($todo->id_plan_estudio);
             if($plan){
-                $plan->pes_horas = $plan->pes_horas - $todo->mat_horas + $horas;
+                $plan->pes_horas = $plan->pes_horas - $todo->mat_horas;
                 $plan->save();
             }
             $todo->estado = 0;
