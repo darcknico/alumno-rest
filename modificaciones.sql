@@ -482,3 +482,7 @@ ALTER TABLE `tbl_sedes` ADD `sed_mercadopago` BOOLEAN NOT NULL DEFAULT FALSE AFT
 ### 2021-06-05
 
 ALTER TABLE `tbl_comisiones` ADD `com_aula_virtual_id` VARCHAR(255) NULL AFTER `sed_id`;
+
+### 2021-06-24
+
+ALTER TABLE `tbl_comision_examen` ADD `cex_examen_virtual_id` VARCHAR(255) NULL AFTER `com_id`;

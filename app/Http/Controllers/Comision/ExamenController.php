@@ -14,6 +14,7 @@ use App\Models\TipoExamenAlumno;
 use App\Models\Comision\Examen;
 use App\Models\Comision\TipoExamen;
 use App\Models\Comision\ExamenAlumno;
+use App\Events\ComisionExamenModificado;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -149,6 +150,7 @@ class ExamenController extends Controller
         $fecha = $request->input('fecha');
         $nombre = $request->input('nombre');
         $observaciones = $request->input('observaciones');
+        $id_examen_virtual = $request->input('id_examen_virtual');
 
         $comision = Comision::find($id_comision);
         if(!$comision){
@@ -162,6 +164,7 @@ class ExamenController extends Controller
         $todo->observaciones = $observaciones;
         $todo->id_comision = $id_comision;
         $todo->usu_id = $user->id;
+        $todo->id_examen_virtual = $id_examen_virtual;
         $todo->save();
 
         $asistentes = ComisionAlumno::where([
@@ -181,6 +184,8 @@ class ExamenController extends Controller
             $alumno->save();
         }
 
+        event(new ComisionExamenModificado($todo));
+
         return response()->json($todo,200);
     }
 
@@ -198,13 +203,17 @@ class ExamenController extends Controller
         $fecha = $request->input('fecha');
         $nombre = $request->input('nombre');
         $observaciones = $request->input('observaciones');
+        $id_examen_virtual = $request->input('id_examen_virtual');
 
         $todo = Examen::find($id_comision_examen);
         $todo->id_tipo_examen = $id_tipo_examen;
         $todo->fecha = $fecha;
         $todo->nombre = $nombre;
         $todo->observaciones = $observaciones;
+        $todo->id_examen_virtual = $id_examen_virtual;
         $todo->save();
+
+        event(new ComisionExamenModificado($todo));
 
         return response()->json($todo,200);
     }

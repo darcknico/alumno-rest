@@ -54,6 +54,9 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\ComisionModificado' => [
             'App\Listeners\ActualizarComision',
         ],
+        'App\Events\ComisionExamenModificado' => [
+            'App\Listeners\ActualizarComisionExamen',
+        ],
     ];
 
     /**

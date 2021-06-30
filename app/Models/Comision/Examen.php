@@ -29,6 +29,7 @@ class Examen extends Model
     'cex_nombre',
     'cex_observaciones',
     'cex_fecha',
+    'cex_examen_virtual_id',
 
     'usu_id',
     'usu_id_baja',
@@ -43,6 +44,7 @@ class Examen extends Model
       'nombre' => 'cex_nombre',
       'observaciones' => 'cex_observaciones',
       'fecha' => 'cex_fecha',
+      'id_examen_virtual' => 'cex_examen_virtual_id',
       'id_usuario' => 'usu_id',
   ];
 
@@ -53,6 +55,7 @@ class Examen extends Model
       'nombre',
       'observaciones',
       'fecha',
+      'id_examen_virtual',
       'id_usuario',
 
   ];
