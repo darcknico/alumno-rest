@@ -3,6 +3,7 @@
 namespace App\Functions;
 
 use App\Models\PlanPago;
+use App\Models\Materia;
 use App\Models\Mesa\MesaExamen;
 use App\Models\Mesa\MesaExamenMateria;
 use App\Models\Mesa\MesaExamenMateriaAlumno;
@@ -49,6 +50,11 @@ class MesaExamenFunction{
         $materia->alumnos_cantidad = $alumnos_cantidad->total??0;
         $materia->alumnos_cantidad_aprobado = $alumnos_cantidad->aprobado??0;
         $materia->alumnos_cantidad_no_aprobado = $alumnos_cantidad->no_aprobado??0;
+
+        if(is_null($materia->id_examen_virtual) or empty($materia->id_examen_virtual)){
+            $materia->id_examen_virtual = $materia->materia->id_examen_virtual;
+        }
+
         $materia->save();
 
         if($todo){

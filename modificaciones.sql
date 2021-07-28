@@ -486,3 +486,9 @@ ALTER TABLE `tbl_comisiones` ADD `com_aula_virtual_id` VARCHAR(255) NULL AFTER `
 ### 2021-06-24
 
 ALTER TABLE `tbl_comision_examen` ADD `cex_examen_virtual_id` VARCHAR(255) NULL AFTER `com_id`;
+
+### 2021-07-06
+
+ALTER TABLE `tbl_materias` ADD `mat_aula_virtual_id` VARCHAR(255) NULL AFTER `usu_id`, ADD `mat_examen_virtual_id` VARCHAR(255) NULL AFTER `mat_aula_virtual_id`;
+
+ALTER TABLE `tbl_mesa_materia` ADD `mma_examen_virtual_id` VARCHAR(255) NULL AFTER `mma_alumnos_cantidad_no_aprobado`;

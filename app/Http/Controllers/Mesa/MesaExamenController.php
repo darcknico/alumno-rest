@@ -16,6 +16,7 @@ use App\Models\ComisionAlumno;
 use App\Models\Asistencia;
 use App\Models\Sede;
 use App\Http\Controllers\Controller;
+use App\Events\MesaExamenMateriaModificado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -166,16 +167,18 @@ class MesaExamenController extends Controller
                 response()->json([
                     'error'=>'La materia ya cuenta con mesa de examen.',
                 ],404);
-            } else {
-                $todo = new MesaExamenMateria;
-                $todo->id_mesa_examen = $id_mesa_examen;
-                $todo->id_carrera = $materia->planEstudio->id_carrera;
-                $todo->id_materia = $id_materia;
-                $todo->usu_id = $user->id;
-                $todo->fecha = $fecha;
-                $todo->ubicacion = $ubicacion;
-                $todo->save();
             }
+            $todo = new MesaExamenMateria;
+            $todo->id_mesa_examen = $id_mesa_examen;
+            $todo->id_carrera = $materia->planEstudio->id_carrera;
+            $todo->id_materia = $id_materia;
+            $todo->usu_id = $user->id;
+            $todo->fecha = $fecha;
+            $todo->ubicacion = $ubicacion;
+            $todo->save();
+            
+            event(new MesaExamenMateriaModificado($todo));
+
             return response()->json($todo,200);
         }
         return response()->json([
@@ -532,6 +535,7 @@ class MesaExamenController extends Controller
             $todo->usu_id = $user->id;
             $todo->fecha = $fecha;
             $todo->save();
+            event(new MesaExamenMateriaModificado($todo));
         }
         return response()->json($materias,200);
     }

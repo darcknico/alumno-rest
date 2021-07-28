@@ -18,6 +18,7 @@ use App\Models\ComisionAlumno;
 use App\Models\Asistencia;
 use App\Models\Sede;
 use App\Models\Extra\ReporteJob;
+use App\Events\MesaExamenMateriaModificado;
 use App\Events\InscripcionMesaExamenMateriaNuevo;
 use App\Events\InscripcionMesaExamenMateriaModificado;
 use App\Http\Controllers\Controller;
@@ -169,6 +170,7 @@ class MesaExamenMateriaController extends Controller
         $folio_promocion = $request->input('folio_promocion',null);
         $folio_regular = $request->input('folio_regular',null);
         $libro = $request->input('libro',null);
+        $id_examen_virtual = $request->input('id_examen_virtual');
 
         $mesa_examen = MesaExamen::find($id_mesa_examen);
         $materia = Materia::find($id_materia);
@@ -187,24 +189,27 @@ class MesaExamenMateriaController extends Controller
             return response()->json([
                 'error'=>'La mesa de examen ya cuenta con la materia. Elija otra materia disponible.',
             ],403);
-        } else {
-            $todo = new MesaExamenMateria;
-            $todo->id_mesa_examen = $id_mesa_examen;
-            $todo->id_carrera = $materia->planEstudio->id_carrera;
-            $todo->id_materia = $id_materia;
-            $todo->usu_id = $user->id;
-            $todo->fecha = $fecha;
-            $todo->observaciones = $observaciones;
-            $todo->folio_libre = $folio_libre;
-            $todo->folio_promocion = $folio_promocion;
-            $todo->folio_regular = $folio_regular;
-            $todo->libro = $libro;
-
-            if($fecha_cierre){
-                $todo->fecha_cierre = Carbon::parse($fecha_cierre);
-            }
-            $todo->save();
         }
+        $todo = new MesaExamenMateria;
+        $todo->id_mesa_examen = $id_mesa_examen;
+        $todo->id_carrera = $materia->planEstudio->id_carrera;
+        $todo->id_materia = $id_materia;
+        $todo->usu_id = $user->id;
+        $todo->fecha = $fecha;
+        $todo->observaciones = $observaciones;
+        $todo->folio_libre = $folio_libre;
+        $todo->folio_promocion = $folio_promocion;
+        $todo->folio_regular = $folio_regular;
+        $todo->libro = $libro;
+        $todo->id_examen_virtual = $id_examen_virtual;
+
+        if($fecha_cierre){
+            $todo->fecha_cierre = Carbon::parse($fecha_cierre);
+        }
+        $todo->save();
+
+        event(new MesaExamenMateriaModificado($todo));
+
         return response()->json($todo,200);
     }
 
@@ -391,6 +396,7 @@ class MesaExamenMateriaController extends Controller
         $folio_promocion = $request->input('folio_promocion',null);
         $folio_regular = $request->input('folio_regular',null);
         $libro = $request->input('libro',null);
+        $id_examen_virtual = $request->input('id_examen_virtual');
 
         $todo = MesaExamenMateria::find($id_mesa_examen_materia);
         $todo->fecha = Carbon::parse($fecha);
@@ -403,7 +409,11 @@ class MesaExamenMateriaController extends Controller
         $todo->folio_promocion = $folio_promocion;
         $todo->folio_regular = $folio_regular;
         $todo->libro = $libro;
+        $todo->id_examen_virtual = $id_examen_virtual;
         $todo->save();
+
+        event(new MesaExamenMateriaModificado($todo));
+        
         return response()->json($todo,200);
     }
 

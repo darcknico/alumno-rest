@@ -43,6 +43,7 @@ class MesaExamenMateria extends Model
     'mma_folio_libre',
     'mma_folio_promocion',
     'mma_folio_regular',
+    'mma_examen_virtual_id',
   ];
 
   protected $maps = [
@@ -66,6 +67,7 @@ class MesaExamenMateria extends Model
       'folio_promocion' => 'mma_folio_promocion',
       'folio_regular' => 'mma_folio_regular',
       'folio' => 'mma_folio',
+      'id_examen_virtual' => 'mma_examen_virtual_id',
   ];
 
   protected $appends = [
@@ -88,6 +90,7 @@ class MesaExamenMateria extends Model
       'folio_regular',
       'alumnos_cantidad_aprobado',
       'alumnos_cantidad_no_aprobado',
+      'id_examen_virtual',
   ];
 
 

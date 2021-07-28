@@ -27,6 +27,8 @@ class Materia extends Model
     'tmr_id',
     'tml_id',
     'usu_id',
+    'mat_aula_virtual_id',
+    'mat_examen_virtual_id',
   ];
 
   protected $maps = [
@@ -38,6 +40,8 @@ class Materia extends Model
       'id_tipo_materia_lectivo' => 'tml_id',
       'id_plan_estudio' => 'pes_id',
       'id_usuario' => 'usu_id',
+      'id_aula_virtual' => 'mat_aula_virtual_id',
+      'id_examen_virtual' => 'mat_examen_virtual_id',
   ];
 
   protected $appends = [
@@ -49,6 +53,8 @@ class Materia extends Model
       'id_tipo_materia_lectivo',
       'id_plan_estudio',
       'id_usuario',
+      'id_aula_virtual',
+      'id_examen_virtual',
   ];
 
   public function usuario(){

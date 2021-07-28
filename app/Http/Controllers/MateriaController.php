@@ -9,6 +9,7 @@ use App\Models\MateriaCorrelatividad;
 use App\Models\TipoMateriaLectivo;
 use App\Models\TipoMateriaRegimen;
 use App\Models\PlanEstudio;
+use App\Events\MateriaModificado;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -157,6 +158,8 @@ class MateriaController extends Controller
             $plan->save();
         }
 
+        event(new MateriaModificado($todo));
+
         return response()->json($todo,200);
     }
 
@@ -288,6 +291,7 @@ class MateriaController extends Controller
             $todo->tml_id = $id_tipo_materia_lectivo;
             $todo->tmr_id = $id_tipo_materia_regimen;
             $todo->save();
+            event(new MateriaModificado($todo));
         } 
         return response()->json($todo,200);
     }
